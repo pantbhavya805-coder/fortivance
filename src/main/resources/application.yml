@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: vendorshield-ai
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:vendorshield}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+    username: ${DB_USER:vendorshield}
+    password: ${DB_PASSWORD:vendorshield}
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Flyway owns the schema; Hibernate only checks it
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: Asia/Kolkata
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+anthropic:
+  api-key: ${ANTHROPIC_API_KEY:}
+  model: ${ANTHROPIC_MODEL:claude-sonnet-5-5}
+
+vendorshield:
+  sample-docs-path: ${SAMPLE_DOCS_PATH:./sample-docs}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
