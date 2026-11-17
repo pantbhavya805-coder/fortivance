@@ -11,10 +11,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.vendorshield</groupId>
-    <artifactId>vendorshield-ai</artifactId>
+    <groupId>com.fortivance</groupId>
+    <artifactId>fortivance</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <name>VendorShield AI</name>
+    <name>Fortivance</name>
     <description>Third-party risk intelligence and operational resilience for banks</description>
 
     <properties>

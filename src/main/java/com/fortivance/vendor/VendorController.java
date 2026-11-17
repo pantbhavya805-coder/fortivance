@@ -1,4 +1,4 @@
-package com.vendorshield.vendor;
+package com.fortivance.vendor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;

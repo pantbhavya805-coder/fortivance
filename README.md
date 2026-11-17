@@ -1,4 +1,4 @@
-# VendorShield AI
+# Fortivance
 
 Third-party risk intelligence and operational resilience for banks.
 MVP focus: **Compliance & Dependency Intelligence** for a fictional Indian commercial bank.
@@ -26,7 +26,7 @@ curl localhost:8080/api/vendors
 curl localhost:8080/api/vendors/1/subcontractors   # -> SecureVault (fourth party)
 ```
 
-To run the app from your IDE instead, start MySQL only with `docker compose up mysql`, then run `VendorShieldApplication`.
+To run the app from your IDE instead, start MySQL only with `docker compose up mysql`, then run `FortivanceApplication`.
 
 ## Data model
 

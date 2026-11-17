@@ -7,7 +7,7 @@
 **Independent Service Auditor:** Ashby & Rao LLP, Chartered Accountants (fictional)
 **Report Date:** 20 June 2026
 
-*SYNTHETIC DOCUMENT — fictional parties, created for VendorShield AI testing only.*
+*SYNTHETIC DOCUMENT — fictional parties, created for Fortivance testing only.*
 
 ---
 

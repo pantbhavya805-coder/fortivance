@@ -1,12 +1,12 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: vendorshield-mysql
+    container_name: fortivance-mysql
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_NAME:-vendorshield}
-      MYSQL_USER: ${DB_USER:-vendorshield}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-vendorshield}
+      MYSQL_DATABASE: ${DB_NAME:-fortivance}
+      MYSQL_USER: ${DB_USER:-fortivance}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-fortivance}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
     ports:
       - "3306:3306"
@@ -21,16 +21,16 @@ services:
 
   app:
     build: .
-    container_name: vendorshield-app
+    container_name: fortivance-app
     depends_on:
       mysql:
         condition: service_healthy
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: ${DB_NAME:-vendorshield}
-      DB_USER: ${DB_USER:-vendorshield}
-      DB_PASSWORD: ${DB_PASSWORD:-vendorshield}
+      DB_NAME: ${DB_NAME:-fortivance}
+      DB_USER: ${DB_USER:-fortivance}
+      DB_PASSWORD: ${DB_PASSWORD:-fortivance}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
     ports:

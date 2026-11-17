@@ -1,4 +1,4 @@
--- VendorShield AI: core schema (10 tables)
+-- Fortivance: core schema (10 tables)
 -- Graph: business_services -> applications -> vendors -> vendors (parent_vendor_id = fourth party)
 
 -- 1. The regulated entity (one row for the demo, but keeps the model multi-tenant ready)

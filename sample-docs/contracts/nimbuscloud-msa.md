@@ -5,7 +5,7 @@
 **And:** NimbusCloud Infra Pvt Ltd ("the Service Provider"), Bengaluru
 **Effective Date:** 1 April 2025 **Term:** 5 years
 
-*SYNTHETIC DOCUMENT — fictional parties, created for VendorShield AI testing only.*
+*SYNTHETIC DOCUMENT — fictional parties, created for Fortivance testing only.*
 
 ---
 

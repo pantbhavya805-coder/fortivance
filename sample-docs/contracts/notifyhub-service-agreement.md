@@ -5,7 +5,7 @@
 **And:** Deccan Meridian Bank Ltd ("Customer"), Hyderabad
 **Effective Date:** 15 July 2024 **Initial Term:** 2 years, renewing automatically for successive 1-year terms
 
-*SYNTHETIC DOCUMENT — fictional parties, created for VendorShield AI testing only.*
+*SYNTHETIC DOCUMENT — fictional parties, created for Fortivance testing only.*
 
 ---
 

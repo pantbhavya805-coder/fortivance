@@ -1,4 +1,4 @@
-package com.vendorshield.vendor;
+package com.fortivance.vendor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

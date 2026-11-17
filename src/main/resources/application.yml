@@ -1,10 +1,10 @@
 spring:
   application:
-    name: vendorshield-ai
+    name: fortivance
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:vendorshield}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
-    username: ${DB_USER:vendorshield}
-    password: ${DB_PASSWORD:vendorshield}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:fortivance}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+    username: ${DB_USER:fortivance}
+    password: ${DB_PASSWORD:fortivance}
   jpa:
     hibernate:
       ddl-auto: validate   # Flyway owns the schema; Hibernate only checks it
@@ -19,7 +19,7 @@ anthropic:
   api-key: ${ANTHROPIC_API_KEY:}
   model: ${ANTHROPIC_MODEL:claude-sonnet-5-5}
 
-vendorshield:
+fortivance:
   sample-docs-path: ${SAMPLE_DOCS_PATH:./sample-docs}
 
 management:
