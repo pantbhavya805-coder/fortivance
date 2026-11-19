@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AccountExpiredException;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.Customizer;
@@ -34,7 +35,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JdbcTemplate jdbcTemplate) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JdbcTemplate jdbcTemplate, AdminAccess adminAccess)
+            throws Exception {
         RequestMatcher approveOrRejectMatcher = request ->
                 "POST".equalsIgnoreCase(request.getMethod()) &&
                 (request.getRequestURI().endsWith("/approve") || request.getRequestURI().endsWith("/reject"));
@@ -66,6 +68,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/demo-requests").permitAll()
                 // Forgot-password flow; rate-limited, one-time hashed tokens (PasswordResetService).
                 .requestMatchers(HttpMethod.POST, "/api/password/forgot", "/api/password/reset").permitAll()
+                // Admin panel: only the named permanent accounts (AdminAccess), whatever role they have switched to.
+                .requestMatchers("/admin.html", "/api/admin/**")
+                    .access((authentication, context) -> new AuthorizationDecision(adminAccess.isAdmin(authentication.get())))
                 .requestMatchers(approveOrRejectMatcher).hasAnyRole("APPROVER", "ADMIN")
                 .anyRequest().authenticated()
             )

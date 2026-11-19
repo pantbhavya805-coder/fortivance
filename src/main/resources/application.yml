@@ -17,6 +17,14 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  # Browsers must revalidate pages, JS and CSS on every load (cheap: unchanged files get 304 Not Modified),
+  # so a new deploy is picked up immediately instead of running a stale cached copy.
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          no-cache: true
+        use-last-modified: true
   # Contact form SMTP (GoDaddy Titan mailbox). Credentials come only from the environment.
   mail:
     host: ${MAIL_HOST:smtpout.secureserver.net}
@@ -43,6 +51,10 @@ fortivance:
   public-url: ${PUBLIC_URL:https://fortivance.in}
   # Permanent accounts created/updated at startup. Passwords come only from the environment;
   # when a password is empty its accounts are left untouched.
+  # Permanent accounts allowed to open the admin panel (/admin.html).
+  admin-usernames: ${ADMIN_USERNAMES:bhavya,judge}
+  # Admins who also see requesters' phone numbers and purpose text.
+  owner-usernames: ${OWNER_USERNAMES:bhavya}
   accounts:
     owner-password: ${OWNER_PASSWORD:}
     judge-password: ${JUDGE_PASSWORD:}

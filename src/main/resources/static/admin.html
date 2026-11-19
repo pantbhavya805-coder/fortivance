@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Admin</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+        .admin-stat { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 1.1rem; }
+        .admin-stat .v { font-size: 1.6rem; font-weight: 700; color: var(--navy); line-height: 1.1; }
+        .admin-stat .l { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.3rem; }
+        .admin-stat.green .v { color: var(--status-green); }
+        .admin-stat.amber .v { color: var(--status-amber); }
+        .admin-stat.red .v { color: var(--status-red); }
+        .admin-stat.grey .v { color: var(--status-grey); }
+
+        .admin-toolbar { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 1rem; }
+        .filter-btn { border: 1px solid var(--border-color); background: #fff; color: var(--text-secondary); border-radius: 999px;
+                      padding: 0.3rem 0.85rem; font: inherit; font-size: 0.8125rem; cursor: pointer; }
+        .filter-btn[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+        .admin-search { flex: 1 1 220px; max-width: 320px; padding: 0.45rem 0.75rem; border: 1px solid var(--border-color);
+                        border-radius: 4px; font: inherit; font-size: 0.875rem; }
+        .admin-meta { font-size: 0.78rem; color: var(--text-secondary); margin-left: auto; }
+
+        .admin-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; }
+        table.admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 860px; }
+        .admin-table th { text-align: left; background: var(--status-grey-bg); color: var(--text-secondary); font-size: 0.72rem;
+                          text-transform: uppercase; letter-spacing: 0.04em; padding: 0.65rem 0.8rem; border-bottom: 1px solid var(--border-color); }
+        .admin-table td { padding: 0.65rem 0.8rem; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        .admin-table tr:last-child td { border-bottom: none; }
+        .admin-table .muted { color: var(--text-secondary); font-size: 0.78rem; }
+        .admin-table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.8rem; word-break: break-all; }
+        .state-pill { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+        .state-ACTIVE { background: var(--status-green-bg); color: var(--status-green); }
+        .state-EXPIRING_SOON { background: var(--status-amber-bg); color: var(--status-amber); }
+        .state-EXPIRED { background: var(--status-red-bg); color: var(--status-red); }
+        .state-NOT_ACTIVATED { background: var(--status-grey-bg); color: var(--status-grey); }
+        .admin-table details summary { cursor: pointer; color: var(--teal-dark); font-size: 0.78rem; }
+        .admin-table details p { white-space: pre-wrap; word-break: break-word; margin: 0.4rem 0 0; max-width: 420px;
+                                 font-size: 0.8rem; color: var(--text-primary); }
+        .admin-empty { padding: 2rem; text-align: center; color: var(--text-secondary); }
+        .admin-error { display: none; padding: 0.75rem 1rem; border-radius: 4px; background: var(--status-red-bg);
+                       color: var(--status-red); border: 1px solid #fca5a5; margin-bottom: 1rem; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">
+                <img src="/images/logo-icon.svg" alt="Fortivance Logo" class="brand-logo">
+                <span>Fortivance</span>
+            </a>
+            <span class="brand-subtitle">Operational Resilience &amp; TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+            <a href="/eval.html" data-nav="eval">Evaluation</a>
+            <a href="/about.html" data-nav="about">About</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user"></div>
+    </header>
+
+    <main class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">Demo accounts</h1>
+        </div>
+
+        <div id="admin-error" class="admin-error" role="alert"></div>
+        <p id="admin-privacy" style="display: none; font-size: 0.8125rem; color: var(--text-secondary); margin: 0 0 1rem;">
+            Phone numbers and access reasons are personal details and are visible to the owner only.
+        </p>
+
+        <div class="admin-stats" aria-live="polite">
+            <div class="admin-stat"><div class="v" id="stat-total">-</div><div class="l">Demo requests</div></div>
+            <div class="admin-stat green"><div class="v" id="stat-ACTIVE">-</div><div class="l">Active</div></div>
+            <div class="admin-stat amber"><div class="v" id="stat-EXPIRING_SOON">-</div><div class="l">Expiring within 6 h</div></div>
+            <div class="admin-stat red"><div class="v" id="stat-EXPIRED">-</div><div class="l">Expired</div></div>
+            <div class="admin-stat grey"><div class="v" id="stat-NOT_ACTIVATED">-</div><div class="l">Not activated (email failed)</div></div>
+        </div>
+
+        <div class="admin-toolbar">
+            <button type="button" class="filter-btn" data-filter="ALL" aria-pressed="true">All</button>
+            <button type="button" class="filter-btn" data-filter="ACTIVE" aria-pressed="false">Active</button>
+            <button type="button" class="filter-btn" data-filter="EXPIRING_SOON" aria-pressed="false">Expiring soon</button>
+            <button type="button" class="filter-btn" data-filter="EXPIRED" aria-pressed="false">Expired</button>
+            <button type="button" class="filter-btn" data-filter="NOT_ACTIVATED" aria-pressed="false">Not activated</button>
+            <input type="search" id="admin-search" class="admin-search" placeholder="Search email or name" aria-label="Search email or name">
+            <button type="button" class="btn btn-secondary btn-sm" id="admin-refresh">Refresh</button>
+            <span class="admin-meta" id="admin-updated"></span>
+        </div>
+
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Name / organisation</th>
+                        <th>Email (sign-in)</th>
+                        <th>Phone</th>
+                        <th>Requested</th>
+                        <th>Access until</th>
+                        <th>Time left</th>
+                        <th>Extensions</th>
+                        <th>Current role</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-rows">
+                    <tr><td colspan="10" class="admin-empty">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        (function () {
+            const STATE_LABEL = {
+                ACTIVE: 'Active', EXPIRING_SOON: 'Expiring soon', EXPIRED: 'Expired', NOT_ACTIVATED: 'Not activated'
+            };
+            let accounts = [];
+            let filter = 'ALL';
+            let personalVisible = false;
+
+            function fmt(value) {
+                if (!value) return '-';
+                const d = new Date(value);
+                if (isNaN(d.getTime())) return '-';
+                return d.toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true
+                }).replace(/\b(am|pm)\b/i, s => s.toUpperCase());
+            }
+
+            function timeLeft(a) {
+                if (a.accessState === 'EXPIRED') return 'Expired';
+                if (a.accessState === 'NOT_ACTIVATED') return '-';
+                const m = Number(a.minutesLeft) || 0;
+                const h = Math.floor(m / 60);
+                return h > 0 ? h + ' h ' + (m % 60) + ' min' : m + ' min';
+            }
+
+            function cell(text, cls) {
+                const td = document.createElement('td');
+                td.textContent = text == null || text === '' ? '-' : String(text);
+                if (cls) td.className = cls;
+                return td;
+            }
+
+            function render() {
+                const q = document.getElementById('admin-search').value.trim().toLowerCase();
+                const rows = accounts.filter(a =>
+                    (filter === 'ALL' || a.accessState === filter) &&
+                    (!q || String(a.email || '').toLowerCase().includes(q) || String(a.name || '').toLowerCase().includes(q)));
+
+                const body = document.getElementById('admin-rows');
+                body.replaceChildren();
+                if (rows.length === 0) {
+                    const tr = document.createElement('tr');
+                    const td = cell(accounts.length === 0 ? 'No demo requests yet.' : 'No accounts match this filter.', 'admin-empty');
+                    td.colSpan = 10;
+                    tr.appendChild(td);
+                    body.appendChild(tr);
+                    return;
+                }
+                rows.forEach(a => {
+                    const tr = document.createElement('tr');
+
+                    const stateTd = document.createElement('td');
+                    const pill = document.createElement('span');
+                    pill.className = 'state-pill state-' + a.accessState;
+                    pill.textContent = STATE_LABEL[a.accessState] || a.accessState;
+                    stateTd.appendChild(pill);
+                    tr.appendChild(stateTd);
+
+                    tr.appendChild(cell(a.name));
+                    const emailTd = cell(a.username || a.email, 'mono');
+                    if (a.username && a.email && a.username.toLowerCase() !== a.email.toLowerCase()) {
+                        const note = document.createElement('div');
+                        note.className = 'muted';
+                        note.textContent = 'request email: ' + a.email;
+                        emailTd.appendChild(note);
+                    }
+                    tr.appendChild(emailTd);
+                    tr.appendChild(personalVisible ? cell(a.phone, a.phone ? '' : 'muted') : cell('Hidden', 'muted'));
+                    tr.appendChild(cell(fmt(a.requestedAt)));
+                    tr.appendChild(cell(fmt(a.accessExpiresAt)));
+                    tr.appendChild(cell(timeLeft(a)));
+                    tr.appendChild(cell(a.extensionCount + ' of ' + a.maxExtensions));
+                    tr.appendChild(cell(a.role ? (a.role === 'APPROVER' ? 'Approver' : 'Analyst') : '-'));
+
+                    const purposeTd = document.createElement('td');
+                    if (!personalVisible) {
+                        purposeTd.textContent = 'Hidden';
+                        purposeTd.className = 'muted';
+                    } else if (a.purpose) {
+                        const det = document.createElement('details');
+                        const sum = document.createElement('summary');
+                        sum.textContent = 'Show';
+                        const p = document.createElement('p');
+                        p.textContent = a.purpose;
+                        det.append(sum, p);
+                        purposeTd.appendChild(det);
+                    } else {
+                        purposeTd.textContent = '-';
+                    }
+                    tr.appendChild(purposeTd);
+                    body.appendChild(tr);
+                });
+            }
+
+            async function load() {
+                const err = document.getElementById('admin-error');
+                try {
+                    const res = await api.fetch('/api/admin/demo-accounts', { method: 'GET' });
+                    if (!res) return; // session ended; api.fetch redirected to login
+                    if (res.status === 403) {
+                        err.textContent = 'The admin panel is available to the owner and judge accounts only.';
+                        err.style.display = 'block';
+                        accounts = [];
+                        render();
+                        return;
+                    }
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const data = await res.json();
+                    err.style.display = 'none';
+                    accounts = data.accounts || [];
+                    personalVisible = data.personalDetailsVisible === true;
+                    document.getElementById('admin-privacy').style.display = personalVisible ? 'none' : 'block';
+                    document.getElementById('stat-total').textContent = data.total ?? accounts.length;
+                    ['ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'NOT_ACTIVATED'].forEach(k => {
+                        document.getElementById('stat-' + k).textContent = (data.counts && data.counts[k]) || 0;
+                    });
+                    document.getElementById('admin-updated').textContent = 'Updated ' + fmt(data.generatedAt);
+                    render();
+                } catch (e) {
+                    err.textContent = 'Could not load demo accounts. Please try Refresh.';
+                    err.style.display = 'block';
+                }
+            }
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filter = btn.dataset.filter;
+                    document.querySelectorAll('.filter-btn').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+                    render();
+                });
+            });
+            document.getElementById('admin-search').addEventListener('input', render);
+            document.getElementById('admin-refresh').addEventListener('click', load);
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                await api.initNav('admin');
+                await load();
+                setInterval(load, 60000); // keep "time left" current
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -233,6 +233,15 @@ const api = {
                 });
             }
         }
+        // Admin panel link, only for admin accounts (the server enforces access as well).
+        const navLinks = document.querySelector('.nav-links');
+        if (user && user.isAdmin && navLinks && !navLinks.querySelector('a[data-nav="admin"]')) {
+            const adminLink = document.createElement('a');
+            adminLink.href = '/admin.html';
+            adminLink.dataset.nav = 'admin';
+            adminLink.textContent = 'Admin';
+            navLinks.appendChild(adminLink);
+        }
         if (activeKey) {
             const activeLink = document.querySelector(`.nav-links a[data-nav="${activeKey}"]`);
             if (activeLink) activeLink.classList.add('active');

@@ -42,12 +42,12 @@ Before access expires, a demo user can open `/profile.html` and extend it by 24 
 - `/request-demo.html`: Public request form for personal 24-hour demo accounts.
 - `/login.html`: Clean session login form.
 - `/profile.html`: Signed-in user's demo access details, expiry countdown and extension button.
+- `/admin.html`: Admin panel (owner and judge accounts only): every demo account with its expiry status, time left, extensions and current role.
 - `/index.html`: Executive dashboard with 6 resilience metric cards and vendor risk registry.
 - `/graph.html`: Interactive Cytoscape.js dependency graph mapping Business Services &rarr; Applications &rarr; Vendors &rarr; 4th Parties, with live vendor incident cascade simulation.
 - `/vendor.html?id=`: Detailed vendor risk profile, contract validity, mis-tiering alerts, subcontractors, and dependent applications.
 - `/incidents.html`: Active incident triage list.
 - `/incident.html?id=`: Incident detail with live **RBI 6-Hour Reporting Window** countdown clock, monospace notice text, AI extraction, and response plan approval workflow.
-- `/profile.html`: User demo profile, session status, and 24-hour access extension.
 
 ## REST APIs
 
@@ -58,6 +58,7 @@ Before access expires, a demo user can open `/profile.html` and extend it by 24 
 | `/api/me` | GET | Authenticated | Current user details and role |
 | `/api/me/demo` | GET | Authenticated | Own demo request, expiry and extension state (404 for permanent accounts) |
 | `/api/me/demo/extend` | POST | Authenticated | Extend own demo access by 24 hours (max 2; 409 when reached) |
+| `/api/admin/demo-accounts` | GET | Admin (`bhavya`, `judge`) | All demo requests with access state (active, expiring within 6 h, expired, not activated); no passwords |
 | `/api/me/role` | POST | Authenticated | Switch own role between `ANALYST` and `APPROVER` (kept for the next login) |
 | `/api/password/forgot` | POST | Public | Email a one-time reset link (same answer whether or not the account exists) |
 | `/api/password/reset` | POST | Public | Set a new password with a reset token (30 minutes, single use) |
