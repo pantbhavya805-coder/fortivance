@@ -1,0 +1,21 @@
+# SITE_ADDRESS in .env:
+#   your domain (e.g. fortivance.example.com) -> automatic HTTPS via Let's Encrypt
+#   :80                                       -> plain HTTP on the server IP (no domain yet)
+{$SITE_ADDRESS} {
+	encode gzip
+	request_body {
+		max_size 10MB
+	}
+	reverse_proxy app:8080 {
+		transport http {
+			read_timeout 180s
+			write_timeout 180s
+		}
+	}
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
