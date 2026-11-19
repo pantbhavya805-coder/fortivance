@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fortivance - Evaluation</title>
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/ai-loader.css">
     <style>
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
         .kpi { background: #fff; border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem; }
@@ -14,6 +15,127 @@
         .ok { color: var(--status-green); font-weight: 600; }
         .bad { color: #b91c1c; font-weight: 600; }
         td.num, th.num { text-align: right; }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 900px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media print {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .chart-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+        .chart-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .chart-card-wide {
+            grid-column: 1 / -1;
+        }
+        @media (max-width: 900px) {
+            .chart-card-wide {
+                grid-column: auto;
+            }
+        }
+        .chart-body {
+            margin: 0.75rem 0;
+            flex-grow: 1;
+        }
+        .chart-caption {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.5rem;
+        }
+        .bar-row {
+            margin-bottom: 0.625rem;
+        }
+        .bar-row:last-child {
+            margin-bottom: 0;
+        }
+        .bar-label-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.8125rem;
+            margin-bottom: 0.25rem;
+        }
+        .bar-track {
+            background-color: var(--border-color);
+            height: 14px;
+            border-radius: 3px;
+            overflow: hidden;
+            display: flex;
+            width: 100%;
+        }
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8125rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .matrix-table th, .matrix-table td {
+            padding: 0.5rem 0.35rem;
+            border: 1px solid var(--border-color);
+        }
+        .matrix-table th {
+            background-color: var(--status-grey-bg);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .matrix-cell-diag {
+            background-color: var(--status-green-bg);
+            color: var(--navy);
+            font-weight: 700;
+        }
+        .matrix-cell-off {
+            background-color: var(--status-amber-bg);
+            color: #92400e;
+            font-weight: 700;
+        }
+        .matrix-cell-zero {
+            background-color: #ffffff;
+            color: var(--text-muted);
+        }
+        .chart-legend {
+            display: flex;
+            gap: 1.25rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            align-items: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -28,6 +150,7 @@
             <a href="/incidents.html" data-nav="incidents">Incidents</a>
             <a href="/evidence.html" data-nav="evidence">Evidence</a>
             <a href="/eval.html" data-nav="eval" class="active">Evaluation</a>
+            <a href="/about.html" data-nav="about">About</a>
         </nav>
         <div class="nav-user-section" id="nav-user"></div>
     </header>
@@ -52,6 +175,35 @@
             <div class="kpi"><div class="kpi-label">Citations rejected</div><div class="kpi-value" id="k-cit">-</div><div class="kpi-sub" id="k-cit-sub"></div></div>
             <div class="kpi"><div class="kpi-label">Injection blocked</div><div class="kpi-value" id="k-inj">-</div><div class="kpi-sub" id="k-inj-sub"></div></div>
         </div>
+
+        <!-- Charts Section -->
+        <section class="charts-grid" id="eval-charts">
+            <div class="card chart-card">
+                <div class="card-title">Extraction accuracy by field</div>
+                <div class="chart-body" id="chart-extraction-body"></div>
+                <div class="chart-caption">Accuracy across notice fields compared with gold standard benchmark.</div>
+            </div>
+            <div class="card chart-card">
+                <div class="card-title">Evidence: AI vs gold</div>
+                <div class="chart-body" id="chart-evidence-body"></div>
+                <div class="chart-caption">Agreement between AI evidence evaluation and gold standard labels.</div>
+            </div>
+            <div class="card chart-card">
+                <div class="card-title">Average cost per API call (USD)</div>
+                <div class="chart-body" id="chart-cost-body"></div>
+                <div class="chart-caption">Average cost in USD per live LLM API call by task type.</div>
+            </div>
+            <div class="card chart-card">
+                <div class="card-title">Average latency per API call</div>
+                <div class="chart-body" id="chart-latency-body"></div>
+                <div class="chart-caption">Average round-trip response latency for live API invocations.</div>
+            </div>
+            <div class="card chart-card chart-card-wide">
+                <div class="card-title">Cache hits vs API calls</div>
+                <div class="chart-body" id="chart-cache-body"></div>
+                <div class="chart-caption">Fresh LLM API invocations compared against deterministic cache hits.</div>
+            </div>
+        </section>
 
         <div class="card">
             <div class="card-title">Incident extraction by field</div>
@@ -112,6 +264,7 @@
     </main>
 
     <script src="/js/api.js"></script>
+    <script src="/js/ai-loader.js"></script>
     <script>
         const esc = (v) => escapeHtml(v == null ? '-' : v);
         const pct = (v) => v == null ? '-' : `${v}%`;
@@ -151,6 +304,8 @@
             const inj = r.injection || {};
             document.getElementById('k-inj').innerHTML = inj.blocked == null ? 'Not run' : (inj.blocked ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>');
             document.getElementById('k-inj-sub').textContent = inj.basis || '';
+
+            renderCharts(r);
 
             document.getElementById('t-fields').innerHTML = (x.byField || []).map(f => `
                 <tr><td><code>${esc(f.field)}</code></td><td class="num">${esc(f.correct)}</td><td class="num">${esc(f.total)}</td><td class="num">${esc(pct(f.accuracyPct))}</td></tr>
@@ -193,6 +348,186 @@
                     <td class="num">${esc(u.failures)}</td><td class="num">${esc(u.avgInputTokens)}</td><td class="num">${esc(u.avgOutputTokens)}</td>
                     <td class="num">${esc(money(u.avgCostUsd))}</td><td class="num">${esc(money(u.totalCostUsd))}</td><td class="num">${esc(u.avgLatencyMs)}</td>
                 </tr>`).join('') || empty(11, 'No AI calls logged yet.');
+        }
+
+        function renderCharts(r) {
+            // Chart 1: Extraction accuracy by field
+            const x = r.extraction || {};
+            const fields = x.byField || [];
+            const extBody = document.getElementById('chart-extraction-body');
+            if (!fields.length) {
+                extBody.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8125rem;">No extraction data available.</p>';
+            } else {
+                extBody.innerHTML = fields.map(f => {
+                    const acc = Number(f.accuracyPct) || 0;
+                    const color = acc >= 100 ? 'var(--status-green)' :
+                                  acc >= 50  ? 'var(--status-amber)' : 'var(--status-red)';
+                    const clamped = Math.min(100, Math.max(0, acc));
+                    return `
+                        <div class="bar-row">
+                            <div class="bar-label-group">
+                                <span><code>${esc(f.field)}</code></span>
+                                <span><strong>${esc(f.correct)}/${esc(f.total)}</strong> <span style="color: ${color}; font-weight: 700;">${acc}%</span></span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: ${clamped}%; background-color: ${color};"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Chart 2: Evidence: AI vs gold (3x3 confusion matrix)
+            const e = r.evidence || {};
+            const items = e.items || [];
+            const statuses = ['MET', 'PARTIAL', 'NOT_MET'];
+            const matrix = {
+                MET: { MET: 0, PARTIAL: 0, NOT_MET: 0 },
+                PARTIAL: { MET: 0, PARTIAL: 0, NOT_MET: 0 },
+                NOT_MET: { MET: 0, PARTIAL: 0, NOT_MET: 0 }
+            };
+            items.forEach(item => {
+                if (matrix[item.expected] && matrix[item.expected][item.actual] !== undefined) {
+                    matrix[item.expected][item.actual]++;
+                }
+            });
+
+            const rowsHtml = statuses.map(gold => {
+                const cells = statuses.map(ai => {
+                    const count = matrix[gold][ai];
+                    const isDiag = (gold === ai);
+                    const cellClass = isDiag ? 'matrix-cell-diag' : (count > 0 ? 'matrix-cell-off' : 'matrix-cell-zero');
+                    return `<td class="${cellClass}">${count}</td>`;
+                }).join('');
+                return `<tr><th style="text-align: left; background: var(--status-grey-bg);">${esc(gold)}</th>${cells}</tr>`;
+            }).join('');
+
+            const evBody = document.getElementById('chart-evidence-body');
+            evBody.innerHTML = `
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.35rem; display: flex; justify-content: space-between;">
+                    <span>Gold (Row)</span>
+                    <span>AI Predicted (Col)</span>
+                </div>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; background: transparent; border-top: none; border-left: none;">Gold \\ AI</th>
+                            <th>MET</th>
+                            <th>PARTIAL</th>
+                            <th>NOT_MET</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+                <div style="font-size: 0.8125rem; font-weight: 600; color: var(--navy); text-align: center; margin-top: 0.5rem;">
+                    Exact ${e.exactPct != null ? e.exactPct : 0}% &middot; within one step ${e.withinOneStepPct != null ? e.withinOneStepPct : 0}%
+                </div>
+            `;
+
+            // Chart 3: Average cost per API call (USD)
+            const usage = r.usage || [];
+            const costBody = document.getElementById('chart-cost-body');
+            if (!usage.length) {
+                costBody.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8125rem;">No AI calls logged yet.</p>';
+            } else {
+                const maxCost = usage.reduce((max, u) => Math.max(max, Number(u.avgCostUsd) || 0), 0) || 0.0001;
+                costBody.innerHTML = usage.map(u => {
+                    const cost = Number(u.avgCostUsd) || 0;
+                    const widthPct = Math.min(100, Math.max(0, (cost / maxCost) * 100)).toFixed(1);
+                    return `
+                        <div class="bar-row">
+                            <div class="bar-label-group">
+                                <div>
+                                    <code>${esc(u.callType)}</code>
+                                    <small style="color: var(--text-secondary); margin-left: 0.35rem;">(${esc(u.model)})</small>
+                                </div>
+                                <div>
+                                    <strong>$${cost.toFixed(4)}</strong>
+                                </div>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: ${widthPct}%; background-color: var(--navy);"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Chart 4: Average latency per API call
+            const latencyBody = document.getElementById('chart-latency-body');
+            if (!usage.length) {
+                latencyBody.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8125rem;">No AI calls logged yet.</p>';
+            } else {
+                const maxLatency = usage.reduce((max, u) => Math.max(max, Number(u.avgLatencyMs) || 0), 0) || 1;
+                latencyBody.innerHTML = usage.map(u => {
+                    const latMs = Number(u.avgLatencyMs) || 0;
+                    const secStr = (latMs / 1000).toFixed(1) + ' s';
+                    const widthPct = Math.min(100, Math.max(0, (latMs / maxLatency) * 100)).toFixed(1);
+                    return `
+                        <div class="bar-row">
+                            <div class="bar-label-group">
+                                <div>
+                                    <code>${esc(u.callType)}</code>
+                                    <small style="color: var(--text-secondary); margin-left: 0.35rem;">(${esc(u.model)})</small>
+                                </div>
+                                <div>
+                                    <strong>${secStr}</strong>
+                                </div>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: ${widthPct}%; background-color: var(--teal);"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Chart 5: Cache hits vs API calls
+            const cacheBody = document.getElementById('chart-cache-body');
+            if (!usage.length) {
+                cacheBody.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8125rem;">No AI calls logged yet.</p>';
+            } else {
+                const maxTotal = usage.reduce((max, u) => Math.max(max, (Number(u.apiCalls) || 0) + (Number(u.cacheHits) || 0)), 0) || 1;
+                const rows = usage.map(u => {
+                    const apiCalls = Number(u.apiCalls) || 0;
+                    const cacheHits = Number(u.cacheHits) || 0;
+                    const total = apiCalls + cacheHits;
+                    const barWidthPct = Math.min(100, Math.max(0, (total / maxTotal) * 100)).toFixed(1);
+                    const apiPct = total > 0 ? ((apiCalls / total) * 100).toFixed(1) : '0';
+                    const cachePct = total > 0 ? ((cacheHits / total) * 100).toFixed(1) : '0';
+                    return `
+                        <div class="bar-row">
+                            <div class="bar-label-group">
+                                <div>
+                                    <code>${esc(u.callType)}</code>
+                                </div>
+                                <div>
+                                    <span><strong style="color: var(--navy);">${apiCalls}</strong> API</span>
+                                    <span style="color: var(--text-secondary); margin: 0 0.25rem;">/</span>
+                                    <span><strong style="color: var(--teal);">${cacheHits}</strong> cache</span>
+                                    <small style="color: var(--text-secondary); margin-left: 0.25rem;">(${total} total)</small>
+                                </div>
+                            </div>
+                            <div class="bar-track">
+                                <div style="display: flex; width: ${barWidthPct}%; height: 100%;">
+                                    <div style="width: ${apiPct}%; background-color: var(--navy);" title="${apiCalls} API calls"></div>
+                                    <div style="width: ${cachePct}%; background-color: var(--teal);" title="${cacheHits} cache hits"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                cacheBody.innerHTML = `
+                    <div class="chart-legend">
+                        <span class="legend-item"><span class="legend-swatch" style="background-color: var(--navy);"></span> API calls</span>
+                        <span class="legend-item"><span class="legend-swatch" style="background-color: var(--teal);"></span> Cache hits</span>
+                    </div>
+                    ${rows}
+                `;
+            }
         }
     </script>
 </body>

@@ -1,0 +1,176 @@
+/* Fortivance AI working overlay: blocks the whole page while Claude is processing. */
+
+.ai-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 27, 47, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    cursor: progress;
+}
+
+.ai-overlay.visible { opacity: 1; }
+
+.ai-overlay-card {
+    width: min(420px, calc(100vw - 2rem));
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 20px 50px rgba(10, 27, 47, 0.35);
+    padding: 2rem 1.75rem 1.5rem;
+    text-align: center;
+    transform: translateY(8px) scale(0.98);
+    transition: transform 0.25s ease;
+}
+
+.ai-overlay.visible .ai-overlay-card { transform: translateY(0) scale(1); }
+
+/* Three dots travelling around a circle */
+.ai-orbit {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.25rem;
+}
+
+.ai-orbit span {
+    position: absolute;
+    inset: 0;
+    animation: ai-orbit-spin 1.4s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+
+.ai-orbit span::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    border-radius: 50%;
+    background: var(--teal, #0d9488);
+}
+
+.ai-orbit span:nth-child(2) { animation-delay: -0.22s; }
+.ai-orbit span:nth-child(2)::before { background: var(--navy-light, #1e3a5f); transform: scale(0.85); }
+.ai-orbit span:nth-child(3) { animation-delay: -0.44s; }
+.ai-orbit span:nth-child(3)::before { background: var(--navy, #0f2744); transform: scale(0.7); }
+
+@keyframes ai-orbit-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.ai-overlay-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--navy, #0f2744);
+    margin-bottom: 0.35rem;
+}
+
+.ai-overlay-step {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #64748b);
+    min-height: 1.3em;
+    transition: opacity 0.25s ease;
+}
+
+.ai-overlay-step.fading { opacity: 0; }
+
+.ai-overlay-steps {
+    list-style: none;
+    margin: 1.1rem 0 0;
+    padding: 0;
+    text-align: left;
+    font-size: 0.8125rem;
+}
+
+.ai-overlay-steps li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.35rem 0;
+    color: var(--text-muted, #94a3b8);
+    transition: color 0.2s ease;
+}
+
+.ai-overlay-steps li::before {
+    content: "";
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-dark, #cbd5e1);
+    background: transparent;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.ai-overlay-steps li.active {
+    color: var(--text-primary, #1e293b);
+    font-weight: 600;
+}
+
+.ai-overlay-steps li.active::before {
+    border: 2px solid var(--teal, #0d9488);
+    background: transparent;
+}
+
+@keyframes ai-step-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.45);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(13, 148, 136, 0);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .ai-overlay-steps li.active::before {
+        animation: ai-step-pulse 1.8s ease-in-out infinite;
+    }
+}
+
+.ai-overlay-steps li.done {
+    color: var(--status-green, #16a34a);
+}
+
+.ai-overlay-steps li.done::before {
+    background: var(--status-green, #16a34a);
+    border: 1.5px solid var(--status-green, #16a34a);
+    animation: none;
+}
+
+.ai-overlay-steps li.done::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    width: 4px;
+    height: 8px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: translateY(-62%) rotate(45deg);
+    box-sizing: border-box;
+}
+
+.ai-overlay-meta {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    font-size: 0.75rem;
+    color: var(--text-muted, #94a3b8);
+}
+
+body.ai-busy { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ai-orbit span { animation-duration: 3s; }
+    .ai-overlay, .ai-overlay-card, .ai-overlay-step { transition: none; }
+}

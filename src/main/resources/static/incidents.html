@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fortivance - Incident Notifications</title>
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/ai-loader.css">
 </head>
 <body>
     <header class="header-nav">
@@ -17,6 +18,8 @@
             <a href="/graph.html" data-nav="graph">Dependency Graph</a>
             <a href="/incidents.html" data-nav="incidents" class="active">Incidents</a>
             <a href="/evidence.html" data-nav="evidence">Evidence</a>
+            <a href="/eval.html" data-nav="eval">Evaluation</a>
+            <a href="/about.html" data-nav="about">About</a>
         </nav>
         <div class="nav-user-section" id="nav-user"></div>
     </header>
@@ -68,6 +71,7 @@
     </main>
 
     <script src="/js/api.js"></script>
+    <script src="/js/ai-loader.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             await api.initNav('incidents');
@@ -97,14 +101,16 @@
                     const formData = new FormData();
                     formData.append('file', file);
                     errorBanner.style.display = 'none';
+                    uploadBtn.disabled = true;
 
                     try {
-                        await api.post('/api/incidents', formData);
+                        await AiLoader.run(() => api.post('/api/incidents', formData), 'incidentUpload');
                         window.location.reload();
                     } catch (err) {
                         errorBanner.textContent = err.message || 'Failed to upload incident notice';
                         errorBanner.style.display = 'block';
                     } finally {
+                        uploadBtn.disabled = false;
                         fileInput.value = '';
                     }
                 });

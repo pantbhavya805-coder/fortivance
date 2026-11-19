@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fortivance - Evidence &amp; Assurance</title>
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/ai-loader.css">
 </head>
 <body>
     <header class="header-nav">
@@ -17,6 +18,8 @@
             <a href="/graph.html" data-nav="graph">Dependency Graph</a>
             <a href="/incidents.html" data-nav="incidents">Incidents</a>
             <a href="/evidence.html" data-nav="evidence" class="active">Evidence</a>
+            <a href="/eval.html" data-nav="eval">Evaluation</a>
+            <a href="/about.html" data-nav="about">About</a>
         </nav>
         <div class="nav-user-section" id="nav-user"></div>
     </header>
@@ -154,6 +157,7 @@
     </div>
 
     <script src="/js/api.js"></script>
+    <script src="/js/ai-loader.js"></script>
     <script>
         let currentVendorId = null;
 
@@ -180,12 +184,10 @@
 
             btn.addEventListener('click', async () => {
                 errorBanner.style.display = 'none';
-                const originalHtml = btn.innerHTML;
                 btn.disabled = true;
-                btn.innerHTML = '<span class="spinner"></span> Analysing documents... (up to 1 min)';
 
                 try {
-                    await api.post('/api/evidence/analyse-all');
+                    await AiLoader.run(() => api.post('/api/evidence/analyse-all'), 'evidence');
                     await loadSummary(currentVendorId);
                     if (currentVendorId) {
                         await loadVendorReport(currentVendorId);
@@ -195,7 +197,6 @@
                     errorBanner.style.display = 'block';
                 } finally {
                     btn.disabled = false;
-                    btn.innerHTML = originalHtml;
                 }
             });
         }

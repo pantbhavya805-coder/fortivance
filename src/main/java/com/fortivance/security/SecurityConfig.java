@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.Customizer;
@@ -39,6 +40,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.ignoringRequestMatchers(new AntPathRequestMatcher("/api/**"), new AntPathRequestMatcher("/login"), new AntPathRequestMatcher("/logout")))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
+                    "/",
+                    "/about.html",
                     "/login.html",
                     "/login",
                     "/logout",
@@ -48,6 +51,8 @@ public class SecurityConfig {
                     "/actuator/health",
                     "/favicon.ico"
                 ).permitAll()
+                // Public landing page (about.html) shows these aggregate counts only.
+                .requestMatchers(HttpMethod.GET, "/api/metrics").permitAll()
                 .requestMatchers(approveOrRejectMatcher).hasAnyRole("APPROVER", "ADMIN")
                 .anyRequest().authenticated()
             )
