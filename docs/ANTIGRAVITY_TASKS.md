@@ -170,3 +170,255 @@ Pages:
 - `scripts/reset-demo.ps1` and `scripts/reset-demo.sh`: run that SQL inside the `fortivance-mysql` container using `docker exec` and the env vars from `.env` (read the variable names only; do not print values).
 - README: add the new pages, APIs, demo users and the reset script.
 
+
+---
+
+# Round 2 (19 Nov): "Request a demo" UI, tasks A1 to A5
+
+All earlier tasks above are complete. Do only the tasks in this section.
+
+## What is being built
+Public visitors no longer get shared demo credentials. Instead they request a demo: the form posts to the
+backend, which stores the request, creates two personal demo accounts (analyst + approver, valid 24 hours)
+and emails the credentials. **The backend, database, email and security are being built by another developer
+at the same time. You build the UI only, against the API contract below.**
+
+## Rules for this round (these replace the ownership rules above)
+1. **Never read, print or edit `.env`.**
+2. You may edit only: `src/main/resources/static/**` and `README.md`.
+3. **Do not edit any Java file, `pom.xml`, `application.yml`, Docker files or migrations.**
+4. Do not reformat files you touch. Change only the lines your task needs.
+5. Keep the existing look: `/css/app.css`, the header with `/images/logo-icon.svg`, `/favicon.svg`.
+6. No frameworks, no CDN scripts, no build step. Plain HTML, CSS and JS.
+7. Stop after each task and list the files changed (one line each).
+
+## API contract (the backend implements this; code against it exactly)
+
+`POST /api/demo-requests` (public, JSON)
+```json
+{ "email": "jane@acme.com", "name": "Acme Bank", "phone": "+91 98765 43210", "purpose": "...", "website": "" }
+```
+| Field | Rule |
+|---|---|
+| `email` | required, valid email, max 200 chars |
+| `name` | required, 2 to 100 chars (person or organisation name) |
+| `phone` | optional; if present 7 to 20 chars, only digits, spaces and `+ - ( )` |
+| `purpose` | required, **50 to 1000 chars** ("who you are and why you need access") |
+| `website` | honeypot: hidden from people, always sent empty |
+
+Responses (all JSON):
+| Status | Body | Show the user |
+|---|---|---|
+| 201 | `{ "status": "sent" }` | Success panel: "Thank you. Your demo credentials are on their way to <email>. Check your inbox (and spam folder) in the next few minutes. Access is valid for 24 hours." Hide the form. |
+| 400 | `{ "error": "...", "field": "purpose" }` | Show `error` under the named field |
+| 409 | `{ "error": "..." }` | Show `error` (an access request already exists for this email) |
+| 429 | `{ "error": "..." }` | Show `error` |
+| 503 / 502 / network | `{ "error": "..." }` or none | "We could not process your request right now. Please try again later." |
+
+Use `window.fetch` directly (not `api.js`, which redirects to login on 401).
+
+## Task A1: `request-demo.html` (new page)
+- Public page at `/request-demo.html`. Same header as `about.html` (logo, "Fortivance", "Log in" button on the right; no app nav links).
+- Short intro: "Request a demo of Fortivance. We will email you two personal accounts (an analyst and an approver) so you can try the full incident workflow. Access lasts 24 hours and runs on synthetic data."
+- Form fields, in order: Email, Name or organisation, Phone (optional), "Who are you and why do you need access?" (textarea).
+- Browser-side checks matching the table above, shown inline under each field on blur and on submit. Do not submit while any field is invalid.
+- Live character counter under the textarea: "0 / 1000 (minimum 50)", turns green once at 50 or more.
+- Hidden honeypot field `website`: position it off screen (not `display:none`), `tabindex="-1"`, `autocomplete="off"`, `aria-hidden="true"` on its wrapper.
+- Submit button shows "Sending..." and is disabled while the request is in flight.
+- Handle every response in the table above.
+- Footer link back to `/about.html`.
+- Checks: page loads while logged out; empty submit shows errors on all required fields; a 49-character purpose is rejected; phone `abc` is rejected; phone left empty is accepted.
+
+## Task A2: `about.html`
+- **Remove the "Contact us" section (`<section id="contact">`), its `.contact-form` CSS and the `initContactForm` script.** The request form replaces it.
+- Hero buttons:
+  - Logged out: "Request a demo" (primary, to `/request-demo.html`) and "Log in" (secondary, to `/login.html`).
+  - Logged in: keep the current "Triage an incident" and "Review vendor evidence" buttons.
+  - The page already detects login via `GET /api/me`; build on that. Make sure the existing code that rewrites `.hero-actions a` hrefs to `/login.html` for logged-out visitors does not overwrite the "Request a demo" link.
+- Add a small closing section above "About this instance": heading "Try Fortivance", one line of text, and a "Request a demo" button (shown only when logged out).
+- Checks: logged out shows "Request a demo"; logged in shows the original buttons; no console errors; the live metrics still load.
+
+## Task A3: `login.html`
+- Remove the line that shows the demo accounts and the password.
+- Below the form add: "Don't have access? <a href="/request-demo.html">Request a demo</a>".
+- If the URL has `?error=expired`, show: "Your demo access has expired. Reply to your welcome email to ask for an extension." (style it like the existing error message). Keep the existing `?error` and `?logout` messages working.
+- Checks: `/login.html?error=expired` shows the expiry message; `/login.html?error` still shows the normal error; no password appears anywhere on the page.
+
+## Task A4: email-safe logo
+- Create `src/main/resources/static/images/email-logo.png`: the Fortivance logo (icon plus the word "Fortivance", from `images/logo.svg`) as a PNG, about 240 x 64 px, transparent or white background.
+- Email clients (Gmail, Outlook) block SVG, so this must be a real PNG file. If you cannot produce a PNG, say so and skip this task; do not save an SVG with a `.png` name.
+
+## Task A5: README
+- Remove the "Demo Accounts" table and every mention of the old `analyst` / `approver` password.
+- Add a short "Request a demo" section: visitors request access at `/request-demo.html`; the system emails two personal accounts valid for 24 hours; requests are stored, and each email address can request once.
+- Mention `/request-demo.html` in the pages list and `POST /api/demo-requests` (Public) in the API table. Remove `/api/contact` from the docs if it is listed.
+- Do not include any password.
+
+## Task A6: `profile.html` (new page, logged-in users only)
+
+Backend contract (built by the other developer):
+
+`GET /api/me/demo` (logged in)
+- 200 for demo accounts:
+```json
+{
+  "email": "jane@acme.com", "name": "Acme Bank", "phone": "+91 98765 43210", "purpose": "...",
+  "requestedAt": "2026-11-19T18:05:00+05:30",
+  "accessExpiresAt": "2026-11-20T18:05:00+05:30",
+  "analystUsername": "acmebank-analyst", "approverUsername": "acmebank-approver",
+  "extensionCount": 0, "maxExtensions": 2, "canExtend": true
+}
+```
+- 404 `{ "error": "..." }` for accounts that are not demo accounts (owner and judge accounts).
+
+`POST /api/me/demo/extend` (logged in, no body)
+- 200 with the same body as above (new `accessExpiresAt`, `extensionCount` + 1).
+- 409 `{ "error": "Maximum extensions reached" }` when `extensionCount` has reached `maxExtensions`.
+
+Page:
+- Normal app page: same header and nav as `index.html`, `api.initNav('profile')`. Logged-out visitors are sent to login (as `api.js` already does on 401).
+- Card "Your demo access": email, name or organisation, phone (show "Not provided" if empty), requested at, and the purpose text (preserve line breaks; insert it with `textContent`, never `innerHTML`).
+- Card "Accounts": the two usernames, each labelled Analyst / Approver. Never show passwords.
+- Card "Access period": expiry date and time in IST (for example "20 Nov 2026, 6:05 PM IST"), plus a live "expires in 5 h 12 min" countdown, and "Extensions used: 0 of 2". Each extension adds 24 hours, and extending applies to both accounts.
+- Button "Request 24-hour extension":
+  - If `canExtend` is false, disable it and show "Maximum extensions reached".
+  - On click, ask for confirmation, call `POST /api/me/demo/extend`, then update the card from the response. On 409 show the error and disable the button.
+- If `GET /api/me/demo` returns 404: show only "Signed in as <username>. This account does not expire." (no extension button).
+- In `js/api.js` `initNav`, make the user's name a link to `/profile.html` (keep the Logout link as it is).
+- Checks: name in header links to the profile page on every page; a 404 response shows the "does not expire" message; the button state follows `canExtend`; no console errors.
+
+---
+
+# Round 3 (20 Nov): email login, role switch, forgot password, tasks U1 to U5
+
+Rounds 1 and 2 are complete. Do only the tasks in this section.
+
+## What changes
+- **One account per person, and it can switch role.** A demo request now creates a single account whose
+  username **is the email address** (for example `jane@acmebank.com`) plus a generated password. The owner and
+  judge accounts are also single accounts now: `bhavya` and `judge`. Every account can switch between
+  **Analyst** and **Approver** from the header; the choice is remembered for the next login.
+- **Forgot password** sends a one-time reset link by email (valid 30 minutes). Demo accounts only.
+- The backend (Java, database, email, security) is being built by another developer at the same time against
+  the contract below. Build the UI only.
+
+## Rules (same as Round 2)
+1. **Never read, print or edit `.env`.**
+2. Edit only `src/main/resources/static/**`. No Java, `pom.xml`, `application.yml`, Docker files or migrations.
+3. Do not reformat files you touch; change only what the task needs.
+4. Keep the existing look (`/css/app.css`, header logo, favicon). Plain HTML/CSS/JS, no frameworks or CDNs.
+5. Insert any server-provided text with `textContent`, never `innerHTML` (the only exception is the existing
+   `initNav` template, which already escapes with `escapeHtml`).
+6. Stop after each task and list the files changed (one line each).
+
+## API contract (code against this exactly)
+
+**`GET /api/me`** (logged in)
+```json
+{ "id": 12, "username": "jane@acmebank.com", "displayName": "Acme Bank", "role": "ANALYST", "team": "Acme Bank", "canSwitchRole": true }
+```
+
+**`POST /api/me/role`** (logged in), body `{ "role": "APPROVER" }` (or `"ANALYST"`)
+- 200 `{ "role": "APPROVER" }`: the session now has the new role. Reload the page so role-dependent UI
+  (for example the Approve/Reject buttons on `incident.html`) updates.
+- 400 `{ "error": "..." }` unknown role; 403 `{ "error": "..." }` account cannot switch.
+
+**`POST /api/demo-requests`** (public), same request body as before. The 201 response changes to:
+```json
+{ "status": "sent", "username": "jane@acmebank.com", "password": "Kp7mQx2RtW9aZe", "role": "ANALYST",
+  "accessExpiresAt": "2026-11-21T18:05:00+05:30" }
+```
+(`analystUsername`, `analystPassword`, `approverUsername` and `approverPassword` no longer exist.)
+
+**`GET /api/me/demo`** (logged in), 200 for demo accounts:
+```json
+{ "email": "jane@acmebank.com", "name": "Acme Bank", "phone": null, "purpose": "...",
+  "requestedAt": "2026-11-20T18:05:00+05:30", "accessExpiresAt": "2026-11-21T18:05:00+05:30",
+  "username": "jane@acmebank.com", "role": "ANALYST",
+  "extensionCount": 0, "maxExtensions": 2, "canExtend": true }
+```
+404 for permanent accounts (unchanged). `POST /api/me/demo/extend` returns the same shape (otherwise unchanged).
+
+**`POST /api/password/forgot`** (public), body `{ "email": "jane@acmebank.com" }`
+- 200 `{ "status": "sent", "message": "If an account exists for this email, we have sent a reset link. It is valid for 30 minutes." }`.
+  This is returned whether or not the account exists. Always show `message`, and never suggest whether the
+  email is registered.
+- 400 `{ "error": "...", "field": "email" }` invalid email; 429 `{ "error": "..." }` too many requests.
+
+**`POST /api/password/reset`** (public), body `{ "token": "<from the URL>", "newPassword": "..." }`
+- 200 `{ "status": "changed", "message": "Your password has been changed. You can now sign in." }`
+- 400 `{ "error": "...", "field": "token" }` link invalid, expired or already used;
+  400 `{ "error": "...", "field": "newPassword" }` weak password; 429 `{ "error": "..." }`.
+
+Reset links look like `https://fortivance.in/reset-password.html?token=<64 hex characters>`.
+Password rules (same as change password): 10 to 64 characters, at least one letter and one number.
+
+Use `window.fetch` directly on the public pages (`forgot-password.html`, `reset-password.html`,
+`request-demo.html`); `api.fetch` redirects to login on 401.
+
+## Task U1: `login.html`
+- Username field: label "Email or username", placeholder "you@company.com". Keep `name="username"`, the `id`
+  and the existing autocomplete; make sure `type="text"` (owner and judge usernames are not emails). Add
+  `autocapitalize="none"` and `spellcheck="false"`.
+- Put a "Forgot password?" link to `/forgot-password.html` on the **right-hand side of the Password label row**
+  (label on the left, link on the right, same line). Small, teal, no underline until hover.
+- Do not change the eye toggle, the error/expired/logout messages or the form action.
+- Checks: the label row shows "Password" on the left and "Forgot password?" on the right; the eye toggle still
+  works; logging in still works.
+
+## Task U2: `forgot-password.html` (new, public)
+- Same header and card style as `request-demo.html` (logo, "Log in" button on the right, no app nav).
+- Heading "Reset your password", then: "Enter the email address you used to request your demo. We will send
+  you a link to choose a new password." Below it in small grey text: "Owner and judge accounts are managed by
+  the administrator."
+- One email field (same validation as `request-demo.html`); submit button "Send reset link" (shows
+  "Sending..." and is disabled while in flight).
+- On 200: hide the form and show a green panel with the `message` from the response and a "Back to sign in"
+  button. On 400 show the error under the field; on 429 or anything else show the error in a red banner.
+- Footer link "Back to sign in" to `/login.html`.
+
+## Task U3: `reset-password.html` (new, public)
+- Same header and card style. Heading "Choose a new password".
+- Read `token` from the query string. If it is missing or is not 64 hex characters, show only a red panel
+  "This reset link is invalid. Request a new one." with a link to `/forgot-password.html`.
+- Fields "New password" and "Confirm new password", each with the same eye show/hide toggle as `login.html`
+  (copy its markup, CSS and script pattern; the toggles are independent; switch both back to hidden on
+  submit). Hint: "10 to 64 characters, with at least one letter and one number."
+- Client checks before submitting: length, a letter and a number, both fields match.
+- POST `{ token, newPassword }`. On 200: hide the form and show a green panel with `message` and a "Sign in"
+  button to `/login.html`. On 400 with `field: "token"`: show the invalid-link panel above with its text
+  replaced by `error`. Other 400: show `error` under the new-password field. 429 and others: red banner.
+- After the page loads, remove the token from the address bar with `history.replaceState` (keep it in a
+  variable) so it is not left in the browser history.
+
+## Task U4: role switch in the header (`js/api.js`, `initNav`)
+- When `user.canSwitchRole` is true, replace the role badge with a small two-option switch
+  `[ Analyst | Approver ]`: the current role highlighted (teal background, white text), the other a plain
+  button. When `canSwitchRole` is false or missing, keep the existing badge exactly as it is now.
+- Clicking the inactive option: disable the switch, `POST /api/me/role` with `{ "role": "APPROVER" }` or
+  `{ "role": "ANALYST" }` (send `Content-Type: application/json`), then `window.location.reload()` on 200. On
+  an error, re-enable it and `alert()` the `error` text.
+- Use `<button>` elements with `aria-pressed`, and a `title` such as "Switch to Approver".
+- Add the CSS for the switch to `css/app.css`. It must fit in the dark header next to the user name and wrap
+  sensibly on narrow screens.
+- The user name stays a link to `/profile.html`; Logout stays as it is.
+- Checks: the switch appears on every app page; switching to Approver shows Approve/Reject on a pending plan in
+  `incident.html`; switching back hides them.
+
+## Task U5: `request-demo.html` and `profile.html`
+`request-demo.html`
+- Success panel: replace the two account boxes with **one** box "Your sign-in details": Email (`username`)
+  and Password (`password`), each with the existing Copy button. Below it: "You start as an Analyst. Switch to
+  Approver at any time from the header after signing in." Keep the expiry line and the "save these now" note.
+- Intro text: "We will email you a personal account (sign in with your email) so you can try the full incident
+  workflow as an analyst and as an approver. Access lasts 24 hours and runs on synthetic data."
+
+`profile.html`
+- Replace the "Accounts" card with a "Sign-in" card: "Email / username" (`username`) and "Current role"
+  (`role`, shown as "Analyst" or "Approver"), plus the line "Switch role from the header at any time."
+- Change-password card: remove the sentence "Your other demo account keeps its own password." and keep
+  "Changes the password of the account you are signed in as (...)".
+- Access-period card: replace "extending applies to both accounts" with "Each extension adds 24 hours."
+- Remove every remaining reference to `analystUsername` / `approverUsername`.
+- Checks: a demo account shows one sign-in card with its email and role; permanent accounts still show
+  "This account does not expire"; no console errors.

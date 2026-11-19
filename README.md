@@ -23,12 +23,11 @@ Flyway runs on startup:
 Application runs on: `http://localhost:8080`
 MySQL exposed on host port: `3307`
 
-## Demo Accounts
+## Request a Demo
 
-| Username | Password | Role | Description |
-|---|---|---|---|
-| `analyst` | `Fortivance@2026` | `ROLE_ANALYST` | Priya Nair (TPRM Analyst) |
-| `approver` | `Fortivance@2026` | `ROLE_APPROVER` | Arvind Rao (Head of TPRM) |
+Visitors request access at `/request-demo.html`. The system creates one personal demo account (sign in with your email; a generated password is shown on screen and emailed) valid for 24 hours. Every account can switch between **Analyst** and **Approver** from the header, so one person can run the whole incident workflow. Requests are stored and each email address can request once. Access runs on synthetic demonstration data. Forgotten passwords are reset through a one-time emailed link (`/forgot-password.html`, valid 30 minutes).
+
+Before access expires, a demo user can open `/profile.html` and extend it by 24 hours, up to two times. Passwords are stored only as bcrypt hashes; accounts become active only after the welcome email is sent. Permanent owner and judge accounts are created at startup from `OWNER_PASSWORD` and `JUDGE_PASSWORD` in `.env` (see `deploy/DEPLOY.md`).
 
 ## Security & Known Simplifications
 
@@ -39,19 +38,30 @@ MySQL exposed on host port: `3307`
 
 ## Web Application Pages
 
+- `/about.html`: Public landing page with operational resilience overview and live metrics.
+- `/request-demo.html`: Public request form for personal 24-hour demo accounts.
 - `/login.html`: Clean session login form.
+- `/profile.html`: Signed-in user's demo access details, expiry countdown and extension button.
 - `/index.html`: Executive dashboard with 6 resilience metric cards and vendor risk registry.
 - `/graph.html`: Interactive Cytoscape.js dependency graph mapping Business Services &rarr; Applications &rarr; Vendors &rarr; 4th Parties, with live vendor incident cascade simulation.
 - `/vendor.html?id=`: Detailed vendor risk profile, contract validity, mis-tiering alerts, subcontractors, and dependent applications.
 - `/incidents.html`: Active incident triage list.
 - `/incident.html?id=`: Incident detail with live **RBI 6-Hour Reporting Window** countdown clock, monospace notice text, AI extraction, and response plan approval workflow.
+- `/profile.html`: User demo profile, session status, and 24-hour access extension.
 
 ## REST APIs
 
 | Endpoint | Method | Role | Description |
 |---|---|---|---|
 | `/actuator/health` | GET | Public | Healthcheck probe |
+| `/api/demo-requests` | POST | Public | Submit demo request and dispatch personal credentials |
 | `/api/me` | GET | Authenticated | Current user details and role |
+| `/api/me/demo` | GET | Authenticated | Own demo request, expiry and extension state (404 for permanent accounts) |
+| `/api/me/demo/extend` | POST | Authenticated | Extend own demo access by 24 hours (max 2; 409 when reached) |
+| `/api/me/role` | POST | Authenticated | Switch own role between `ANALYST` and `APPROVER` (kept for the next login) |
+| `/api/password/forgot` | POST | Public | Email a one-time reset link (same answer whether or not the account exists) |
+| `/api/password/reset` | POST | Public | Set a new password with a reset token (30 minutes, single use) |
+| `/api/me/password` | POST | Authenticated | Change own password (demo accounts only; needs the current password; 5 attempts per 15 min) |
 | `/api/vendors` | GET | Authenticated | List all vendors (`?directOnly=true` supported) |
 | `/api/vendors/{id}` | GET | Authenticated | Get vendor by ID |
 | `/api/vendors/{id}/subcontractors` | GET | Authenticated | Fourth parties behind this vendor |

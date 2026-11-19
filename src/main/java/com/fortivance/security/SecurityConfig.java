@@ -5,6 +5,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.Customizer;
@@ -13,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
@@ -31,7 +34,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JdbcTemplate jdbcTemplate) throws Exception {
         RequestMatcher approveOrRejectMatcher = request ->
                 "POST".equalsIgnoreCase(request.getMethod()) &&
                 (request.getRequestURI().endsWith("/approve") || request.getRequestURI().endsWith("/reject"));
@@ -43,6 +46,9 @@ public class SecurityConfig {
                     "/",
                     "/about.html",
                     "/login.html",
+                    "/request-demo.html",
+                    "/forgot-password.html",
+                    "/reset-password.html",
                     "/login",
                     "/logout",
                     "/css/**",
@@ -56,8 +62,10 @@ public class SecurityConfig {
                 ).permitAll()
                 // Public landing page (about.html) shows these aggregate counts only.
                 .requestMatchers(HttpMethod.GET, "/api/metrics").permitAll()
-                // Public contact form; rate-limited and honeypot-protected in ContactService.
-                .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
+                // Public demo access request; rate-limited, one per email (DemoRequestService).
+                .requestMatchers(HttpMethod.POST, "/api/demo-requests").permitAll()
+                // Forgot-password flow; rate-limited, one-time hashed tokens (PasswordResetService).
+                .requestMatchers(HttpMethod.POST, "/api/password/forgot", "/api/password/reset").permitAll()
                 .requestMatchers(approveOrRejectMatcher).hasAnyRole("APPROVER", "ADMIN")
                 .anyRequest().authenticated()
             )
@@ -65,6 +73,8 @@ public class SecurityConfig {
                 .loginPage("/login.html")
                 .loginProcessingUrl("/login")
                 .defaultSuccessUrl("/index.html", true)
+                .failureHandler((request, response, ex) -> response.sendRedirect(
+                        ex instanceof AccountExpiredException ? "/login.html?error=expired" : "/login.html?error"))
                 .permitAll()
             )
             .logout(logout -> logout
@@ -74,6 +84,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .httpBasic(Customizer.withDefaults())
+            .addFilterAfter(new DemoExpiryFilter(jdbcTemplate), SecurityContextHolderAwareRequestFilter.class)
             .exceptionHandling(ex -> ex
                 .defaultAuthenticationEntryPointFor(
                     (request, response, authException) -> {

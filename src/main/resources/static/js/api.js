@@ -91,7 +91,14 @@ const api = {
 
         const res = await window.fetch(url, config);
         if (res.status === 401) {
-            window.location.href = '/login.html';
+            // DemoExpiryFilter answers {"expired": true} when a demo account's access has run out.
+            let expired = false;
+            try {
+                expired = (await res.clone().json()).expired === true;
+            } catch (_) {
+                // not JSON
+            }
+            window.location.href = expired ? '/login.html?error=expired' : '/login.html';
             return null;
         }
         return res;
@@ -155,11 +162,69 @@ const api = {
         const user = await this.me();
         const userSlot = document.getElementById('nav-user');
         if (userSlot && user) {
+            let roleHtml = '';
+            if (user.canSwitchRole) {
+                const isApprover = String(user.role).toUpperCase().includes('APPROVER');
+                roleHtml = `
+                    <div class="role-switch" id="role-switch" role="group" aria-label="Switch Role">
+                        <button type="button" class="role-switch-btn ${!isApprover ? 'active' : ''}" data-role="ANALYST" aria-pressed="${!isApprover}" ${!isApprover ? 'disabled' : ''} title="${!isApprover ? 'Current role: Analyst' : 'Switch to Analyst'}">Analyst</button>
+                        <button type="button" class="role-switch-btn ${isApprover ? 'active' : ''}" data-role="APPROVER" aria-pressed="${isApprover}" ${isApprover ? 'disabled' : ''} title="${isApprover ? 'Current role: Approver' : 'Switch to Approver'}">Approver</button>
+                    </div>
+                `;
+            } else {
+                roleHtml = `<span class="badge badge-role">${escapeHtml(user.role)}</span>`;
+            }
+
             userSlot.innerHTML = `
-                <span class="user-name">${escapeHtml(user.displayName || user.username)}</span>
-                <span class="badge badge-role">${escapeHtml(user.role)}</span>
+                <a href="/profile.html" class="user-name">${escapeHtml(user.displayName || user.username)}</a>
+                ${roleHtml}
                 <a href="/logout" class="nav-logout" id="nav-logout-btn">Logout</a>
             `;
+
+            const roleSwitch = document.getElementById('role-switch');
+            if (roleSwitch) {
+                roleSwitch.querySelectorAll('.role-switch-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const targetRole = btn.getAttribute('data-role');
+                        if (!targetRole || btn.classList.contains('active')) return;
+
+                        roleSwitch.querySelectorAll('.role-switch-btn').forEach(b => b.disabled = true);
+
+                        try {
+                            // api.fetch sends an ended/expired session to the login page instead of alerting.
+                            const res = await api.fetch('/api/me/role', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ role: targetRole })
+                            });
+                            if (!res) return;
+
+                            if (res.status === 200) {
+                                window.location.reload();
+                                return;
+                            }
+
+                            let errData = {};
+                            try {
+                                errData = await res.json();
+                            } catch (_) {}
+
+                            const errMsg = errData.error || `Failed to switch role (status ${res.status})`;
+                            alert(errMsg);
+                        } catch (err) {
+                            alert('Network error while switching role.');
+                        } finally {
+                            roleSwitch.querySelectorAll('.role-switch-btn').forEach(b => {
+                                b.disabled = b.classList.contains('active');
+                            });
+                        }
+                    });
+                });
+            }
+
             const logoutBtn = document.getElementById('nav-logout-btn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', (e) => {

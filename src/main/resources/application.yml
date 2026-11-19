@@ -37,8 +37,19 @@ anthropic:
 fortivance:
   sample-docs-path: ${SAMPLE_DOCS_PATH:./sample-docs}
   contact:
+    # Mailbox that receives a notice for every demo request (defaults to the sending mailbox).
     to: ${CONTACT_TO:${MAIL_USERNAME:}}
-    max-per-hour: ${CONTACT_MAX_PER_HOUR:5}
+  # Base URL used in emails (login and profile links).
+  public-url: ${PUBLIC_URL:https://fortivance.in}
+  # Permanent accounts created/updated at startup. Passwords come only from the environment;
+  # when a password is empty its accounts are left untouched.
+  accounts:
+    owner-password: ${OWNER_PASSWORD:}
+    judge-password: ${JUDGE_PASSWORD:}
+  demo:
+    access-hours: ${DEMO_ACCESS_HOURS:24}
+    max-extensions: ${DEMO_MAX_EXTENSIONS:2}
+    requests-per-hour: ${DEMO_REQUESTS_PER_HOUR:3}
 
 management:
   health:

@@ -40,6 +40,9 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       CONTACT_TO: ${CONTACT_TO:-}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:-}
+      JUDGE_PASSWORD: ${JUDGE_PASSWORD:-}
+      PUBLIC_URL: ${PUBLIC_URL:-https://fortivance.in}
       JAVA_TOOL_OPTIONS: "-Xmx768m"
       SERVER_FORWARD_HEADERS_STRATEGY: framework
     expose:

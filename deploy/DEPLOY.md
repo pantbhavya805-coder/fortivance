@@ -81,6 +81,15 @@ MAIL_PASSWORD=<the mailbox password>
 CONTACT_TO=admin@fortivance.in
 ```
 
+Permanent accounts (created or updated at startup; they never expire). Use single quotes: Docker Compose
+treats `$` in an unquoted value as a variable.
+```
+OWNER_PASSWORD='<password for the bhavya account>'
+JUDGE_PASSWORD='<password for the judge account>'
+```
+The old shared `analyst` / `approver` accounts are disabled by migration V4. Visitors get personal 24-hour
+accounts through `/request-demo.html`.
+
 `SITE_ADDRESS` is the address Caddy serves:
 - `fortivance.example.com` (your domain): HTTPS with an automatic Let's Encrypt certificate, and HTTP
   redirected to HTTPS.
@@ -115,23 +124,25 @@ Demo files to upload afterwards:
 - `sample-docs/incident-notices/` (three vendor notices)
 - `sample-docs/test-inputs/INJECTION-TEST-notice.md` (prompt-injection test; the plan should be withheld)
 
-## Domain email and contact form
+## Domain email and the demo request form
 
-The mailbox `admin@fortivance.in` is GoDaddy Professional Email (Titan, Pro Light).
+The mailbox `admin@fortivance.in` is GoDaddy Professional Email (Titan, Pro Light). It sends the welcome email
+with demo credentials and receives a notice (without passwords) for every demo request.
 
 1. Send a test email from another account to `admin@fortivance.in` and check it arrives in webmail.
 2. Put `MAIL_USERNAME`, `MAIL_PASSWORD` and `CONTACT_TO` in `.env` on the server (never in the repository).
 3. Recreate the app: `docker compose -f docker-compose.prod.yml up -d --build app`.
-4. Open `https://fortivance.in/about.html#contact`, send a message, and check it arrives in the mailbox.
-   Replying to it goes to the visitor (their address is set as Reply-To).
+4. Open `https://fortivance.in/request-demo.html`, submit a request with an address you can read, and check:
+   the credentials appear on screen, the welcome email arrives, and the notice reaches `admin@fortivance.in`
+   (replying to the notice goes to the visitor).
 
 SMTP defaults: `smtpout.secureserver.net`, port 465 (SSL), full email address as the username. If the login is
 rejected, set `MAIL_HOST=smtp.titan.email` in `.env` and recreate the app. Errors appear in
-`docker compose -f docker-compose.prod.yml logs app | grep -i contact`.
+`docker compose -f docker-compose.prod.yml logs app | grep -i demo`.
 
-The endpoint (`POST /api/contact`) is public. It drops submissions that fill the hidden honeypot field and
-allows 5 messages per IP per hour (`CONTACT_MAX_PER_HOUR`). Without `MAIL_USERNAME` it answers 503 and the rest
-of the app runs normally.
+`POST /api/demo-requests` is public. It drops submissions that fill the hidden honeypot field, allows 3 requests
+per IP per hour (`DEMO_REQUESTS_PER_HOUR`) and one request per email address. Without `MAIL_USERNAME` it answers
+503 and the rest of the app runs normally. Accounts are activated only after the welcome email is sent.
 
 ## No domain yet
 

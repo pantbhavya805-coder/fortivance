@@ -1,0 +1,6 @@
+# Reviewed false positives (gitleaks fingerprints: commit:file:rule:line)
+# DEPLOY.md placeholder "<another long random password>", not a secret
+1957c06fd7503b91644bc7478f686aaa1944d2a3:deploy/DEPLOY.md:generic-api-key:80
+# Public demo account (analyst / Fortivance@2026), also shown on the login page
+f689ce37d943606c06caba712b549da01a9dada4:docs/ANTIGRAVITY_TASKS.md:curl-auth-user:46
+f689ce37d943606c06caba712b549da01a9dada4:docs/ANTIGRAVITY_TASKS.md:curl-auth-user:55

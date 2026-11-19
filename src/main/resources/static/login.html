@@ -6,6 +6,27 @@
     <title>Fortivance - Sign In</title>
     <link rel="stylesheet" href="/css/app.css">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        .pw-wrap { position: relative; }
+        .pw-wrap input { padding-right: 2.75rem !important; }
+        .pw-toggle {
+            position: absolute; top: 50%; right: 0.5rem; transform: translateY(-50%);
+            display: flex; align-items: center; justify-content: center;
+            width: 2rem; height: 2rem; padding: 0; border: none; border-radius: 4px;
+            background: transparent; color: var(--text-secondary); cursor: pointer;
+        }
+        .pw-toggle:hover { color: var(--navy); background: rgba(15, 39, 68, 0.06); }
+        .pw-toggle:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+        .forgot-pw-link {
+            font-size: 0.8125rem;
+            color: var(--teal);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .forgot-pw-link:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body class="auth-page">
     <div class="auth-card">
@@ -61,31 +82,73 @@
 
         <form action="/login" method="post" class="login-form">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required autofocus autocomplete="username" placeholder="e.g. analyst">
+                <label for="username">Email or username</label>
+                <input type="text" id="username" name="username" required autofocus autocomplete="username" placeholder="you@company.com" autocapitalize="none" spellcheck="false">
             </div>
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Password">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">
+                    <label for="password" style="margin-bottom: 0;">Password</label>
+                    <a href="/forgot-password.html" class="forgot-pw-link">Forgot password?</a>
+                </div>
+                <div class="pw-wrap">
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Password">
+                    <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password" aria-pressed="false" title="Show password">
+                        <svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="eye-closed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Sign In</button>
         </form>
 
+        <div style="text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-secondary);">
+            Don't have access? <a href="/request-demo.html" style="color: var(--teal); font-weight: 500; text-decoration: none;">Request a demo</a>
+        </div>
+
         <div class="auth-help">
-            <div style="font-weight: 500; color: var(--navy); margin-bottom: 0.25rem;">Authorized Banking Personnel Only</div>
-            <div>Demo accounts: <code>analyst</code> or <code>approver</code> (Password: <code>Fortivance@2026</code>)</div>
+            <div style="font-weight: 500; color: var(--navy);">Authorized Banking Personnel Only</div>
         </div>
     </div>
 
     <script>
         (function() {
+            const pwInput = document.getElementById('password');
+            const pwToggle = document.getElementById('pw-toggle');
+            if (pwInput && pwToggle) {
+                pwToggle.addEventListener('click', function() {
+                    const show = pwInput.type === 'password';
+                    pwInput.type = show ? 'text' : 'password';
+                    pwToggle.setAttribute('aria-pressed', String(show));
+                    pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    pwToggle.title = show ? 'Hide password' : 'Show password';
+                    pwToggle.querySelector('.eye-open').style.display = show ? 'none' : '';
+                    pwToggle.querySelector('.eye-closed').style.display = show ? '' : 'none';
+                    pwInput.focus();
+                });
+                // Never submit while the password is visible as plain text (browsers may cache text fields).
+                pwInput.form.addEventListener('submit', function() {
+                    pwInput.type = 'password';
+                });
+            }
+        })();
+
+        (function() {
             const params = new URLSearchParams(window.location.search);
             if (params.has('logout')) {
                 const banner = document.getElementById('logout-banner');
                 if (banner) banner.style.display = 'block';
+            } else if (params.get('error') === 'expired') {
+                const banner = document.getElementById('error-banner');
+                if (banner) {
+                    banner.textContent = 'Your demo access has expired. Reply to your welcome email to ask for an extension.';
+                    banner.style.display = 'block';
+                }
             } else if (params.has('error')) {
                 const banner = document.getElementById('error-banner');
-                if (banner) banner.style.display = 'block';
+                if (banner) {
+                    banner.textContent = 'Invalid username or password. Please try again.';
+                    banner.style.display = 'block';
+                }
             } else {
                 // If user is already authenticated and pressed back into login,
                 // bounce them back to the application so they don't see the login form

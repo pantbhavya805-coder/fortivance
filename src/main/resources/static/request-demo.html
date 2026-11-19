@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Request a Demo</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        .demo-page-container {
+            max-width: 680px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+        .demo-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem 2.25rem;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        }
+        .demo-header {
+            margin-bottom: 1.75rem;
+        }
+        .demo-header h1 {
+            font-size: 1.6rem;
+            color: var(--navy);
+            margin-bottom: 0.5rem;
+        }
+        .demo-intro {
+            font-size: 0.925rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 0.35rem;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group textarea {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: var(--text-primary);
+            box-sizing: border-box;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-group input[type="text"]:focus,
+        .form-group input[type="email"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+        }
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .input-error {
+            border-color: var(--status-red) !important;
+        }
+        .field-error {
+            font-size: 0.75rem;
+            color: var(--status-red);
+            font-weight: 500;
+            margin-top: 0.3rem;
+            min-height: 1em;
+        }
+        .char-counter {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: right;
+            margin-top: 0.25rem;
+        }
+        .char-counter.valid {
+            color: var(--status-green);
+            font-weight: 600;
+        }
+        .hp-field {
+            position: absolute;
+            left: -10000px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+        .banner-alert {
+            background-color: var(--status-red-bg);
+            color: var(--status-red);
+            border: 1px solid #fca5a5;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8125rem;
+            margin-bottom: 1.25rem;
+            display: none;
+        }
+        .success-card {
+            background-color: var(--status-green-bg);
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: left;
+            display: none;
+        }
+        .success-card h2 {
+            font-size: 1.25rem;
+            color: var(--navy);
+            margin-bottom: 0.75rem;
+        }
+        .success-card p {
+            font-size: 0.925rem;
+            line-height: 1.6;
+            color: var(--navy);
+            margin-bottom: 1.25rem;
+        }
+        .cred-box {
+            background: #ffffff;
+            border: 1px solid #86efac;
+            border-left: 4px solid var(--teal);
+            border-radius: 6px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .cred-box h3 {
+            font-size: 0.9rem;
+            color: var(--navy);
+            margin: 0 0 0.5rem;
+        }
+        .cred-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            margin-top: 0.35rem;
+            flex-wrap: wrap;
+        }
+        .cred-row .cred-label {
+            width: 5.5rem;
+            color: var(--text-secondary);
+        }
+        .cred-row code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: var(--navy);
+            word-break: break-all;
+        }
+        .copy-btn {
+            border: 1px solid var(--border-color);
+            background: #ffffff;
+            border-radius: 4px;
+            padding: 0.15rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .cred-note {
+            font-size: 0.8125rem !important;
+            color: var(--text-secondary) !important;
+            margin-bottom: 1rem !important;
+        }
+        .demo-footer-nav {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.8125rem;
+        }
+        .demo-footer-nav a {
+            color: var(--teal);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .demo-footer-nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/" class="brand-title">
+                <img src="/images/logo-icon.svg" alt="Fortivance Logo" class="brand-logo" width="28" height="28">
+                <span>Fortivance</span>
+            </a>
+            <span class="brand-subtitle">Operational Resilience &amp; TPRM</span>
+        </div>
+        <div class="nav-user-section" id="nav-user">
+            <a href="/login.html" class="btn btn-primary">Log in</a>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="demo-page-container">
+            <div class="demo-card">
+                <div class="demo-header">
+                    <h1>Request a Demo</h1>
+                    <p class="demo-intro">
+                        We will email you a personal account (sign in with your email) so you can try the full incident workflow as an analyst and as an approver. Access lasts 24 hours and runs on synthetic data.
+                    </p>
+                </div>
+
+                <div id="general-error" class="banner-alert" role="alert"></div>
+
+                <form id="demo-form" novalidate>
+                    <!-- 1. Email -->
+                    <div class="form-group">
+                        <label for="field-email">Email <span style="color: var(--status-red);">*</span></label>
+                        <input type="email" id="field-email" name="email" required maxlength="200" autocomplete="email" placeholder="e.g. jane@acmebank.com">
+                        <div class="field-error" id="error-email"></div>
+                    </div>
+
+                    <!-- 2. Name or organisation -->
+                    <div class="form-group">
+                        <label for="field-name">Name or organisation <span style="color: var(--status-red);">*</span></label>
+                        <input type="text" id="field-name" name="name" required minlength="2" maxlength="100" autocomplete="name" placeholder="e.g. Acme Bank or Jane Doe">
+                        <div class="field-error" id="error-name"></div>
+                    </div>
+
+                    <!-- 3. Phone (optional) -->
+                    <div class="form-group">
+                        <label for="field-phone">Phone <span style="color: var(--text-secondary); font-weight: normal;">(optional)</span></label>
+                        <input type="text" id="field-phone" name="phone" maxlength="20" autocomplete="tel" placeholder="e.g. +91 98765 43210">
+                        <div class="field-error" id="error-phone"></div>
+                    </div>
+
+                    <!-- 4. Purpose -->
+                    <div class="form-group">
+                        <label for="field-purpose">Who are you and why do you need access? <span style="color: var(--status-red);">*</span></label>
+                        <textarea id="field-purpose" name="purpose" required minlength="50" maxlength="1000" placeholder="Please describe your role and evaluation purpose (minimum 50 characters)..."></textarea>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div class="field-error" id="error-purpose"></div>
+                            <div class="char-counter" id="purpose-counter">0 / 1000 (minimum 50)</div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Honeypot (hidden from human visitors) -->
+                    <div class="hp-field" aria-hidden="true">
+                        <label for="field-website">Website</label>
+                        <input type="text" id="field-website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+
+                    <div style="margin-top: 1.75rem;">
+                        <button type="submit" class="btn btn-primary" id="submit-btn" style="width: 100%; padding: 0.75rem; font-size: 0.9375rem;">
+                            Request demo
+                        </button>
+                    </div>
+                </form>
+
+                <div id="success-panel" class="success-card">
+                    <h2>Your demo access is ready</h2>
+                    <p>
+                        Thank you. We have also emailed these credentials to <strong id="success-email"></strong>.
+                        Access is valid until <strong id="success-expiry"></strong>.
+                    </p>
+                    <div id="cred-section" style="display: none;">
+                        <div class="cred-box">
+                            <h3>Your sign-in details</h3>
+                            <div class="cred-row"><span class="cred-label">Email</span><code id="cred-user"></code><button type="button" class="copy-btn" data-copy="cred-user">Copy</button></div>
+                            <div class="cred-row"><span class="cred-label">Password</span><code id="cred-pass"></code><button type="button" class="copy-btn" data-copy="cred-pass">Copy</button></div>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--navy); margin-bottom: 0.75rem;">You start as an Analyst. Switch to Approver at any time from the header after signing in.</p>
+                        <p class="cred-note">Save these now: this page will not show them again. You can change your password from your profile after signing in.</p>
+                    </div>
+                    <div>
+                        <a href="/login.html" class="btn btn-primary">Proceed to sign in</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-footer-nav">
+                <a href="/about.html">&larr; Back to About Fortivance</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            const form = document.getElementById('demo-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const generalError = document.getElementById('general-error');
+            const successPanel = document.getElementById('success-panel');
+            const successEmail = document.getElementById('success-email');
+
+            const emailInput = document.getElementById('field-email');
+            const nameInput = document.getElementById('field-name');
+            const phoneInput = document.getElementById('field-phone');
+            const purposeInput = document.getElementById('field-purpose');
+            const websiteInput = document.getElementById('field-website');
+            const purposeCounter = document.getElementById('purpose-counter');
+
+            const errorEmail = document.getElementById('error-email');
+            const errorName = document.getElementById('error-name');
+            const errorPhone = document.getElementById('error-phone');
+            const errorPurpose = document.getElementById('error-purpose');
+
+            function validateEmail(val) {
+                const s = (val || '').trim();
+                if (!s) return 'Email is required.';
+                if (s.length > 200) return 'Email must be 200 characters or fewer.';
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!re.test(s)) return 'Please enter a valid email address.';
+                return '';
+            }
+
+            function validateName(val) {
+                const s = (val || '').trim();
+                if (!s) return 'Name or organisation is required.';
+                if (s.length < 2 || s.length > 100) return 'Name must be between 2 and 100 characters.';
+                return '';
+            }
+
+            function validatePhone(val) {
+                const s = (val || '').trim();
+                if (!s) return ''; // optional
+                if (s.length < 7 || s.length > 20) return 'Phone must be between 7 and 20 characters.';
+                const re = /^[0-9+\-()\s]+$/;
+                if (!re.test(s)) return 'Phone may only contain digits, spaces, and + - ( ).';
+                return '';
+            }
+
+            function validatePurpose(val) {
+                const s = (val || '').trim();
+                if (!s) return 'Purpose is required.';
+                if (s.length < 50) return 'Please enter at least 50 characters (currently ' + s.length + ').';
+                if (s.length > 1000) return 'Purpose must be 1000 characters or fewer.';
+                return '';
+            }
+
+            function fmtExpiry(value) {
+                const d = new Date(value);
+                if (isNaN(d.getTime())) return '24 hours from now';
+                return d.toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric',
+                    hour: 'numeric', minute: '2-digit', hour12: true
+                }).replace(/\b(am|pm)\b/i, s => s.toUpperCase()) + ' IST';
+            }
+
+            document.querySelectorAll('.copy-btn').forEach(function(btn) {
+                btn.addEventListener('click', async function() {
+                    const text = document.getElementById(btn.dataset.copy).textContent;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        btn.textContent = 'Copied';
+                    } catch (_) {
+                        btn.textContent = 'Select and copy';
+                    }
+                    setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+                });
+            });
+
+            function setFieldStatus(input, errorEl, msg) {
+                errorEl.textContent = msg;
+                if (msg) {
+                    input.classList.add('input-error');
+                } else {
+                    input.classList.remove('input-error');
+                }
+                return !msg;
+            }
+
+            emailInput.addEventListener('blur', function() {
+                setFieldStatus(emailInput, errorEmail, validateEmail(emailInput.value));
+            });
+            nameInput.addEventListener('blur', function() {
+                setFieldStatus(nameInput, errorName, validateName(nameInput.value));
+            });
+            phoneInput.addEventListener('blur', function() {
+                setFieldStatus(phoneInput, errorPhone, validatePhone(phoneInput.value));
+            });
+            purposeInput.addEventListener('blur', function() {
+                setFieldStatus(purposeInput, errorPurpose, validatePurpose(purposeInput.value));
+            });
+
+            purposeInput.addEventListener('input', function() {
+                const len = purposeInput.value.trim().length; // same rule as the server (trimmed)
+                purposeCounter.textContent = len + ' / 1000 (minimum 50)';
+                if (len >= 50 && len <= 1000) {
+                    purposeCounter.classList.add('valid');
+                } else {
+                    purposeCounter.classList.remove('valid');
+                }
+                if (errorPurpose.textContent && len >= 50 && len <= 1000) {
+                    setFieldStatus(purposeInput, errorPurpose, '');
+                }
+            });
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                generalError.style.display = 'none';
+                generalError.textContent = '';
+
+                const emailErr = validateEmail(emailInput.value);
+                const nameErr = validateName(nameInput.value);
+                const phoneErr = validatePhone(phoneInput.value);
+                const purposeErr = validatePurpose(purposeInput.value);
+
+                setFieldStatus(emailInput, errorEmail, emailErr);
+                setFieldStatus(nameInput, errorName, nameErr);
+                setFieldStatus(phoneInput, errorPhone, phoneErr);
+                setFieldStatus(purposeInput, errorPurpose, purposeErr);
+
+                if (emailErr || nameErr || phoneErr || purposeErr) {
+                    if (emailErr) emailInput.focus();
+                    else if (nameErr) nameInput.focus();
+                    else if (phoneErr) phoneInput.focus();
+                    else if (purposeErr) purposeInput.focus();
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Sending...';
+
+                const payload = {
+                    email: emailInput.value.trim(),
+                    name: nameInput.value.trim(),
+                    phone: phoneInput.value.trim(),
+                    purpose: purposeInput.value.trim(),
+                    website: websiteInput.value || ''
+                };
+
+                try {
+                    const res = await window.fetch('/api/demo-requests', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    let data = {};
+                    try {
+                        data = await res.json();
+                    } catch (_) {}
+
+                    if (res.status === 201) {
+                        form.style.display = 'none';
+                        successEmail.textContent = payload.email;
+                        document.getElementById('success-expiry').textContent =
+                            data.accessExpiresAt ? fmtExpiry(data.accessExpiresAt) : '24 hours from now';
+                        if (data.username && data.password) {
+                            document.getElementById('cred-user').textContent = data.username;
+                            document.getElementById('cred-pass').textContent = data.password;
+                            document.getElementById('cred-section').style.display = 'block';
+                        }
+                        successPanel.style.display = 'block';
+                        return;
+                    }
+
+                    if (res.status === 400) {
+                        const errMsg = data.error || 'Please correct the highlighted fields.';
+                        const field = (data.field || '').toLowerCase();
+                        if (field === 'email') setFieldStatus(emailInput, errorEmail, errMsg);
+                        else if (field === 'name') setFieldStatus(nameInput, errorName, errMsg);
+                        else if (field === 'phone') setFieldStatus(phoneInput, errorPhone, errMsg);
+                        else if (field === 'purpose') setFieldStatus(purposeInput, errorPurpose, errMsg);
+                        else {
+                            generalError.textContent = errMsg;
+                            generalError.style.display = 'block';
+                        }
+                        return;
+                    }
+
+                    if (res.status === 409) {
+                        generalError.textContent = data.error || 'An access request already exists for this email address.';
+                        generalError.style.display = 'block';
+                        return;
+                    }
+
+                    if (res.status === 429) {
+                        generalError.textContent = data.error || 'Too many requests. Please try again later.';
+                        generalError.style.display = 'block';
+                        return;
+                    }
+
+                    generalError.textContent = data.error || 'We could not process your request right now. Please try again later.';
+                    generalError.style.display = 'block';
+
+                } catch (err) {
+                    generalError.textContent = 'We could not process your request right now. Please try again later.';
+                    generalError.style.display = 'block';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Request demo';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

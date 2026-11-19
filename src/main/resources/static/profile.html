@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - User Profile</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/ai-loader.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 860px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .profile-field-list {
+            display: grid;
+            gap: 0.85rem;
+            font-size: 0.875rem;
+        }
+        .profile-field-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .field-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+        .field-val {
+            color: var(--navy);
+            font-weight: 500;
+        }
+        .purpose-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.875rem;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .account-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        .account-role {
+            font-weight: 600;
+            color: var(--navy);
+            font-size: 0.875rem;
+        }
+        .account-username {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--teal-dark);
+            background: #e6fffa;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            border: 1px solid #b2f5ea;
+        }
+        .countdown-pill {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .countdown-green {
+            background-color: var(--status-green-bg);
+            color: var(--status-green);
+            border: 1px solid #86efac;
+        }
+        .countdown-amber {
+            background-color: var(--status-amber-bg);
+            color: var(--status-amber);
+            border: 1px solid #fcd34d;
+        }
+        .pw-input {
+            display: block;
+            width: 100%;
+            margin-top: 0.3rem;
+            padding: 0.55rem 0.75rem;
+            font: inherit;
+            font-size: 0.875rem;
+            text-transform: none;
+            letter-spacing: normal;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .pw-wrap { position: relative; display: block; }
+        .pw-wrap .pw-input { padding-right: 2.75rem; }
+        .pw-toggle {
+            position: absolute; top: calc(50% + 0.15rem); right: 0.4rem; transform: translateY(-50%);
+            display: flex; align-items: center; justify-content: center;
+            width: 2rem; height: 2rem; padding: 0; border: none; border-radius: 4px;
+            background: transparent; color: var(--text-secondary); cursor: pointer;
+        }
+        .pw-toggle:hover { color: var(--navy); background: rgba(15, 39, 68, 0.06); }
+        .pw-toggle:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+        .countdown-red {
+            background-color: var(--status-red-bg);
+            color: var(--status-red);
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">
+                <img src="/images/logo-icon.svg" alt="Fortivance Logo" class="brand-logo">
+                <span>Fortivance</span>
+            </a>
+            <span class="brand-subtitle">Operational Resilience &amp; TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+            <a href="/eval.html" data-nav="eval">Evaluation</a>
+            <a href="/about.html" data-nav="about">About</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user">
+            <!-- Populated by api.initNav -->
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">User Profile</h1>
+        </div>
+
+        <!-- 404 Non-demo account container -->
+        <div id="non-demo-container" class="card" style="display: none; padding: 2rem; max-width: 650px;">
+            <p style="font-size: 1rem; color: var(--navy); margin: 0;">
+                Signed in as <strong id="non-demo-username"></strong>. This account does not expire.
+            </p>
+        </div>
+
+        <!-- 200 Demo account container -->
+        <div id="demo-container" style="display: none;">
+            <div class="profile-grid">
+                <!-- Card 1: Your demo access -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="card-title">Your demo access</div>
+                    <div class="profile-field-list">
+                        <div class="profile-field-row">
+                            <span class="field-label">Email</span>
+                            <span class="field-val" id="demo-email">-</span>
+                        </div>
+                        <div class="profile-field-row">
+                            <span class="field-label">Name or organisation</span>
+                            <span class="field-val" id="demo-name">-</span>
+                        </div>
+                        <div class="profile-field-row">
+                            <span class="field-label">Phone</span>
+                            <span class="field-val" id="demo-phone">-</span>
+                        </div>
+                        <div class="profile-field-row">
+                            <span class="field-label">Requested at</span>
+                            <span class="field-val" id="demo-requested-at">-</span>
+                        </div>
+                        <div class="profile-field-row" style="margin-top: 0.25rem;">
+                            <span class="field-label">Purpose</span>
+                            <div class="purpose-box" id="demo-purpose">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Card 2 & Card 3 -->
+                <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                    <!-- Card 2: Sign-in -->
+                    <div class="card" style="margin-bottom: 0;">
+                        <div class="card-title">Sign-in</div>
+                        <div class="profile-field-list">
+                            <div class="profile-field-row">
+                                <span class="field-label">Email / username</span>
+                                <span class="field-val" id="demo-signin-username" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 600;">-</span>
+                            </div>
+                            <div class="profile-field-row">
+                                <span class="field-label">Current role</span>
+                                <span class="field-val" id="demo-current-role">-</span>
+                            </div>
+                            <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                Switch role from the header at any time.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Access period -->
+                    <div class="card" style="margin-bottom: 0;">
+                        <div class="card-title">
+                            <span>Access period</span>
+                            <span id="demo-countdown" class="countdown-pill countdown-amber">-</span>
+                        </div>
+                        <div class="profile-field-list">
+                            <div class="profile-field-row">
+                                <span class="field-label">Expiry date and time</span>
+                                <span class="field-val" id="demo-expires-at" style="font-weight: 600;">-</span>
+                            </div>
+                            <div class="profile-field-row">
+                                <span class="field-label">Extensions</span>
+                                <span class="field-val" id="demo-extensions">-</span>
+                            </div>
+                            <div style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5;">
+                                Each extension adds 24 hours.
+                            </div>
+                            <div id="extension-error" style="display: none; padding: 0.6rem 0.875rem; border-radius: 4px; background: var(--status-red-bg); color: var(--status-red); border: 1px solid #fca5a5; font-size: 0.8125rem;"></div>
+                            <div style="margin-top: 0.5rem;">
+                                <button type="button" class="btn btn-primary" id="extend-btn">Request 24-hour extension</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Change password (demo accounts only) -->
+            <div class="card" style="max-width: 560px;">
+                <div class="card-title">Change password</div>
+                <p style="font-size: 0.8125rem; color: var(--text-secondary); margin: 0 0 1rem; line-height: 1.5;">
+                    Changes the password of the account you are signed in as (<strong id="pw-username">-</strong>).
+                </p>
+                <form id="pw-form" novalidate style="display: grid; gap: 0.85rem;">
+                    <label class="field-label" for="pw-current">Current password
+                        <span class="pw-wrap"><input type="password" id="pw-current" autocomplete="current-password" required class="pw-input"><button type="button" class="pw-toggle" data-target="pw-current" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span>
+                    </label>
+                    <label class="field-label" for="pw-new">New password
+                        <span class="pw-wrap"><input type="password" id="pw-new" autocomplete="new-password" required minlength="10" maxlength="64" class="pw-input"><button type="button" class="pw-toggle" data-target="pw-new" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span>
+                    </label>
+                    <label class="field-label" for="pw-confirm">Confirm new password
+                        <span class="pw-wrap"><input type="password" id="pw-confirm" autocomplete="new-password" required class="pw-input"><button type="button" class="pw-toggle" data-target="pw-confirm" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span>
+                    </label>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">10 to 64 characters, with at least one letter and one number.</div>
+                    <div id="pw-message" role="status" aria-live="polite" style="display: none; padding: 0.6rem 0.875rem; border-radius: 4px; font-size: 0.8125rem;"></div>
+                    <div><button type="submit" class="btn btn-primary" id="pw-submit">Change password</button></div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/ai-loader.js"></script>
+    <script>
+        (function() {
+            let countdownInterval = null;
+
+            function formatISTDateTime(value) {
+                if (!value) return '-';
+                try {
+                    const d = new Date(value);
+                    if (isNaN(d.getTime())) return '-';
+                    const formatted = d.toLocaleString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    return formatted.replace(/\b(am|pm)\b/i, s => s.toUpperCase()) + ' IST';
+                } catch (_) {
+                    return '-';
+                }
+            }
+
+            function updateCountdown(expiresAt) {
+                const el = document.getElementById('demo-countdown');
+                if (!el) return;
+
+                if (!expiresAt) {
+                    el.textContent = '-';
+                    el.className = 'countdown-pill countdown-amber';
+                    return;
+                }
+
+                const target = new Date(expiresAt).getTime();
+                const now = Date.now();
+                const diffMs = target - now;
+
+                if (isNaN(target)) {
+                    el.textContent = '-';
+                    el.className = 'countdown-pill countdown-amber';
+                    return;
+                }
+
+                if (diffMs <= 0) {
+                    el.textContent = 'Access expired';
+                    el.className = 'countdown-pill countdown-red';
+                    return;
+                }
+
+                const totalMinutes = Math.floor(diffMs / (1000 * 60));
+                const hours = Math.floor(totalMinutes / 60);
+                const mins = totalMinutes % 60;
+
+                el.textContent = `expires in ${hours} h ${mins} min`;
+                if (hours < 1) {
+                    el.className = 'countdown-pill countdown-red';
+                } else if (hours < 6) {
+                    el.className = 'countdown-pill countdown-amber';
+                } else {
+                    el.className = 'countdown-pill countdown-green';
+                }
+            }
+
+            function setCountdownTimer(expiresAt) {
+                if (countdownInterval) clearInterval(countdownInterval);
+                updateCountdown(expiresAt);
+                countdownInterval = setInterval(() => updateCountdown(expiresAt), 30000);
+            }
+
+            function updateExtendButton(demo) {
+                const btn = document.getElementById('extend-btn');
+                if (!btn) return;
+
+                if (!demo.canExtend) {
+                    btn.disabled = true;
+                    btn.textContent = 'Maximum extensions reached';
+                    btn.className = 'btn btn-secondary';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Request 24-hour extension';
+                    btn.className = 'btn btn-primary';
+                    btn.style.cursor = 'pointer';
+                }
+            }
+
+            function renderDemoCards(demo) {
+                document.getElementById('demo-email').textContent = demo.email || '-';
+                document.getElementById('demo-name').textContent = demo.name || '-';
+                document.getElementById('demo-phone').textContent = demo.phone ? demo.phone : 'Not provided';
+                document.getElementById('demo-requested-at').textContent = fmtDate(demo.requestedAt);
+                document.getElementById('demo-purpose').textContent = demo.purpose || '-';
+
+                document.getElementById('demo-signin-username').textContent = demo.username || demo.email || '-';
+                const isApprover = String(demo.role || '').toUpperCase().includes('APPROVER');
+                document.getElementById('demo-current-role').textContent = isApprover ? 'Approver' : 'Analyst';
+
+                document.getElementById('demo-expires-at').textContent = formatISTDateTime(demo.accessExpiresAt);
+                const extCount = demo.extensionCount != null ? demo.extensionCount : 0;
+                const maxExt = demo.maxExtensions != null ? demo.maxExtensions : 2;
+                document.getElementById('demo-extensions').textContent = `Extensions used: ${extCount} of ${maxExt}`;
+
+                setCountdownTimer(demo.accessExpiresAt);
+                updateExtendButton(demo);
+            }
+
+            async function initProfile() {
+                const user = await api.initNav('profile');
+                if (!user) return; // redirected to /login.html
+
+                const nonDemoContainer = document.getElementById('non-demo-container');
+                const demoContainer = document.getElementById('demo-container');
+                const nonDemoUsername = document.getElementById('non-demo-username');
+
+                try {
+                    const res = await api.fetch('/api/me/demo', { method: 'GET' });
+                    if (!res) return; // 401 redirect handled by api.fetch
+
+                    if (res.status === 404) {
+                        nonDemoUsername.textContent = user.username || 'user';
+                        nonDemoContainer.style.display = 'block';
+                        demoContainer.style.display = 'none';
+                        return;
+                    }
+
+                    if (res.ok) {
+                        const demoData = await res.json();
+                        document.getElementById('pw-username').textContent = user.username || '-';
+                        nonDemoContainer.style.display = 'none';
+                        demoContainer.style.display = 'block';
+                        renderDemoCards(demoData);
+                        return;
+                    }
+
+                    // Unexpected status code
+                    nonDemoUsername.textContent = user.username || 'user';
+                    nonDemoContainer.style.display = 'block';
+                    demoContainer.style.display = 'none';
+                } catch (e) {
+                    console.error('Failed to fetch demo profile:', e);
+                }
+            }
+
+            const extendBtn = document.getElementById('extend-btn');
+            if (extendBtn) {
+                extendBtn.addEventListener('click', async () => {
+                    const errorEl = document.getElementById('extension-error');
+                    if (errorEl) {
+                        errorEl.style.display = 'none';
+                        errorEl.textContent = '';
+                    }
+
+                    const confirmed = window.confirm('Request a 24-hour demo extension?');
+                    if (!confirmed) return;
+
+                    extendBtn.disabled = true;
+                    extendBtn.textContent = 'Extending...';
+
+                    try {
+                        const res = await api.fetch('/api/me/demo/extend', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' }
+                        });
+
+                        if (!res) return; // 401 redirect handled
+
+                        let data = {};
+                        try {
+                            data = await res.json();
+                        } catch (_) {}
+
+                        if (res.status === 200) {
+                            renderDemoCards(data);
+                        } else if (res.status === 409) {
+                            if (errorEl) {
+                                errorEl.textContent = data.error || 'Maximum extensions reached';
+                                errorEl.style.display = 'block';
+                            }
+                            extendBtn.disabled = true;
+                            extendBtn.textContent = 'Maximum extensions reached';
+                            extendBtn.className = 'btn btn-secondary';
+                            extendBtn.style.cursor = 'not-allowed';
+                        } else {
+                            if (errorEl) {
+                                errorEl.textContent = data.error || 'Could not extend demo access. Please try again.';
+                                errorEl.style.display = 'block';
+                            }
+                            extendBtn.disabled = false;
+                            extendBtn.textContent = 'Request 24-hour extension';
+                        }
+                    } catch (e) {
+                        if (errorEl) {
+                            errorEl.textContent = 'Network error while requesting extension. Please try again.';
+                            errorEl.style.display = 'block';
+                        }
+                        extendBtn.disabled = false;
+                        extendBtn.textContent = 'Request 24-hour extension';
+                    }
+                });
+            }
+
+            // Show/hide toggles on the password fields
+            document.querySelectorAll('.pw-toggle').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault(); // the button sits inside a <label>; do not re-focus via the label
+                    const input = document.getElementById(btn.dataset.target);
+                    const show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    btn.setAttribute('aria-pressed', String(show));
+                    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    btn.title = show ? 'Hide password' : 'Show password';
+                    btn.querySelector('.eye-open').style.display = show ? 'none' : '';
+                    btn.querySelector('.eye-closed').style.display = show ? '' : 'none';
+                    input.focus();
+                });
+            });
+            function hideAllPasswords() {
+                document.querySelectorAll('.pw-toggle').forEach(function(btn) {
+                    const input = document.getElementById(btn.dataset.target);
+                    if (input.type !== 'password') btn.click();
+                });
+            }
+
+            // Change password (demo accounts only; the card sits inside #demo-container)
+            const pwForm = document.getElementById('pw-form');
+            if (pwForm) {
+                const pwMsg = document.getElementById('pw-message');
+                const pwSubmit = document.getElementById('pw-submit');
+                function showPw(text, ok) {
+                    pwMsg.textContent = text;
+                    pwMsg.style.display = 'block';
+                    pwMsg.style.background = ok ? 'var(--status-green-bg)' : 'var(--status-red-bg)';
+                    pwMsg.style.color = ok ? 'var(--status-green)' : 'var(--status-red)';
+                    pwMsg.style.border = ok ? '1px solid #86efac' : '1px solid #fca5a5';
+                }
+                pwForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const current = document.getElementById('pw-current').value;
+                    const next = document.getElementById('pw-new').value;
+                    const confirmPw = document.getElementById('pw-confirm').value;
+                    if (!current) return showPw('Please enter your current password.', false);
+                    if (next.length < 10 || next.length > 64) return showPw('The new password must be 10 to 64 characters long.', false);
+                    if (!/[A-Za-z]/.test(next) || !/[0-9]/.test(next)) return showPw('The new password must contain at least one letter and one number.', false);
+                    if (next !== confirmPw) return showPw('The new passwords do not match.', false);
+                    if (next === current) return showPw('The new password must be different from the current one.', false);
+
+                    hideAllPasswords();
+                    pwSubmit.disabled = true;
+                    pwSubmit.textContent = 'Changing...';
+                    try {
+                        const res = await api.fetch('/api/me/password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({ currentPassword: current, newPassword: next })
+                        });
+                        if (!res) return; // session ended; api.fetch redirected to login
+                        let data = {};
+                        try { data = await res.json(); } catch (_) {}
+                        if (res.ok) {
+                            pwForm.reset();
+                            showPw(data.message || 'Your password has been changed.', true);
+                        } else {
+                            showPw(data.error || 'Could not change the password. Please try again.', false);
+                        }
+                    } catch (_) {
+                        showPw('Network error. Please try again.', false);
+                    } finally {
+                        pwSubmit.disabled = false;
+                        pwSubmit.textContent = 'Change password';
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', initProfile);
+        })();
+    </script>
+</body>
+</html>
