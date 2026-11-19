@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Evaluation</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <style>
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+        .kpi { background: #fff; border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem; }
+        .kpi-label { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+        .kpi-value { font-size: 1.75rem; font-weight: 800; color: var(--navy); margin-top: 0.25rem; }
+        .kpi-sub { font-size: 0.75rem; color: var(--text-secondary); }
+        .ok { color: var(--status-green); font-weight: 600; }
+        .bad { color: #b91c1c; font-weight: 600; }
+        td.num, th.num { text-align: right; }
+    </style>
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">Fortivance</a>
+            <span class="brand-subtitle">Operational Resilience & TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+            <a href="/eval.html" data-nav="eval" class="active">Evaluation</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user"></div>
+    </header>
+
+    <main class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">AI Evaluation</h1>
+                <p style="color: var(--text-secondary); font-size: 0.8125rem;" id="eval-note">
+                    Latest stored AI outputs compared with hand-labelled gold data. No AI calls are made on this page.
+                </p>
+            </div>
+            <div style="font-size: 0.8125rem; color: var(--text-secondary);">Generated: <span id="eval-generated">-</span></div>
+        </div>
+
+        <div id="eval-error" class="card" style="display: none; border-left: 4px solid #dc2626; color: #991b1b;"></div>
+
+        <div class="kpi-row">
+            <div class="kpi"><div class="kpi-label">Extraction field accuracy</div><div class="kpi-value" id="k-extract">-</div><div class="kpi-sub" id="k-extract-sub"></div></div>
+            <div class="kpi"><div class="kpi-label">Evidence status, exact</div><div class="kpi-value" id="k-exact">-</div><div class="kpi-sub" id="k-exact-sub"></div></div>
+            <div class="kpi"><div class="kpi-label">Evidence, within one step</div><div class="kpi-value" id="k-within">-</div><div class="kpi-sub">MET / PARTIAL / NOT_MET</div></div>
+            <div class="kpi"><div class="kpi-label">Citations rejected</div><div class="kpi-value" id="k-cit">-</div><div class="kpi-sub" id="k-cit-sub"></div></div>
+            <div class="kpi"><div class="kpi-label">Injection blocked</div><div class="kpi-value" id="k-inj">-</div><div class="kpi-sub" id="k-inj-sub"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Incident extraction by field</div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Field</th><th class="num">Correct</th><th class="num">Total</th><th class="num">Accuracy</th></tr></thead>
+                    <tbody id="t-fields"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Incident extraction detail</div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Reference</th><th>Field</th><th>Expected</th><th>Extracted</th><th>Result</th></tr></thead>
+                    <tbody id="t-incidents"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Prompt-injection test</div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Check</th><th>Result</th></tr></thead>
+                    <tbody id="t-injection"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Evidence status agreement</div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Document</th><th>Requirement</th><th>Gold</th><th>AI</th><th>Exact</th><th>Within one step</th></tr></thead>
+                    <tbody id="t-evidence"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Usage, cost and latency by call type</div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Call type</th><th>Model</th><th class="num">Calls</th><th class="num">API calls</th><th class="num">Cache hits</th>
+                        <th class="num">Failures</th><th class="num">Avg input tokens</th><th class="num">Avg output tokens</th>
+                        <th class="num">Avg cost (USD)</th><th class="num">Total cost (USD)</th><th class="num">Avg latency (ms)</th>
+                    </tr></thead>
+                    <tbody id="t-usage"></tbody>
+                </table>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                Averages cover API calls only; cache hits cost nothing and are counted separately.
+            </p>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        const esc = (v) => escapeHtml(v == null ? '-' : v);
+        const pct = (v) => v == null ? '-' : `${v}%`;
+        const yesNo = (v) => v == null ? '<span>Not run</span>' : (v ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>');
+        const mark = (v) => v ? '<span class="ok">Match</span>' : '<span class="bad">Mismatch</span>';
+        const empty = (cols, text) => `<tr><td colspan="${cols}" style="text-align: center; color: var(--text-secondary);">${esc(text)}</td></tr>`;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await api.initNav('eval');
+            try {
+                render(await api.get('/api/eval/report'));
+            } catch (err) {
+                console.error('Failed to load evaluation report', err);
+                const box = document.getElementById('eval-error');
+                box.textContent = 'The evaluation report could not be loaded. ' + (err.message || '');
+                box.style.display = 'block';
+            }
+        });
+
+        function render(r) {
+            document.getElementById('eval-generated').textContent = fmtDate(r.generatedAt);
+
+            const x = r.extraction || {};
+            document.getElementById('k-extract').textContent = pct(x.accuracyPct);
+            document.getElementById('k-extract-sub').textContent =
+                `${x.correct ?? 0} of ${x.total ?? 0} fields, ${x.incidentsEvaluated ?? 0} notices` + (x.incidentsMissing ? `, ${x.incidentsMissing} not run` : '');
+
+            const e = r.evidence || {};
+            document.getElementById('k-exact').textContent = pct(e.exactPct);
+            document.getElementById('k-exact-sub').textContent = `${e.exact ?? 0} of ${e.total ?? 0} findings` + (e.notRun ? `, ${e.notRun} not run` : '');
+            document.getElementById('k-within').textContent = pct(e.withinOneStepPct);
+
+            const c = r.citations || {};
+            document.getElementById('k-cit').textContent = `${c.rejected ?? 0}`;
+            document.getElementById('k-cit-sub').textContent = `of ${c.cited ?? 0} passage keys cited, ${c.documents ?? 0} documents`;
+
+            const inj = r.injection || {};
+            document.getElementById('k-inj').innerHTML = inj.blocked == null ? 'Not run' : (inj.blocked ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>');
+            document.getElementById('k-inj-sub').textContent = inj.basis || '';
+
+            document.getElementById('t-fields').innerHTML = (x.byField || []).map(f => `
+                <tr><td><code>${esc(f.field)}</code></td><td class="num">${esc(f.correct)}</td><td class="num">${esc(f.total)}</td><td class="num">${esc(pct(f.accuracyPct))}</td></tr>
+            `).join('') || empty(4, 'No extraction outputs yet.');
+
+            document.getElementById('t-incidents').innerHTML = (x.incidents || []).flatMap(i => {
+                if (i.status === 'NOT_RUN') return [`<tr><td><strong>${esc(i.referenceNo)}</strong></td><td colspan="4" style="color: var(--text-secondary);">Notice not uploaded yet</td></tr>`];
+                return (i.fields || []).map((f, idx) => `
+                    <tr>
+                        <td>${idx === 0 ? `<strong>${esc(i.referenceNo)}</strong><br><small>${esc(i.correct)} / ${esc(i.total)}</small>` : ''}</td>
+                        <td><code>${esc(f.field)}</code></td>
+                        <td><small>${esc(f.expected)}</small></td>
+                        <td><small>${esc(f.actual)}</small></td>
+                        <td>${mark(f.match)}</td>
+                    </tr>`);
+            }).join('') || empty(5, 'No gold incidents.');
+
+            document.getElementById('t-injection').innerHTML = `
+                <tr><td>Reference</td><td><strong>${esc(inj.referenceNo)}</strong></td></tr>
+                <tr><td>AI flagged instructions in the notice (expected: yes)</td><td>${yesNo(inj.suspiciousDetected)}</td></tr>
+                <tr><td>Sender domain mismatch flagged by code</td><td>${yesNo(inj.senderFlagRaised)}</td></tr>
+                <tr><td>Response plan withheld automatically</td><td>${yesNo(inj.planWithheld)}</td></tr>
+                <tr><td>Blocked</td><td>${yesNo(inj.blocked)} <small style="color: var(--text-secondary);">${esc(inj.basis)}</small></td></tr>`;
+
+            document.getElementById('t-evidence').innerHTML = (e.items || []).map(i => `
+                <tr>
+                    <td>${esc(i.document)} <small style="color: var(--text-secondary);">#${esc(i.documentId)}</small></td>
+                    <td><code>${esc(i.requirement)}</code></td>
+                    <td>${esc(i.expected)}</td>
+                    <td>${esc(i.actual)}</td>
+                    <td>${i.exact ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>'}</td>
+                    <td>${i.withinOneStep ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>'}</td>
+                </tr>`).join('') || empty(6, 'No gold evidence items.');
+
+            const money = (v) => v == null ? '-' : Number(v).toFixed(4);
+            document.getElementById('t-usage').innerHTML = (r.usage || []).map(u => `
+                <tr>
+                    <td><code>${esc(u.callType)}</code></td><td><small>${esc(u.model)}</small></td>
+                    <td class="num">${esc(u.calls)}</td><td class="num">${esc(u.apiCalls)}</td><td class="num">${esc(u.cacheHits)}</td>
+                    <td class="num">${esc(u.failures)}</td><td class="num">${esc(u.avgInputTokens)}</td><td class="num">${esc(u.avgOutputTokens)}</td>
+                    <td class="num">${esc(money(u.avgCostUsd))}</td><td class="num">${esc(money(u.totalCostUsd))}</td><td class="num">${esc(u.avgLatencyMs)}</td>
+                </tr>`).join('') || empty(11, 'No AI calls logged yet.');
+        }
+    </script>
+</body>
+</html>
