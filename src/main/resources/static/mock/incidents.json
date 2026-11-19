@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "referenceNo": "INC-NC-2026-1103",
+    "incidentVendorName": "SecureVault Datacentres Pvt Ltd",
+    "severityReported": "HIGH",
+    "status": "ASSESSED",
+    "detectedAt": "2026-11-03T12:40:00+05:30",
+    "clock": {
+      "deadline": "2026-11-03T18:40:00+05:30"
+    },
+    "disruptedServices": 5
+  },
+  {
+    "id": 2,
+    "referenceNo": "NH-INC-2026-0412",
+    "incidentVendorName": "TextLink Telecom Gateway",
+    "severityReported": "MEDIUM",
+    "status": "CLOSED",
+    "detectedAt": "2026-10-09T09:10:00+05:30",
+    "clock": {
+      "deadline": "2026-10-09T15:10:00+05:30"
+    },
+    "disruptedServices": 1
+  },
+  {
+    "id": 3,
+    "referenceNo": "PR-SEC-2026-0027",
+    "incidentVendorName": "PayRail Switching Services Pvt Ltd",
+    "severityReported": "CRITICAL",
+    "status": "TRIAGING",
+    "detectedAt": "2026-11-14T02:30:00+05:30",
+    "clock": {
+      "deadline": "2026-11-14T08:30:00+05:30"
+    },
+    "disruptedServices": 2
+  }
+]

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Incident Notifications</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">Fortivance</a>
+            <span class="brand-subtitle">Operational Resilience & TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents" class="active">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user"></div>
+    </header>
+
+    <main class="main-container">
+        <!-- Visible Error Banner for Upload -->
+        <div id="upload-error-banner" style="display: none; background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-weight: 600; border-radius: 4px;"></div>
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Vendor Incident Triage</h1>
+                <p style="color: var(--text-secondary); font-size: 0.8125rem;">
+                    Monitoring active vendor disruptions against the RBI 6-hour reporting window
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <input type="file" id="incident-file-input" style="display: none;" accept=".md,.pdf,.txt">
+                <button id="upload-btn" class="btn btn-primary">
+                    Upload Incident Notice
+                </button>
+            </div>
+        </div>
+
+        <section class="card">
+            <div class="card-title">
+                <span>Active & Recent Incident Notices</span>
+                <span id="mock-badge" class="badge badge-ai" style="display: none;">DEMO MOCK DATA ACTIVE</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Reference No</th>
+                            <th>Origin Vendor</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Detected At</th>
+                            <th>RBI Deadline</th>
+                            <th>Disrupted Services</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidents-tbody">
+                        <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading incidents...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await api.initNav('incidents');
+
+            const uploadBtn = document.getElementById('upload-btn');
+            const fileInput = document.getElementById('incident-file-input');
+            const errorBanner = document.getElementById('upload-error-banner');
+            const mockBadge = document.getElementById('mock-badge');
+
+            if (typeof USE_MOCK !== 'undefined' && USE_MOCK) {
+                if (mockBadge) mockBadge.style.display = 'inline-block';
+                uploadBtn.disabled = true;
+                uploadBtn.classList.add('btn-secondary');
+                uploadBtn.classList.remove('btn-primary');
+                uploadBtn.title = 'Upload disabled while USE_MOCK is true';
+            } else {
+                if (mockBadge) mockBadge.style.display = 'none';
+                uploadBtn.addEventListener('click', () => {
+                    errorBanner.style.display = 'none';
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    errorBanner.style.display = 'none';
+
+                    try {
+                        await api.post('/api/incidents', formData);
+                        window.location.reload();
+                    } catch (err) {
+                        errorBanner.textContent = err.message || 'Failed to upload incident notice';
+                        errorBanner.style.display = 'block';
+                    } finally {
+                        fileInput.value = '';
+                    }
+                });
+            }
+
+            try {
+                const list = await api.get('/api/incidents');
+                const tbody = document.getElementById('incidents-tbody');
+                if (!list || list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No active incidents recorded</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = list.map(inc => {
+                    const sev = escapeHtml(inc.severityReported);
+                    const sevClass = sev === 'CRITICAL' ? 'badge-critical' :
+                                     sev === 'HIGH' ? 'badge-high' :
+                                     sev === 'MEDIUM' ? 'badge-medium' : 'badge-low';
+
+                    const deadlineStr = escapeHtml(fmtDate(inc.clock ? inc.clock.deadline : null));
+                    const detectedStr = escapeHtml(fmtDate(inc.detectedAt));
+                    const disruptedCount = Number(inc.disruptedServices) || 0;
+
+                    return `
+                        <tr>
+                            <td><strong><code>${escapeHtml(inc.referenceNo)}</code></strong></td>
+                            <td>${escapeHtml(inc.incidentVendorName || 'Unknown')}</td>
+                            <td><span class="badge ${sevClass}">${sev}</span></td>
+                            <td><span class="badge badge-grey">${escapeHtml(inc.status)}</span></td>
+                            <td><small>${detectedStr}</small></td>
+                            <td><small style="font-weight: 600;">${deadlineStr}</small></td>
+                            <td><span class="badge ${disruptedCount > 0 ? 'badge-critical' : 'badge-green'}">${disruptedCount} Services</span></td>
+                            <td><a href="/incident.html?id=${encodeURIComponent(inc.id)}" class="btn btn-secondary">Triage & Plan</a></td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Failed to load incidents", err);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "id": 1,
+  "referenceNo": "INC-NC-2026-1103",
+  "status": "ASSESSED",
+  "incidentVendor": { "id": 5, "name": "SecureVault Datacentres Pvt Ltd", "fourthParty": true },
+  "reportedBy": { "id": 1, "name": "NimbusCloud Infra Pvt Ltd" },
+  "senderEmail": "incidents@nimbuscloud.example",
+  "incidentType": "DEGRADATION",
+  "severityReported": "HIGH",
+  "summary": "Cooling failure at SecureVault Mumbai facility; about 30% of NimbusCloud MUM-1 hosts throttled or powered down.",
+  "detectedAt": "2026-11-03T12:40:00+05:30",
+  "notifiedAt": "2026-11-03T16:05:00+05:30",
+  "receivedAt": "2026-11-03T16:07:00+05:30",
+  "clock": { "startsAt": "2026-11-03T12:40:00+05:30", "deadline": "2026-11-03T18:40:00+05:30", "notificationDelayMinutes": 205 },
+  "sourceText": "INCIDENT NOTIFICATION - INITIAL\nFrom: NimbusCloud Infra Pvt Ltd\nTo: soc@deccanmeridian.example\nSent: 3 November 2026, 16:05 IST\nReference: INC-NC-2026-1103\n\nSummary: At 12:40 IST today, our infrastructure monitoring detected elevated temperatures in Zone B of the SecureVault Mumbai MUM-1 data centre facility. SecureVault engineering determined that primary chilled water circulation pumps had failed.\n\nApproximately 30% of hypervisor hosts in MUM-1 were throttled or powered down to protect hardware. Workloads with multi-zone redundancy have failed over to MUM-2. Single-zone instances in MUM-1 Zone B remain degraded or offline.\n\nNext update: 17:30 IST or upon significant change.",
+  "extraction": { "model": "claude-haiku-5-5", "confidence": 0.92, "reviewStatus": "PENDING" },
+  "impact": {
+    "vendorChain": [
+      { "id": 5, "name": "SecureVault Datacentres Pvt Ltd", "depth": 0 },
+      { "id": 1, "name": "NimbusCloud Infra Pvt Ltd", "depth": 1 }
+    ],
+    "services": [
+      { "id": 1, "code": "SVC-ACCT", "name": "Retail Accounts & Deposits", "criticality": "CRITICAL", "impactLevel": "DISRUPTED", "impactToleranceHours": 4, "viaApplications": ["CBS", "IBP", "MBB"] },
+      { "id": 2, "code": "SVC-PAY", "name": "Digital Payments (UPI/IMPS)", "criticality": "CRITICAL", "impactLevel": "DISRUPTED", "impactToleranceHours": 2, "viaApplications": ["CBS", "MBB"] }
+    ],
+    "summary": { "services": 6, "disruptedServices": 5, "criticalServices": 4, "tightestImpactToleranceHours": 1, "singlePointsOfFailure": 2 }
+  },
+  "plan": {
+    "aiOutputId": 10,
+    "model": "claude-sonnet-5-5",
+    "reviewStatus": "PENDING",
+    "content": {
+      "situationSummary": "A cooling failure at NimbusCloud's colocation subcontractor is degrading the Mumbai region that hosts core banking and digital channels.",
+      "immediateActions": [
+        { "title": "Confirm with NimbusCloud whether CBS database clusters have failed over", "ownerTeam": "Core Banking IT", "priority": "HIGH", "dueInMinutes": 30 }
+      ],
+      "decisionsForAnalyst": ["Assess whether this meets the RBI cyber incident reporting criteria"],
+      "questionsForVendor": ["Which bank workloads were powered down, and when?"],
+      "customerCommunication": "Hold; prepare a holding statement for digital banking delays."
+    }
+  },
+  "actions": [
+    { "id": 1, "title": "Confirm CBS failover status", "ownerTeam": "Core Banking IT", "status": "OPEN", "priority": "HIGH", "source": "AI" }
+  ],
+  "events": [
+    { "type": "DETECTED_BY_VENDOR", "at": "2026-11-03T12:40:00+05:30", "actor": "SecureVault Datacentres Pvt Ltd", "description": "Cooling failure detected" },
+    { "type": "NOTICE_RECEIVED", "at": "2026-11-03T16:07:00+05:30", "actor": "analyst", "description": "Notice uploaded" },
+    { "type": "IMPACT_COMPUTED", "at": "2026-11-03T16:07:02+05:30", "actor": "SYSTEM", "description": "6 services affected, 5 disrupted" }
+  ]
+}

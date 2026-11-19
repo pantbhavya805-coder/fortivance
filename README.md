@@ -6,7 +6,7 @@ MVP focus: **Compliance & Dependency Intelligence** for a fictional Indian comme
 > All organisations, contracts, reports and incidents in this repo are **synthetic**.
 
 ## Stack
-Java 21 · Spring Boot 3.3 · MySQL 8.4 · Flyway · Docker Compose · Claude API
+Java 21 · Spring Boot 3.3 · MySQL 8.4 · Flyway · Docker Compose · Claude API · Cytoscape.js
 
 ## Run it
 
@@ -16,68 +16,68 @@ docker compose up --build
 ```
 
 Flyway runs on startup:
-- `V1__init_schema.sql`: 10 tables
+- `V1__init_schema.sql`: 10 core tables
 - `V2__seed_synthetic_data.sql`: demo data
+- `V3__workflow_ai_and_audit.sql`: workflow, users, passages, audit log, actions
 
-Check it:
-```bash
-curl localhost:8080/actuator/health
-curl localhost:8080/api/vendors
-curl localhost:8080/api/vendors/1/subcontractors   # -> SecureVault (fourth party)
-```
+Application runs on: `http://localhost:8080`
+MySQL exposed on host port: `3307`
 
-To run the app from your IDE instead, start MySQL only with `docker compose up mysql`, then run `FortivanceApplication`.
+## Demo Accounts
 
-## Data model
+| Username | Password | Role | Description |
+|---|---|---|---|
+| `analyst` | `Fortivance@2026` | `ROLE_ANALYST` | Priya Nair (TPRM Analyst) |
+| `approver` | `Fortivance@2026` | `ROLE_APPROVER` | Arvind Rao (Head of TPRM) |
 
-```
-business_services ──< service_application_dependencies >── applications
-applications ──< application_vendor_dependencies >── vendors
-vendors.parent_vendor_id ──> vendors         (fourth parties)
-vendors ──< documents ──< evidence_mappings >── control_requirements
-vendors ──< incident_notices
-```
+## Security & Known Simplifications
 
-| # | Table | Purpose |
-|---|---|---|
-| 1 | banks | Regulated entity |
-| 2 | vendors | Direct vendors and subcontractors (`parent_vendor_id`) |
-| 3 | applications | Bank IT systems |
-| 4 | business_services | Customer-facing services with impact tolerances |
-| 5 | application_vendor_dependencies | App depends on vendor |
-| 6 | service_application_dependencies | Service depends on app |
-| 7 | documents | Contracts, SOC 2, notices (+ extracted text) |
-| 8 | control_requirements | Obligations to test evidence against |
-| 9 | evidence_mappings | AI-proposed, human-reviewed requirement-to-evidence links |
-| 10 | incident_notices | Vendor incident notices (incident vendor vs reporting vendor) |
+- **Authentication**: Supports session-based Form Login (`/login.html`) and HTTP Basic authentication for curl / programmatic access.
+- **API Responses**: Unauthenticated requests to `/api/**` return HTTP 401 JSON (`{"error": "Unauthorized"}`) instead of redirecting to login.
+- **Authorization**: Endpoints ending in `/approve` or `/reject` require `ROLE_APPROVER` or `ROLE_ADMIN`.
+- **CSRF**: Disabled for `/api/**` and `/login` (known demo simplification).
 
-## Synthetic dataset
+## Web Application Pages
 
-**Deccan Meridian Bank Ltd**, a fictional commercial bank headquartered in Hyderabad.
+- `/login.html`: Clean session login form.
+- `/index.html`: Executive dashboard with 6 resilience metric cards and vendor risk registry.
+- `/graph.html`: Interactive Cytoscape.js dependency graph mapping Business Services &rarr; Applications &rarr; Vendors &rarr; 4th Parties, with live vendor incident cascade simulation.
+- `/vendor.html?id=`: Detailed vendor risk profile, contract validity, mis-tiering alerts, subcontractors, and dependent applications.
+- `/incidents.html`: Active incident triage list.
+- `/incident.html?id=`: Incident detail with live **RBI 6-Hour Reporting Window** countdown clock, monospace notice text, AI extraction, and response plan approval workflow.
 
-| Vendor | Type | Parent |
-|---|---|---|
-| NimbusCloud Infra | Cloud hosting, CRITICAL | — |
-| PayRail Switching Services | UPI and card processing, CRITICAL | — |
-| VeriKYC Technologies | eKYC / video KYC, HIGH | — |
-| NotifyHub Communications | SMS / OTP, HIGH | — |
-| SecureVault Datacentres | Colocation | NimbusCloud |
-| TextLink Telecom Gateway | SMS aggregator | NotifyHub |
+## REST APIs
 
-**Applications (8):** CBS, IBP, MBB, UPI, CMS, DOP, LOS, CNE
-**Services (6):** Accounts, Digital Payments, Cards, Onboarding, Lending, Alerts & OTP
+| Endpoint | Method | Role | Description |
+|---|---|---|---|
+| `/actuator/health` | GET | Public | Healthcheck probe |
+| `/api/me` | GET | Authenticated | Current user details and role |
+| `/api/vendors` | GET | Authenticated | List all vendors (`?directOnly=true` supported) |
+| `/api/vendors/{id}` | GET | Authenticated | Get vendor by ID |
+| `/api/vendors/{id}/subcontractors` | GET | Authenticated | Fourth parties behind this vendor |
+| `/api/vendors/{id}/profile` | GET | Authenticated | Vendor profile with docs, apps, flags & open actions |
+| `/api/metrics` | GET | Authenticated | 6 operational resilience metrics |
+| `/api/dependencies/graph` | GET | Authenticated | Cytoscape graph data (`?incidentVendorId=` highlights affected paths) |
+| `/api/impact/vendors/{id}` | GET | Authenticated | Cascading impact report for vendor failure |
+| `/api/actions` | GET | Authenticated | List remediation actions (`?incidentId=&vendorId=&status=`) |
+| `/api/actions` | POST | Authenticated | Create manual action item (`source = MANUAL`) |
+| `/api/actions/{id}` | PATCH | Authenticated | Update action (`closed_at` set on `DONE`) |
+| `/api/audit` | GET | Authenticated | View audit logs newest first (`?entityType=&entityId=&limit=50`) |
 
-**Documents in `sample-docs/`**
-- `contracts/nimbuscloud-msa.md`: a **complete** contract (6-hour notice, RBI audit rights, subcontractor consent, DR, 180-day exit).
-- `contracts/notifyhub-service-agreement.md`: a contract **with gaps** (no notice timeline or recipient, subcontracting at the vendor's discretion, no regulator access, vague BCP, 30-day exit with no transition support).
-- `audit-reports/nimbuscloud-soc2-type2-fy2026.md`: **carves out SecureVault** and has one access-control exception.
-- `incident-notices/` ×3: a SecureVault cooling failure (cascades through NimbusCloud), TextLink SMS delays (reported late, after resolution), and suspected PayRail UAT ransomware.
+## Demo Reset Script
 
-**Planted signals the AI should find:** an overdue PayRail review; NotifyHub likely mis-tiered as non-material; the undisclosed TextLink subcontractor; the SOC 2 carve-out leaving SecureVault without assurance; the late NotifyHub notice.
+To wipe incident data, event timelines, ai drafts, audit logs, and action items while preserving master data:
 
-`control_requirements` holds a 13-control starter set grouped by RBI outsourcing theme. **`source_reference` = 'TO VERIFY'** means the control must be checked against the official RBI text before you cite paragraph numbers. The set expands to 100 controls later.
+- **Windows (PowerShell):**
+  ```powershell
+  .\scripts\reset-demo.ps1
+  ```
+- **Linux / macOS (Bash):**
+  ```bash
+  ./scripts/reset-demo.sh
+  ```
 
-## Impact query (incident 1 cascade)
+## Impact Query (Incident 1 Cascade)
 
 ```sql
 WITH RECURSIVE affected_vendors AS (

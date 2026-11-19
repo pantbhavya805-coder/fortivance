@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Evidence &amp; Assurance</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">Fortivance</a>
+            <span class="brand-subtitle">Operational Resilience &amp; TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence" class="active">Evidence</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user"></div>
+    </header>
+
+    <main class="main-container">
+        <!-- Error Banner -->
+        <div id="evidence-error-banner" style="display: none; background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-weight: 600; border-radius: 4px;"></div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Evidence &amp; Control Assurance</h1>
+                <p style="color: var(--text-secondary); font-size: 0.8125rem;">
+                    Obligation-to-evidence mapping against RBI IT Outsourcing control requirements
+                </p>
+            </div>
+            <div>
+                <button id="analyse-all-btn" class="btn btn-primary">
+                    Analyse documents
+                </button>
+            </div>
+        </div>
+
+        <!-- Top Section: Summary Table -->
+        <section class="card">
+            <div class="card-title">
+                <span>Vendor Evidence Assurance Overview</span>
+                <span class="badge badge-grey" id="summary-vendor-count">--</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th>Coverage %</th>
+                            <th>Evidence Status Counts</th>
+                            <th>Residual Risk Score</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-tbody">
+                        <tr><td colspan="5" style="text-align: center; padding: 2rem;">Loading evidence summary...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Vendor Detail Section (Loaded on Vendor Selection) -->
+        <section class="card" id="vendor-detail-card" style="display: none;">
+            <div class="card-title">
+                <div>
+                    <span id="detail-vendor-name">Vendor Gap Report</span>
+                    <span class="badge" id="detail-vendor-tier" style="margin-left: 0.5rem;">--</span>
+                </div>
+                <div>
+                    <span style="font-size: 0.8125rem; color: var(--text-secondary); margin-right: 0.5rem;" id="detail-coverage-summary"></span>
+                    <button class="btn btn-secondary btn-sm" id="close-vendor-detail">&times; Close</button>
+                </div>
+            </div>
+
+            <!-- Risk Panel -->
+            <div class="risk-panel" id="risk-panel">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                    <div>
+                        <strong style="color: var(--navy); font-size: 0.875rem;">Vendor Risk Scoring Breakdown</strong>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;" id="risk-method"></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.25rem; font-weight: 700; color: var(--navy);" id="risk-score-val">--</span>
+                        <span class="badge" id="risk-band-badge" style="margin-left: 0.35rem;">--</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; font-weight: 600; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.5rem;">
+                        Contributing Risk Factors:
+                    </div>
+                    <ul class="risk-factors-list" id="risk-factors-list">
+                        <li style="font-size: 0.8125rem; color: var(--text-secondary);">No contributing risk factors.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Requirements Gap Report Table -->
+            <div class="table-responsive">
+                <table class="data-table" id="requirements-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">Code</th>
+                            <th>Requirement Title</th>
+                            <th>Regulatory Source</th>
+                            <th style="width: 130px;">Status</th>
+                            <th style="width: 120px;">Review</th>
+                            <th style="width: 100px;">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requirements-tbody">
+                        <tr><td colspan="6" style="text-align: center; padding: 1.5rem;">Loading requirements...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Dispute Modal Dialog -->
+    <div id="dispute-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card">
+            <h3 style="color: var(--navy); margin-bottom: 0.5rem;">Dispute Evidence Finding</h3>
+            <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;" id="dispute-modal-subtitle">
+                Correct the finding status or leave unassigned to reject the finding.
+            </p>
+            <input type="hidden" id="dispute-mapping-id">
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="dispute-status-select" style="display: block; font-size: 0.8125rem; font-weight: 600; color: var(--navy); margin-bottom: 0.35rem;">Corrected Status</label>
+                <select id="dispute-status-select" style="width: 100%; padding: 0.5rem; font-size: 0.875rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                    <option value="">-- Reject Finding (No Status) --</option>
+                    <option value="MET">MET (Evidence Found)</option>
+                    <option value="PARTIAL">PARTIAL (Partial Evidence)</option>
+                    <option value="NOT_MET">NOT_MET (Evidence Missing)</option>
+                    <option value="NOT_APPLICABLE">NOT_APPLICABLE</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="dispute-comment-text" style="display: block; font-size: 0.8125rem; font-weight: 600; color: var(--navy); margin-bottom: 0.35rem;">Reviewer Comment</label>
+                <textarea id="dispute-comment-text" rows="3" placeholder="Provide justification or note for audit trail..." style="width: 100%; padding: 0.5rem; font-size: 0.875rem; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button class="btn btn-secondary" id="dispute-cancel-btn">Cancel</button>
+                <button class="btn btn-danger" id="dispute-submit-btn">Submit Dispute</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        let currentVendorId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await api.initNav('evidence');
+
+            const params = new URLSearchParams(window.location.search);
+            const vendorParam = params.get('vendorId');
+
+            setupAnalyseAllButton();
+            setupDisputeModal();
+
+            document.getElementById('close-vendor-detail').addEventListener('click', () => {
+                document.getElementById('vendor-detail-card').style.display = 'none';
+                currentVendorId = null;
+            });
+
+            await loadSummary(vendorParam);
+        });
+
+        function setupAnalyseAllButton() {
+            const btn = document.getElementById('analyse-all-btn');
+            const errorBanner = document.getElementById('evidence-error-banner');
+
+            btn.addEventListener('click', async () => {
+                errorBanner.style.display = 'none';
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Analysing documents... (up to 1 min)';
+
+                try {
+                    await api.post('/api/evidence/analyse-all');
+                    await loadSummary(currentVendorId);
+                    if (currentVendorId) {
+                        await loadVendorReport(currentVendorId);
+                    }
+                } catch (err) {
+                    errorBanner.textContent = err.message || 'Analysis failed. Please check backend logs.';
+                    errorBanner.style.display = 'block';
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        async function loadSummary(autoSelectVendorId) {
+            const tbody = document.getElementById('summary-tbody');
+            const countBadge = document.getElementById('summary-vendor-count');
+            const errorBanner = document.getElementById('evidence-error-banner');
+
+            try {
+                const list = await api.get('/api/evidence/summary');
+                if (!list || list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No evidence summaries found.</td></tr>';
+                    countBadge.textContent = '0 Vendors';
+                    return;
+                }
+
+                // Count only vendors whose outsourcing_scope is IN_SCOPE
+                const inScopeCount = list.filter(item => {
+                    const v = item.vendor || {};
+                    const scope = v.outsourcing_scope || v.outsourcingScope;
+                    return scope === 'IN_SCOPE';
+                }).length;
+                countBadge.textContent = `${inScopeCount} In-Scope Vendors`;
+                tbody.innerHTML = '';
+
+                // Sort excluded vendors last
+                list.sort((a, b) => {
+                    const aScope = (a.vendor && (a.vendor.outsourcing_scope || a.vendor.outsourcingScope)) || '';
+                    const bScope = (b.vendor && (b.vendor.outsourcing_scope || b.vendor.outsourcingScope)) || '';
+                    const aExcluded = aScope === 'EXCLUDED' ? 1 : 0;
+                    const bExcluded = bScope === 'EXCLUDED' ? 1 : 0;
+                    return aExcluded - bExcluded;
+                });
+
+                list.forEach(item => {
+                    const v = item.vendor || {};
+                    const counts = item.statusCounts || {};
+                    const risk = item.risk || {};
+
+                    const tr = document.createElement('tr');
+                    tr.style.cursor = 'pointer';
+
+                    const band = risk.band || 'LOW';
+                    const bandClass = band === 'HIGH' ? 'badge-red' : (band === 'MEDIUM' ? 'badge-amber' : 'badge-green');
+
+                    const scope = v.outsourcing_scope || v.outsourcingScope;
+                    const isExcluded = scope === 'EXCLUDED';
+                    const scopeNote = v.scope_note || v.scopeNote || '';
+
+                    const covPct = item.coveragePct != null ? `${item.coveragePct}%` : '--%';
+                    const verPct = item.verifiedCoveragePct != null ? `${item.verifiedCoveragePct}%` : '--%';
+
+                    const coverageCellHtml = isExcluded
+                        ? `<strong>N/A</strong>`
+                        : `<strong>${covPct}</strong><small style="color: var(--text-secondary); display: block;">(${verPct} verified)</small>`;
+
+                    const statusCellHtml = isExcluded
+                        ? `<span class="badge badge-grey" title="${escapeHtml(scopeNote)}">OUT OF SCOPE</span>
+                           ${scopeNote ? `<small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">${escapeHtml(scopeNote)}</small>` : ''}`
+                        : `<span class="badge badge-green" title="Found / Met">${counts.FOUND || 0} FOUND</span>
+                           <span class="badge badge-amber" title="Partial Evidence" style="margin-left: 0.25rem;">${counts.PARTIAL || 0} PARTIAL</span>
+                           <span class="badge badge-red" title="Missing Evidence" style="margin-left: 0.25rem;">${counts.MISSING || 0} MISSING</span>`;
+
+                    tr.innerHTML = `
+                        <td>
+                            <strong><a href="javascript:void(0)" class="vendor-link" style="color: var(--navy); text-decoration: none;">${escapeHtml(v.name || 'Vendor #' + v.id)}</a></strong>
+                            <span class="badge badge-grey" style="margin-left: 0.35rem;">${escapeHtml(v.risk_tier || '-')}</span>
+                        </td>
+                        <td>
+                            ${coverageCellHtml}
+                        </td>
+                        <td>
+                            ${statusCellHtml}
+                        </td>
+                        <td>
+                            <strong>${risk.score != null ? risk.score : '--'}</strong>
+                            <span class="badge ${bandClass}" style="margin-left: 0.35rem;">${escapeHtml(band)}</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm select-vendor-btn">View Gap Report</button>
+                        </td>
+                    `;
+
+                    const onSelect = () => {
+                        loadVendorReport(v.id);
+                        document.getElementById('vendor-detail-card').scrollIntoView({ behavior: 'smooth' });
+                    };
+
+                    tr.querySelector('.vendor-link').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        onSelect();
+                    });
+                    tr.querySelector('.select-vendor-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        onSelect();
+                    });
+                    tr.addEventListener('click', onSelect);
+
+                    tbody.appendChild(tr);
+                });
+
+                if (autoSelectVendorId) {
+                    loadVendorReport(autoSelectVendorId);
+                }
+            } catch (err) {
+                console.error("Failed to load evidence summary", err);
+                errorBanner.textContent = 'Failed to load evidence summary: ' + (err.message || err);
+                errorBanner.style.display = 'block';
+            }
+        }
+
+        async function loadVendorReport(vendorId) {
+            currentVendorId = vendorId;
+            const card = document.getElementById('vendor-detail-card');
+            const tbody = document.getElementById('requirements-tbody');
+            const errorBanner = document.getElementById('evidence-error-banner');
+
+            card.style.display = 'block';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem;">Loading vendor gap report...</td></tr>';
+
+            try {
+                const data = await api.get(`/api/evidence/vendors/${vendorId}`);
+                renderVendorReport(data);
+            } catch (err) {
+                console.error("Failed to load vendor report", err);
+                errorBanner.textContent = 'Failed to load vendor report: ' + (err.message || err);
+                errorBanner.style.display = 'block';
+            }
+        }
+
+        function renderVendorReport(data) {
+            const v = data.vendor || {};
+            const reqs = data.requirements || [];
+            const risk = data.risk || {};
+
+            // Vendor Title & Meta
+            document.getElementById('detail-vendor-name').textContent = v.name || 'Vendor #' + v.id;
+            const tierBadge = document.getElementById('detail-vendor-tier');
+            tierBadge.textContent = v.risk_tier || 'UNKNOWN';
+            tierBadge.className = 'badge ' + (v.risk_tier === 'CRITICAL' ? 'badge-critical' :
+                                             v.risk_tier === 'HIGH' ? 'badge-high' : 'badge-grey');
+
+            const covText = data.coveragePct != null ? `${data.coveragePct}% coverage` : '';
+            const verText = data.verifiedCoveragePct != null ? `(${data.verifiedCoveragePct}% verified)` : '';
+            document.getElementById('detail-coverage-summary').textContent = `${covText} ${verText}`;
+
+            // Risk Panel
+            document.getElementById('risk-method').textContent = risk.method || 'Rule-based scoring';
+            document.getElementById('risk-score-val').textContent = risk.score != null ? `${risk.score} / 100` : '--';
+            
+            const band = risk.band || 'LOW';
+            const bandBadge = document.getElementById('risk-band-badge');
+            bandBadge.textContent = `${band} RESIDUAL RISK`;
+            bandBadge.className = 'badge ' + (band === 'HIGH' ? 'badge-red' : (band === 'MEDIUM' ? 'badge-amber' : 'badge-green'));
+
+            const factorsList = document.getElementById('risk-factors-list');
+            factorsList.innerHTML = '';
+            const factors = risk.factors || [];
+            if (factors.length === 0) {
+                const li = document.createElement('li');
+                li.style.fontSize = '0.8125rem';
+                li.style.color = 'var(--text-secondary)';
+                li.textContent = 'No contributing risk factors.';
+                factorsList.appendChild(li);
+            } else {
+                factors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.className = 'risk-factor-item';
+
+                    const desc = document.createElement('span');
+                    desc.textContent = f.factor || '';
+
+                    const pts = document.createElement('span');
+                    pts.className = 'badge badge-grey';
+                    pts.textContent = `+${f.points} pts`;
+
+                    li.appendChild(desc);
+                    li.appendChild(pts);
+                    factorsList.appendChild(li);
+                });
+            }
+
+            // Requirements Table
+            const tbody = document.getElementById('requirements-tbody');
+            tbody.innerHTML = '';
+
+            if (reqs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No in-demo requirements mapped.</td></tr>';
+                return;
+            }
+
+            reqs.forEach((r, idx) => {
+                const mainTr = document.createElement('tr');
+                mainTr.style.cursor = 'pointer';
+
+                const status = r.status || 'NOT_ASSESSED';
+                const statusClass = status === 'FOUND' ? 'badge-green' :
+                                    status === 'PARTIAL' ? 'badge-amber' :
+                                    status === 'MISSING' ? 'badge-red' : 'badge-grey';
+
+                const sourceRef = (r.sourceReference && r.sourceReference.trim() !== '')
+                    ? r.sourceReference
+                    : (r.sourceFramework || '-');
+
+                // Review column status:
+                const finding = r.bestFinding;
+                const revStatus = (finding && finding.reviewStatus) || (r.needsReview ? 'PENDING' : null);
+                let reviewBadgeHtml = '<span style="color: var(--text-muted); font-size: 0.75rem;">-</span>';
+                if (revStatus === 'PENDING') {
+                    reviewBadgeHtml = '<span class="badge badge-ai" style="color: #b45309; border-color: #fcd34d; background: #fffbeb;">Needs review</span>';
+                } else if (revStatus === 'APPROVED') {
+                    reviewBadgeHtml = '<span class="badge badge-green">Verified</span>';
+                } else if (revStatus === 'REJECTED' || revStatus === 'EDITED') {
+                    reviewBadgeHtml = '<span class="badge badge-grey">Disputed</span>';
+                }
+
+                mainTr.innerHTML = `
+                    <td><strong><code>${escapeHtml(r.requirementCode)}</code></strong></td>
+                    <td><strong>${escapeHtml(r.requirementTitle)}</strong></td>
+                    <td><small style="color: var(--text-secondary);">${escapeHtml(sourceRef)}</small></td>
+                    <td><span class="badge ${statusClass}">${escapeHtml(status)}</span></td>
+                    <td>${reviewBadgeHtml}</td>
+                    <td><button class="btn btn-secondary btn-sm toggle-btn" id="toggle-btn-${idx}">Expand &darr;</button></td>
+                `;
+
+                // Expandable Row
+                const detailTr = document.createElement('tr');
+                detailTr.id = `detail-row-${idx}`;
+                detailTr.style.display = 'none';
+
+                const detailTd = document.createElement('td');
+                detailTd.colSpan = 6;
+                detailTd.style.background = '#f8fafc';
+                detailTd.style.padding = '1.25rem 1.5rem';
+                detailTd.style.borderBottom = '2px solid var(--border-color)';
+
+                detailTd.appendChild(createFindingDetailElement(r));
+                detailTr.appendChild(detailTd);
+
+                const toggle = () => {
+                    const isHidden = detailTr.style.display === 'none';
+                    detailTr.style.display = isHidden ? 'table-row' : 'none';
+                    const btn = mainTr.querySelector(`#toggle-btn-${idx}`);
+                    if (btn) {
+                        btn.innerHTML = isHidden ? 'Collapse &uarr;' : 'Expand &darr;';
+                    }
+                };
+
+                mainTr.querySelector('.toggle-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggle();
+                });
+                mainTr.addEventListener('click', toggle);
+
+                tbody.appendChild(mainTr);
+                tbody.appendChild(detailTr);
+            });
+        }
+
+        function createFindingDetailElement(req) {
+            const container = document.createElement('div');
+            const finding = req.bestFinding;
+
+            if (!finding) {
+                const empty = document.createElement('p');
+                empty.style.color = 'var(--text-secondary)';
+                empty.style.fontStyle = 'italic';
+                empty.style.fontSize = '0.8125rem';
+                empty.textContent = 'No evidence findings assessed for this requirement.';
+                container.appendChild(empty);
+                return container;
+            }
+
+            // Finding Header
+            const header = document.createElement('div');
+            header.style.display = 'flex';
+            header.style.justifyContent = 'space-between';
+            header.style.alignItems = 'center';
+            header.style.marginBottom = '0.75rem';
+
+            const titleBlock = document.createElement('div');
+            const docTitle = document.createElement('strong');
+            docTitle.style.fontSize = '0.875rem';
+            docTitle.style.color = 'var(--navy)';
+            docTitle.textContent = finding.documentTitle || 'Document #' + finding.documentId;
+
+            const docType = document.createElement('span');
+            docType.className = 'badge badge-grey';
+            docType.style.marginLeft = '0.5rem';
+            docType.textContent = finding.documentType || 'DOCUMENT';
+
+            titleBlock.appendChild(docTitle);
+            titleBlock.appendChild(docType);
+
+            const metaBlock = document.createElement('div');
+            const conf = document.createElement('span');
+            conf.className = 'badge badge-ai';
+            conf.style.marginRight = '0.5rem';
+            conf.textContent = `Confidence: ${finding.confidence != null ? Math.round(finding.confidence * 100) : 0}%`;
+
+            const revBadge = document.createElement('span');
+            revBadge.className = 'badge ' + (finding.reviewStatus === 'APPROVED' ? 'badge-green' : (finding.reviewStatus === 'REJECTED' ? 'badge-grey' : 'badge-amber'));
+            revBadge.textContent = finding.reviewStatus || 'PENDING';
+
+            metaBlock.appendChild(conf);
+            metaBlock.appendChild(revBadge);
+            header.appendChild(titleBlock);
+            header.appendChild(metaBlock);
+            container.appendChild(header);
+
+            // Rationale
+            const rationaleLabel = document.createElement('strong');
+            rationaleLabel.style.fontSize = '0.75rem';
+            rationaleLabel.style.textTransform = 'uppercase';
+            rationaleLabel.style.color = 'var(--navy)';
+            rationaleLabel.textContent = 'AI Extraction Rationale:';
+            container.appendChild(rationaleLabel);
+
+            const rationaleText = document.createElement('p');
+            rationaleText.style.fontSize = '0.8125rem';
+            rationaleText.style.background = '#ffffff';
+            rationaleText.style.border = '1px solid var(--border-color)';
+            rationaleText.style.borderRadius = '4px';
+            rationaleText.style.padding = '0.5rem 0.75rem';
+            rationaleText.style.marginTop = '0.25rem';
+            rationaleText.style.marginBottom = '0.75rem';
+            rationaleText.textContent = finding.rationale || 'No rationale recorded.';
+            container.appendChild(rationaleText);
+
+            // Citations
+            const citationsLabel = document.createElement('strong');
+            citationsLabel.style.fontSize = '0.75rem';
+            citationsLabel.style.textTransform = 'uppercase';
+            citationsLabel.style.color = 'var(--navy)';
+            citationsLabel.textContent = 'Passage Citations & Excerpts:';
+            container.appendChild(citationsLabel);
+
+            const citationsList = finding.citations || [];
+            if (citationsList.length === 0) {
+                const noCit = document.createElement('p');
+                noCit.style.fontSize = '0.8125rem';
+                noCit.style.color = 'var(--text-secondary)';
+                noCit.style.fontStyle = 'italic';
+                noCit.style.marginTop = '0.25rem';
+                noCit.style.marginBottom = '0.75rem';
+                noCit.textContent = 'No passage citations linked.';
+                container.appendChild(noCit);
+            } else {
+                const citBox = document.createElement('div');
+                citBox.style.marginTop = '0.25rem';
+                citBox.style.marginBottom = '0.75rem';
+
+                citationsList.forEach(c => {
+                    const citItem = document.createElement('div');
+                    citItem.style.marginBottom = '0.5rem';
+
+                    const citHeader = document.createElement('div');
+                    citHeader.style.fontSize = '0.75rem';
+                    citHeader.style.color = 'var(--text-secondary)';
+
+                    const keySpan = document.createElement('strong');
+                    keySpan.style.color = 'var(--teal-dark)';
+                    keySpan.textContent = `[${c.key}] `;
+                    citHeader.appendChild(keySpan);
+
+                    if (c.sectionRef) {
+                        const secSpan = document.createElement('span');
+                        secSpan.textContent = `(${c.sectionRef}) `;
+                        citHeader.appendChild(secSpan);
+                    }
+                    if (c.page != null) {
+                        const pageSpan = document.createElement('span');
+                        pageSpan.textContent = `Page ${c.page}`;
+                        citHeader.appendChild(pageSpan);
+                    }
+
+                    const quote = document.createElement('blockquote');
+                    quote.className = 'citation-quote';
+                    quote.textContent = c.text || '';
+
+                    citItem.appendChild(citHeader);
+                    citItem.appendChild(quote);
+                    citBox.appendChild(citItem);
+                });
+                container.appendChild(citBox);
+            }
+
+            // Actions: Verify & Dispute (only when PENDING), otherwise show Review info
+            const actionsDiv = document.createElement('div');
+            actionsDiv.style.paddingTop = '0.75rem';
+            actionsDiv.style.borderTop = '1px solid var(--border-color)';
+
+            const revStatus = finding.reviewStatus || 'PENDING';
+            if (revStatus === 'PENDING') {
+                actionsDiv.style.display = 'flex';
+                actionsDiv.style.gap = '0.75rem';
+                actionsDiv.style.alignItems = 'center';
+
+                const verifyBtn = document.createElement('button');
+                verifyBtn.className = 'btn btn-success btn-sm';
+                verifyBtn.textContent = 'Verify';
+                verifyBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    try {
+                        await api.post(`/api/evidence/mappings/${finding.id}/verify`);
+                        await loadVendorReport(currentVendorId);
+                        await loadSummary();
+                    } catch (err) {
+                        alert('Verification failed: ' + err.message);
+                    }
+                });
+
+                const disputeBtn = document.createElement('button');
+                disputeBtn.className = 'btn btn-danger btn-sm';
+                disputeBtn.textContent = 'Dispute';
+                disputeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openDisputeModal(finding.id, req.requirementTitle);
+                });
+
+                actionsDiv.appendChild(verifyBtn);
+                actionsDiv.appendChild(disputeBtn);
+            } else {
+                const reviewBox = document.createElement('div');
+                reviewBox.style.fontSize = '0.8125rem';
+                reviewBox.style.color = 'var(--text-secondary)';
+
+                const reviewer = finding.reviewedBy || 'Reviewer';
+                const dateFormatted = fmtDate(finding.reviewedAt);
+                let label = 'Reviewed';
+                if (revStatus === 'APPROVED') {
+                    label = 'Verified';
+                } else if (revStatus === 'REJECTED' || revStatus === 'EDITED') {
+                    label = 'Disputed';
+                }
+
+                const line = document.createElement('div');
+                line.style.fontWeight = '600';
+                line.style.color = (revStatus === 'APPROVED') ? 'var(--status-green)' : 'var(--navy)';
+                line.textContent = `${label} by ${reviewer} on ${dateFormatted}`;
+                reviewBox.appendChild(line);
+
+                if (finding.reviewerComment && finding.reviewerComment.trim()) {
+                    const commentEl = document.createElement('div');
+                    commentEl.style.marginTop = '0.25rem';
+                    commentEl.style.fontSize = '0.75rem';
+                    commentEl.style.color = 'var(--text-secondary)';
+                    commentEl.style.fontStyle = 'italic';
+                    commentEl.textContent = `Comment: "${finding.reviewerComment}"`;
+                    reviewBox.appendChild(commentEl);
+                }
+
+                actionsDiv.appendChild(reviewBox);
+            }
+
+            container.appendChild(actionsDiv);
+            return container;
+        }
+
+        function setupDisputeModal() {
+            const modal = document.getElementById('dispute-modal');
+            const cancelBtn = document.getElementById('dispute-cancel-btn');
+            const submitBtn = document.getElementById('dispute-submit-btn');
+
+            cancelBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+
+            submitBtn.addEventListener('click', async () => {
+                const mappingId = document.getElementById('dispute-mapping-id').value;
+                const status = document.getElementById('dispute-status-select').value;
+                const comment = document.getElementById('dispute-comment-text').value;
+
+                try {
+                    await api.post(`/api/evidence/mappings/${mappingId}/dispute`, {
+                        status: status || null,
+                        comment: comment || null
+                    });
+                    modal.style.display = 'none';
+                    await loadVendorReport(currentVendorId);
+                    await loadSummary();
+                } catch (err) {
+                    alert('Dispute failed: ' + err.message);
+                }
+            });
+        }
+
+        function openDisputeModal(mappingId, reqTitle) {
+            document.getElementById('dispute-mapping-id').value = mappingId;
+            document.getElementById('dispute-status-select').value = '';
+            document.getElementById('dispute-comment-text').value = '';
+            document.getElementById('dispute-modal-subtitle').textContent = `Requirement: ${reqTitle || 'Assessed Finding'}`;
+            document.getElementById('dispute-modal').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

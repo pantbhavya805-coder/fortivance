@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Incident Assessment</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">Fortivance</a>
+            <span class="brand-subtitle">Operational Resilience & TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents" class="active">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user"></div>
+    </header>
+
+    <main class="main-container">
+        <!-- Security Flags Red Banner -->
+        <div id="flags-banner" style="display: none; background: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; color: #991b1b;">
+            <div style="font-weight: 700; margin-bottom: 0.35rem;">Security Flags Detected:</div>
+            <ul id="flags-list" style="margin-left: 1.25rem; margin-bottom: 0;"></ul>
+        </div>
+
+        <!-- Breadcrumb & Header -->
+        <div style="margin-bottom: 1rem;">
+            <a href="/incidents.html" style="font-size: 0.8125rem; color: var(--teal); text-decoration: none;">&larr; Back to Incident Triage</a>
+        </div>
+
+        <div class="page-header" style="align-items: flex-start;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                    <h1 class="page-title" id="inc-ref" style="margin-bottom: 0;">Incident Assessment</h1>
+                    <span id="inc-sev-badge" class="badge">--</span>
+                    <span id="inc-status-badge" class="badge badge-grey">--</span>
+                    <span id="mock-badge" class="badge badge-ai" style="display: none;">DEMO MOCK DATA ACTIVE</span>
+                </div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                    Origin Vendor: <strong id="inc-vendor" style="color: var(--navy);">--</strong>
+                    | Reported By: <span id="inc-reporter">--</span>
+                </div>
+            </div>
+
+            <!-- Six-Hour Countdown Clock -->
+            <div class="clock-container" id="clock-box" style="min-width: 320px;">
+                <div class="clock-label">RBI 6-Hour Reporting Window</div>
+                <div class="clock-timer" id="clock-display">--:--:--</div>
+                <div class="clock-disclaimer">
+                    Analyst decision required. Fortivance does not determine reportability.
+                </div>
+            </div>
+        </div>
+
+        <!-- Incident Two-Column Triage Grid -->
+        <div class="incident-layout">
+            <!-- Left Column: Source Notice & Extracted Fields -->
+            <div>
+                <!-- Source Notice Card -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>Original Vendor Notice</span>
+                        <span class="badge badge-grey">Monospace Raw</span>
+                    </div>
+                    <pre class="source-text-block" id="source-text">Loading original notice...</pre>
+                </div>
+
+                <!-- Extraction Card -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>AI Extraction Summary</span>
+                        <span class="badge badge-ai" id="extraction-badge">AI-generated &bull; needs review</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.8125rem; margin-bottom: 0.75rem;">
+                        <div><strong>Incident Type:</strong> <span id="ext-type">-</span></div>
+                        <div><strong>Confidence:</strong> <span id="ext-conf">-</span></div>
+                        <div><strong>Detected At:</strong> <span id="ext-detected">-</span></div>
+                        <div><strong>Notified At:</strong> <span id="ext-notified">-</span></div>
+                        <div><strong>Received At:</strong> <span id="ext-received">-</span></div>
+                        <div><strong>Notification Delay:</strong> <span id="ext-delay">-</span></div>
+                    </div>
+                    <div>
+                        <strong style="font-size: 0.8125rem;">Extracted Incident Summary:</strong>
+                        <p id="ext-summary" style="margin-top: 0.25rem; font-size: 0.875rem; color: var(--text-primary); background: #f8fafc; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--border-color);">
+                            -
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Incident Timeline Card -->
+                <div class="card">
+                    <div class="card-title">Incident Event Timeline</div>
+                    <div class="timeline" id="events-timeline">
+                        <p style="font-size: 0.8125rem; color: var(--text-secondary);">No timeline events recorded.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Affected Services, Plan, Actions -->
+            <div>
+                <!-- Affected Services Card -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>Systemic Service Exposure</span>
+                        <span id="services-badge" class="badge">--</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Impact Level</th>
+                                    <th>Tolerance</th>
+                                    <th>Via Applications</th>
+                                </tr>
+                            </thead>
+                            <tbody id="services-tbody">
+                                <tr><td colspan="4" style="text-align: center;">Computing impact...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Proposed Response Plan -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>Draft Response Plan</span>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge badge-ai" id="plan-ai-badge">AI-GENERATED &bull; NEEDS REVIEW</span>
+                            <span id="plan-status-badge" class="badge" style="display: none;"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Response Plan Withheld Banner -->
+                    <div id="plan-withheld-box" style="display: none; padding: 1rem; background: #fee2e2; border: 1px solid #ef4444; border-radius: 4px; margin-bottom: 1rem;">
+                        <p style="color: #991b1b; font-weight: 600; margin-bottom: 0.75rem;">Response plan withheld: verify the sender first</p>
+                        <button id="verify-draft-btn" class="btn btn-primary" style="font-size: 0.8125rem;">Sender verified, draft plan</button>
+                    </div>
+
+                    <div id="plan-container" style="font-size: 0.875rem;">
+                        <p id="plan-situation" style="margin-bottom: 0.75rem; font-weight: 500;"></p>
+                        
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong style="color: var(--navy); font-size: 0.8125rem; text-transform: uppercase;">Immediate Actions Required:</strong>
+                            <ul id="plan-immediate-actions" style="margin-left: 1.25rem; margin-top: 0.25rem;"></ul>
+                        </div>
+
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong style="color: var(--navy); font-size: 0.8125rem; text-transform: uppercase;">Analyst Decision Points:</strong>
+                            <ul id="plan-decisions" style="margin-left: 1.25rem; margin-top: 0.25rem;"></ul>
+                        </div>
+
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong style="color: var(--navy); font-size: 0.8125rem; text-transform: uppercase;">Questions For Vendor:</strong>
+                            <ul id="plan-questions" style="margin-left: 1.25rem; margin-top: 0.25rem;"></ul>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: var(--navy); font-size: 0.8125rem; text-transform: uppercase;">Customer Communication:</strong>
+                            <p id="plan-comm" style="background: #f1f5f9; padding: 0.5rem; border-radius: 4px; margin-top: 0.25rem;"></p>
+                        </div>
+                    </div>
+
+                    <!-- Plan Review & Decision Section -->
+                    <div id="plan-decision-section" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <!-- Approver-Only Actions (ROLE_APPROVER and PENDING) -->
+                        <div id="approver-actions" style="display: none; gap: 0.75rem; align-items: center;">
+                            <button id="approve-btn" class="btn btn-success">Approve Response Plan</button>
+                            <button id="reject-btn" class="btn btn-danger">Reject Plan</button>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary); font-style: italic;">
+                                Head of TPRM approval required.
+                            </span>
+                        </div>
+                        <!-- Review Line for APPROVED or REJECTED -->
+                        <div id="plan-review-line" style="display: none; font-size: 0.875rem; font-weight: 600;"></div>
+                    </div>
+                </div>
+
+                <!-- Open Actions Card -->
+                <div class="card">
+                    <div class="card-title">Remediation Action Items</div>
+                    <div id="actions-list">
+                        <p style="font-size: 0.8125rem; color: var(--text-secondary);">No action items assigned.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        let deadlineTimestamp = null;
+        let clockInterval = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await api.initNav('incidents');
+            const params = new URLSearchParams(window.location.search);
+            const incId = params.get('id') || '1';
+
+            try {
+                const inc = await api.get(`/api/incidents/${incId}`);
+                renderIncident(inc, user, incId);
+            } catch (err) {
+                console.error("Failed to load incident detail", err);
+            }
+        });
+
+        function renderIncident(inc, user, incId) {
+            // Security Flags Red Banner (use textContent)
+            const flagsBanner = document.getElementById('flags-banner');
+            const flagsList = document.getElementById('flags-list');
+            if (inc.flags && inc.flags.length > 0) {
+                flagsList.innerHTML = '';
+                inc.flags.forEach(flag => {
+                    const li = document.createElement('li');
+                    li.textContent = flag;
+                    flagsList.appendChild(li);
+                });
+                flagsBanner.style.display = 'block';
+            } else {
+                flagsBanner.style.display = 'none';
+            }
+
+            document.getElementById('inc-ref').textContent = inc.referenceNo;
+            document.getElementById('inc-vendor').textContent = inc.incidentVendor ? inc.incidentVendor.name : 'Unknown';
+            document.getElementById('inc-reporter').textContent = inc.reportedBy ? inc.reportedBy.name : (inc.senderEmail || 'Vendor Notice');
+
+            // Mock Badge (Task A9)
+            const mockBadge = document.getElementById('mock-badge');
+            if (mockBadge) {
+                mockBadge.style.display = (typeof USE_MOCK !== 'undefined' && USE_MOCK) ? 'inline-block' : 'none';
+            }
+
+            // Severity & Status badges
+            const sevBadge = document.getElementById('inc-sev-badge');
+            sevBadge.textContent = inc.severityReported;
+            sevBadge.className = 'badge ' + (inc.severityReported === 'CRITICAL' ? 'badge-critical' :
+                                            inc.severityReported === 'HIGH' ? 'badge-high' : 'badge-medium');
+
+            document.getElementById('inc-status-badge').textContent = inc.status;
+
+            // Clock Countdown setup
+            if (inc.clock && inc.clock.deadline) {
+                deadlineTimestamp = new Date(inc.clock.deadline).getTime();
+                updateClock();
+                if (clockInterval) clearInterval(clockInterval);
+                clockInterval = setInterval(updateClock, 1000);
+            }
+
+            // Left Column: Source Text
+            document.getElementById('source-text').textContent = inc.sourceText || 'No raw notice text captured.';
+
+            // Left Column: Extraction Details
+            document.getElementById('ext-type').textContent = inc.incidentType || '-';
+            document.getElementById('ext-conf').textContent = inc.extraction ? `${Math.round(inc.extraction.confidence * 100)}% (${inc.extraction.model})` : 'N/A';
+            document.getElementById('ext-detected').textContent = fmtDate(inc.detectedAt);
+            document.getElementById('ext-notified').textContent = fmtDate(inc.notifiedAt);
+            document.getElementById('ext-received').textContent = fmtDate(inc.receivedAt);
+            document.getElementById('ext-delay').textContent = inc.clock ? `${inc.clock.notificationDelayMinutes} mins` : '-';
+            document.getElementById('ext-summary').textContent = inc.summary || '-';
+
+            // Left Column: Timeline Events
+            if (inc.events && inc.events.length > 0) {
+                document.getElementById('events-timeline').innerHTML = inc.events.map(ev => `
+                    <div class="timeline-item">
+                        <div class="timeline-time">${escapeHtml(fmtDate(ev.at))} &bull; <strong>${escapeHtml(ev.actor)}</strong></div>
+                        <div class="timeline-desc">${escapeHtml(ev.description || ev.type)}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Right Column: Affected Services
+            if (inc.impact && inc.impact.services) {
+                document.getElementById('services-badge').textContent = `${inc.impact.summary.disruptedServices} Disrupted / ${inc.impact.summary.services} Exposed`;
+                document.getElementById('services-badge').className = 'badge ' + (inc.impact.summary.disruptedServices > 0 ? 'badge-critical' : 'badge-amber');
+
+                document.getElementById('services-tbody').innerHTML = inc.impact.services.map(s => {
+                    const impact = escapeHtml(s.impactLevel);
+                    return `
+                        <tr>
+                            <td><strong>${escapeHtml(s.name)}</strong><br><small style="color: #64748b;">${escapeHtml(s.code)}</small></td>
+                            <td><span class="badge ${impact === 'DISRUPTED' ? 'badge-disrupted' : 'badge-degraded'}">${impact}</span></td>
+                            <td>${escapeHtml(s.impactToleranceHours)}h</td>
+                            <td><small>${escapeHtml((s.viaApplications || []).join(', '))}</small></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Right Column: Response Plan
+            const planBadge = document.getElementById('plan-status-badge');
+            const aiBadge = document.getElementById('plan-ai-badge');
+            const planWithheldBox = document.getElementById('plan-withheld-box');
+            const planContainer = document.getElementById('plan-container');
+            const decisionSection = document.getElementById('plan-decision-section');
+            const approverSec = document.getElementById('approver-actions');
+            const reviewLine = document.getElementById('plan-review-line');
+
+            const hasPlanWithheld = (inc.events || []).some(ev => ev.type === 'PLAN_WITHHELD');
+            const incidentId = inc.id || incId;
+
+            if (inc.plan) {
+                const status = inc.plan.reviewStatus || 'PENDING';
+                const badgeClass = status === 'APPROVED' ? 'badge-green' :
+                                   status === 'REJECTED' ? 'badge-grey' : 'badge-amber';
+                planBadge.className = 'badge ' + badgeClass;
+                planBadge.textContent = status;
+                planBadge.style.display = 'inline-block';
+
+                if (aiBadge) {
+                    if (status === 'APPROVED') {
+                        aiBadge.textContent = 'AI-GENERATED \u2022 HUMAN-APPROVED';
+                    } else {
+                        aiBadge.textContent = 'AI-GENERATED \u2022 NEEDS REVIEW';
+                    }
+                }
+
+                planWithheldBox.style.display = 'none';
+                planContainer.style.display = 'block';
+
+                const c = inc.plan.content || {};
+                document.getElementById('plan-situation').textContent = c.situationSummary || '';
+                
+                document.getElementById('plan-immediate-actions').innerHTML = (c.immediateActions || []).map(a => `
+                    <li><strong>${escapeHtml(a.title)}</strong> &mdash; <em>${escapeHtml(a.ownerTeam)}</em> (Priority: ${escapeHtml(a.priority)}, Due: ${escapeHtml(a.dueInMinutes)}m)</li>
+                `).join('');
+
+                document.getElementById('plan-decisions').innerHTML = (c.decisionsForAnalyst || []).map(d => `
+                    <li>${escapeHtml(d)}</li>
+                `).join('');
+
+                document.getElementById('plan-questions').innerHTML = (c.questionsForVendor || []).map(q => `
+                    <li>${escapeHtml(q)}</li>
+                `).join('');
+
+                document.getElementById('plan-comm').textContent = c.customerCommunication || 'None planned.';
+
+                // Show Approve and Reject buttons only when user.role === 'APPROVER' and inc.plan.reviewStatus === 'PENDING'
+                if (status === 'PENDING') {
+                    if (user && user.role === 'APPROVER') {
+                        decisionSection.style.display = 'block';
+                        approverSec.style.display = 'flex';
+                        reviewLine.style.display = 'none';
+
+                        document.getElementById('approve-btn').onclick = async () => {
+                            try {
+                                await api.post(`/api/incidents/${incidentId}/plan/approve`);
+                                window.location.reload();
+                            } catch (err) {
+                                alert('Approval failed: ' + err.message);
+                            }
+                        };
+                        document.getElementById('reject-btn').onclick = async () => {
+                            try {
+                                await api.post(`/api/incidents/${incidentId}/plan/reject`);
+                                window.location.reload();
+                            } catch (err) {
+                                alert('Rejection failed: ' + err.message);
+                            }
+                        };
+                    } else {
+                        decisionSection.style.display = 'none';
+                        approverSec.style.display = 'none';
+                        reviewLine.style.display = 'none';
+                    }
+                } else if (status === 'APPROVED' || status === 'REJECTED') {
+                    // When reviewStatus is APPROVED or REJECTED, replace the buttons with a line:
+                    // “Approved by {actor} at {time}” (or “Rejected by …”), taken from the PLAN_APPROVED or PLAN_REJECTED event in inc.events.
+                    decisionSection.style.display = 'block';
+                    approverSec.style.display = 'none';
+                    reviewLine.style.display = 'block';
+
+                    const eventType = status === 'APPROVED' ? 'PLAN_APPROVED' : 'PLAN_REJECTED';
+                    const ev = (inc.events || []).slice().reverse().find(e => e.type === eventType);
+                    const actor = ev && ev.actor ? ev.actor : 'Approver';
+                    const time = ev && ev.at ? fmtDate(ev.at) : '-';
+
+                    if (status === 'APPROVED') {
+                        reviewLine.textContent = `Approved by ${actor} at ${time}`;
+                        reviewLine.style.color = 'var(--status-green)';
+                    } else {
+                        reviewLine.textContent = `Rejected by ${actor} at ${time}`;
+                        reviewLine.style.color = 'var(--text-secondary)';
+                    }
+                } else {
+                    decisionSection.style.display = 'none';
+                }
+            } else if (hasPlanWithheld) {
+                if (aiBadge) aiBadge.textContent = 'AI-GENERATED \u2022 NEEDS REVIEW';
+                planBadge.style.display = 'none';
+                planContainer.style.display = 'none';
+                planWithheldBox.style.display = 'block';
+                decisionSection.style.display = 'none';
+
+                document.getElementById('verify-draft-btn').onclick = async () => {
+                    try {
+                        await api.post(`/api/incidents/${incidentId}/plan`);
+                        window.location.reload();
+                    } catch (err) {
+                        alert('Drafting plan failed: ' + err.message);
+                    }
+                };
+            } else {
+                if (aiBadge) aiBadge.textContent = 'AI-GENERATED \u2022 NEEDS REVIEW';
+                planBadge.style.display = 'none';
+                planContainer.style.display = 'none';
+                planWithheldBox.style.display = 'none';
+                decisionSection.style.display = 'none';
+            }
+
+            // Right Column: Actions
+            if (inc.actions && inc.actions.length > 0) {
+                document.getElementById('actions-list').innerHTML = inc.actions.map(act => `
+                    <div style="padding: 0.5rem; border-left: 3px solid var(--teal); background: #f8fafc; margin-bottom: 0.5rem;">
+                        <div style="font-weight: 600;">${escapeHtml(act.title)}</div>
+                        <div style="font-size: 0.75rem; color: #64748b;">
+                            Team: ${escapeHtml(act.ownerTeam)} &bull; Priority: ${escapeHtml(act.priority)} &bull; Status: <span class="badge badge-grey">${escapeHtml(act.status)}</span>
+                            ${act.dueAt ? `&bull; Due: ${escapeHtml(fmtDate(act.dueAt))}` : ''}
+                            ${act.source === 'AI' ? '<span class="badge badge-ai">AI</span>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateClock() {
+            if (!deadlineTimestamp) return;
+            const now = Date.now();
+            const diffMs = deadlineTimestamp - now;
+            const clockBox = document.getElementById('clock-box');
+            const display = document.getElementById('clock-display');
+
+            clockBox.classList.remove('clock-green', 'clock-amber', 'clock-red', 'clock-grey');
+
+            if (diffMs <= 0) {
+                clockBox.classList.add('clock-grey');
+                display.textContent = 'Window elapsed';
+                return;
+            }
+
+            const totalSec = Math.floor(diffMs / 1000);
+            const hours = Math.floor(totalSec / 3600);
+            const mins = Math.floor((totalSec % 3600) / 60);
+            const secs = totalSec % 60;
+
+            const pad = (n) => String(n).padStart(2, '0');
+            display.textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+
+            if (hours >= 3) {
+                clockBox.classList.add('clock-green');
+            } else if (hours >= 1) {
+                clockBox.classList.add('clock-amber');
+            } else {
+                clockBox.classList.add('clock-red');
+            }
+        }
+    </script>
+</body>
+</html>

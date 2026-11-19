@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Vendor Profile</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">Fortivance</a>
+            <span class="brand-subtitle">Operational Resilience & TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user"></div>
+    </header>
+
+    <main class="main-container">
+        <div class="page-header">
+            <div>
+                <a href="/index.html" style="font-size: 0.8125rem; color: var(--teal); text-decoration: none;">&larr; Back to Dashboard</a>
+                <h1 class="page-title" id="vendor-name" style="margin-top: 0.25rem;">Vendor Profile</h1>
+            </div>
+            <div id="vendor-badges"></div>
+        </div>
+
+        <!-- Flags alert banner if any -->
+        <div id="flags-banner" style="display: none; margin-bottom: 1.25rem;"></div>
+
+        <!-- Vendor Overview Grid -->
+        <div class="card">
+            <div class="card-title">Contract & Risk Metadata</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; font-size: 0.875rem;">
+                <div><strong style="color: var(--text-secondary);">Category:</strong> <span id="v-category">-</span></div>
+                <div><strong style="color: var(--text-secondary);">Country:</strong> <span id="v-country">-</span></div>
+                <div><strong style="color: var(--text-secondary);">Email Domain:</strong> <code id="v-email">-</code></div>
+                <div><strong style="color: var(--text-secondary);">Data Access:</strong> <code id="v-data-access">-</code></div>
+                <div><strong style="color: var(--text-secondary);">Contract Dates:</strong> <span id="v-contract-dates">-</span></div>
+                <div><strong style="color: var(--text-secondary);">Next Review:</strong> <span id="v-next-review">-</span></div>
+                <div><strong style="color: var(--text-secondary);">Outsourcing Scope:</strong> <span id="v-scope">-</span></div>
+                <div><strong style="color: var(--text-secondary);">Active Actions:</strong> <span id="v-open-actions" class="badge badge-grey">0</span></div>
+            </div>
+            <div id="v-scope-note" style="margin-top: 0.75rem; font-size: 0.8125rem; color: var(--text-secondary); background: #f8fafc; padding: 0.5rem; border-radius: 4px; display: none;"></div>
+        </div>
+
+        <!-- Supply Chain Relationships: Parent / Subcontractors -->
+        <div class="card">
+            <div class="card-title">Supply Chain Hierarchy</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <h3 style="font-size: 0.8125rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem;">Direct Contractor (Parent)</h3>
+                    <div id="parent-vendor-info" style="font-size: 0.875rem;">None (Direct Vendor)</div>
+                </div>
+                <div>
+                    <h3 style="font-size: 0.8125rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem;">Subcontractors (4th Parties)</h3>
+                    <div id="subcontractors-list" style="font-size: 0.875rem;">None registered</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dependent Applications -->
+        <div class="card">
+            <div class="card-title">Dependent Bank Applications</div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>App Code</th>
+                            <th>Application Name</th>
+                            <th>Criticality</th>
+                            <th>Owner Team</th>
+                            <th>Dependency Type</th>
+                            <th>Single Point?</th>
+                            <th>Alternative</th>
+                        </tr>
+                    </thead>
+                    <tbody id="apps-tbody">
+                        <tr><td colspan="7" style="text-align: center;">No dependent applications mapped</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Compliance & Evidence Documents -->
+        <div class="card">
+            <div class="card-title">Evidence & Contract Documents</div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Doc ID</th>
+                            <th>Type</th>
+                            <th>Title</th>
+                            <th>Issued On</th>
+                            <th>Valid Until</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docs-tbody">
+                        <tr><td colspan="6" style="text-align: center;">No documents registered</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await api.initNav();
+            const params = new URLSearchParams(window.location.search);
+            const vendorId = params.get('id');
+            if (!vendorId) {
+                alert("No vendor ID provided.");
+                window.location.href = '/index.html';
+                return;
+            }
+
+            try {
+                const p = await api.get(`/api/vendors/${vendorId}/profile`);
+                document.getElementById('vendor-name').textContent = p.name;
+                
+                // Badges
+                const tier = escapeHtml(p.riskTier);
+                const tierClass = tier === 'CRITICAL' ? 'badge-critical' :
+                                  tier === 'HIGH' ? 'badge-high' :
+                                  tier === 'MEDIUM' ? 'badge-medium' : 'badge-low';
+                
+                let badgesHtml = `<span class="badge ${tierClass}">${tier}</span> `;
+                if (p.isMaterial) badgesHtml += `<span class="badge badge-amber">MATERIAL</span> `;
+                if (p.isFourthParty) badgesHtml += `<span class="badge badge-grey">4TH PARTY</span> `;
+                document.getElementById('vendor-badges').innerHTML = badgesHtml;
+
+                // Flags banner
+                const flags = [];
+                if (p.reviewOverdue) flags.push('Next risk review is overdue');
+                if (p.contractExpired) flags.push('Contract validity period has expired');
+                if (p.possibleMisTier) flags.push('CRITICAL WARNING: Possible Mis-tiering detected (Handles sensitive data for critical applications, but marked non-material)');
+                
+                if (flags.length > 0) {
+                    const banner = document.getElementById('flags-banner');
+                    banner.style.display = 'block';
+                    banner.innerHTML = flags.map(f => `
+                        <div style="background: #fee2e2; border-left: 4px solid #dc2626; color: #991b1b; padding: 0.625rem 1rem; margin-bottom: 0.5rem; font-size: 0.8125rem; font-weight: 600;">
+                            ${escapeHtml(f)}
+                        </div>
+                    `).join('');
+                }
+
+                // Metadata
+                document.getElementById('v-category').textContent = p.serviceCategory || '-';
+                document.getElementById('v-country').textContent = p.country || 'India';
+                document.getElementById('v-email').textContent = p.emailDomain || 'None';
+                document.getElementById('v-data-access').textContent = p.dataAccess || 'NONE';
+                document.getElementById('v-contract-dates').textContent = `${fmtDate(p.contractStart)} to ${fmtDate(p.contractEnd)}`;
+                document.getElementById('v-next-review').textContent = fmtDate(p.nextReviewDue);
+                document.getElementById('v-scope').textContent = p.outsourcingScope || 'IN_SCOPE';
+                document.getElementById('v-open-actions').textContent = `${p.openActionsCount} Open`;
+
+                if (p.scopeNote) {
+                    const sn = document.getElementById('v-scope-note');
+                    sn.style.display = 'block';
+                    sn.textContent = `Outsourcing Note: ${p.scopeNote}`;
+                }
+
+                // Parent
+                if (p.parentVendor) {
+                    document.getElementById('parent-vendor-info').innerHTML = `
+                        <strong><a href="/vendor.html?id=${encodeURIComponent(p.parentVendor.id)}">${escapeHtml(p.parentVendor.name)}</a></strong>
+                        <span class="badge badge-grey">${escapeHtml(p.parentVendor.riskTier)}</span>
+                    `;
+                }
+
+                // Subcontractors
+                if (p.subcontractors && p.subcontractors.length > 0) {
+                    document.getElementById('subcontractors-list').innerHTML = p.subcontractors.map(s => `
+                        <div style="margin-bottom: 0.25rem;">
+                            <strong><a href="/vendor.html?id=${encodeURIComponent(s.id)}">${escapeHtml(s.name)}</a></strong>
+                            <span class="badge badge-grey">${escapeHtml(s.riskTier)}</span>
+                        </div>
+                    `).join('');
+                }
+
+                // Apps
+                if (p.applications && p.applications.length > 0) {
+                    document.getElementById('apps-tbody').innerHTML = p.applications.map(a => {
+                        const crit = escapeHtml(a.criticality);
+                        return `
+                            <tr>
+                                <td><code>${escapeHtml(a.code)}</code></td>
+                                <td>${escapeHtml(a.name)}</td>
+                                <td><span class="badge ${crit === 'CRITICAL' ? 'badge-critical' : 'badge-amber'}">${crit}</span></td>
+                                <td>${escapeHtml(a.ownerTeam || '-')}</td>
+                                <td>${escapeHtml(a.dependencyType || '-')}</td>
+                                <td>${a.isSinglePoint ? '<span class="badge badge-red">YES</span>' : 'No'}</td>
+                                <td>${escapeHtml(a.alternativeVendor || 'None registered')}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                // Docs
+                if (p.documents && p.documents.length > 0) {
+                    document.getElementById('docs-tbody').innerHTML = p.documents.map(d => `
+                        <tr>
+                            <td>${escapeHtml(d.id)}</td>
+                            <td><span class="badge badge-grey">${escapeHtml(d.docType)}</span></td>
+                            <td><strong>${escapeHtml(d.title)}</strong></td>
+                            <td>${escapeHtml(fmtDate(d.issuedOn))}</td>
+                            <td>${escapeHtml(fmtDate(d.validUntil))}</td>
+                            <td><span class="badge badge-green">${escapeHtml(d.processingStatus)}</span></td>
+                        </tr>
+                    `).join('');
+                }
+
+            } catch (err) {
+                console.error("Failed to load profile", err);
+            }
+        });
+    </script>
+</body>
+</html>

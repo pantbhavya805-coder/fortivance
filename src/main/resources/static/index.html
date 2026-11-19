@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Dashboard</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">Fortivance</a>
+            <span class="brand-subtitle">Operational Resilience & TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard" class="active">Dashboard</a>
+            <a href="/graph.html" data-nav="graph">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user">
+            <!-- Filled by api.initNav -->
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">Executive Dashboard</h1>
+            <div>
+                <a href="/incidents.html" class="btn btn-primary">View Incidents</a>
+            </div>
+        </div>
+
+        <!-- Six Metric Cards -->
+        <section class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Evidence Coverage</div>
+                <div class="metric-value" id="m-coverage">--%</div>
+                <div class="metric-sub">In-demo requirements met</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Dependency Visibility</div>
+                <div class="metric-value" id="m-visibility">--%</div>
+                <div class="metric-sub">Critical services mapped</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Impact Analysis Speed</div>
+                <div class="metric-value" id="m-impact-time">-- min</div>
+                <div class="metric-sub">Avg to compute impact</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Time to First Action</div>
+                <div class="metric-value" id="m-action-time">-- min</div>
+                <div class="metric-sub">Avg notice to action</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Expired Evidence</div>
+                <div class="metric-value" id="m-expired">--</div>
+                <div class="metric-sub">Docs & reviews overdue</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Open Actions</div>
+                <div class="metric-value" id="m-open-actions">--</div>
+                <div class="metric-sub">Active remediation items</div>
+            </div>
+        </section>
+
+        <!-- Vendors Section -->
+        <section class="card">
+            <div class="card-title">
+                <span>Vendor Risk Registry</span>
+                <span class="badge badge-grey" id="vendor-count">0 Vendors</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table" id="vendors-table">
+                    <thead>
+                        <tr>
+                            <th>Vendor Name</th>
+                            <th>Category</th>
+                            <th>Risk Tier</th>
+                            <th>Outsourcing Scope</th>
+                            <th>Data Access</th>
+                            <th>Next Review</th>
+                            <th>Flags</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendors-tbody">
+                        <tr><td colspan="8" style="text-align:center; padding: 2rem;">Loading vendors...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await api.initNav('dashboard');
+
+            // Load Metrics
+            try {
+                const m = await api.get('/api/metrics');
+                document.getElementById('m-coverage').textContent = m.evidenceCoveragePct != null ? `${m.evidenceCoveragePct}%` : 'N/A';
+                document.getElementById('m-visibility').textContent = m.dependencyVisibilityPct != null ? `${m.dependencyVisibilityPct}%` : 'N/A';
+                document.getElementById('m-impact-time').textContent = m.avgImpactAnalysisMinutes != null ? `${m.avgImpactAnalysisMinutes}m` : 'N/A';
+                document.getElementById('m-action-time').textContent = m.avgTimeToFirstActionMinutes != null ? `${m.avgTimeToFirstActionMinutes}m` : 'N/A';
+                document.getElementById('m-expired').textContent = m.expiredEvidenceCount != null ? m.expiredEvidenceCount : '0';
+                document.getElementById('m-open-actions').textContent = m.openActions != null ? m.openActions : '0';
+            } catch (err) {
+                console.error("Failed to load metrics", err);
+            }
+
+            // Load Vendors
+            try {
+                const vendors = await api.get('/api/vendors');
+                document.getElementById('vendor-count').textContent = `${vendors.length} Vendors`;
+                const tbody = document.getElementById('vendors-tbody');
+                if (!vendors || vendors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No vendors registered</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = vendors.map(v => {
+                    const tier = escapeHtml(v.riskTier);
+                    const tierClass = tier === 'CRITICAL' ? 'badge-critical' :
+                                      tier === 'HIGH' ? 'badge-high' :
+                                      tier === 'MEDIUM' ? 'badge-medium' : 'badge-low';
+                    
+                    const scopeBadge = v.outsourcingScope === 'EXCLUDED' ?
+                        `<span class="badge badge-grey" title="${escapeHtml(v.scopeNote || '')}">EXCLUDED</span>` :
+                        `<span class="badge badge-green">IN SCOPE</span>`;
+
+                    let flags = [];
+                    if (v.reviewOverdue) flags.push('<span class="badge badge-red">Review Overdue</span>');
+                    if (v.contractExpired) flags.push('<span class="badge badge-amber">Contract Expired</span>');
+                    if (v.fourthParty) flags.push('<span class="badge badge-grey">4th Party</span>');
+
+                    return `
+                        <tr>
+                            <td><strong><a href="/vendor.html?id=${encodeURIComponent(v.id)}">${escapeHtml(v.name)}</a></strong></td>
+                            <td>${escapeHtml(v.serviceCategory || '-')}</td>
+                            <td><span class="badge ${tierClass}">${tier}</span></td>
+                            <td>${scopeBadge}</td>
+                            <td><code>${escapeHtml(v.dataAccess || 'NONE')}</code></td>
+                            <td>${escapeHtml(fmtDate(v.nextReviewDue))}</td>
+                            <td>${flags.join(' ') || '-'}</td>
+                            <td><a href="/vendor.html?id=${encodeURIComponent(v.id)}" class="btn btn-secondary">Profile</a></td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("Failed to load vendors", err);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Dependency Graph</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="/vendor/cytoscape.min.js"></script>
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">Fortivance</a>
+            <span class="brand-subtitle">Operational Resilience & TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph" class="active">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user"></div>
+    </header>
+
+    <main class="main-container">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Dependency & Resilience Graph</h1>
+                <p style="color: var(--text-secondary); font-size: 0.8125rem;">
+                    Service &rarr; Application &rarr; Vendor &rarr; Subcontractor (4th Party)
+                </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <label for="vendor-select" style="font-weight: 600; font-size: 0.8125rem;">Simulate Vendor Incident:</label>
+                <select id="vendor-select" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; min-width: 260px;">
+                    <option value="">-- Complete Bank Graph (Normal) --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="graph-layout">
+            <div id="cy-container"></div>
+            <aside class="card" id="impact-panel">
+                <div class="card-title">Impact Assessment</div>
+                <div id="impact-content">
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                        Select a vendor from the dropdown above to simulate an operational incident and trace systemic exposure across banking services.
+                    </p>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        let cy = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await api.initNav('graph');
+
+            // Load Vendors into dropdown
+            try {
+                const vendors = await api.get('/api/vendors');
+                const sel = document.getElementById('vendor-select');
+                vendors.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.id;
+                    opt.textContent = `${v.name} (${v.riskTier})${v.fourthParty ? ' [4th Party]' : ''}`;
+                    sel.appendChild(opt);
+                });
+
+                sel.addEventListener('change', (e) => {
+                    const vendorId = e.target.value;
+                    loadGraph(vendorId || null);
+                });
+            } catch (err) {
+                console.error("Failed to load vendor dropdown", err);
+            }
+
+            // Initial graph load
+            await loadGraph(null);
+        });
+
+        async function loadGraph(vendorId) {
+            try {
+                let url = '/api/dependencies/graph';
+                if (vendorId) {
+                    url += `?incidentVendorId=${vendorId}`;
+                }
+                const data = await api.get(url);
+                renderCytoscape(data);
+
+                if (vendorId) {
+                    loadImpactReport(vendorId);
+                } else {
+                    document.getElementById('impact-content').innerHTML = `
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                            Select a vendor from the dropdown above to simulate an operational incident and trace systemic exposure across banking services.
+                        </p>
+                    `;
+                }
+            } catch (err) {
+                console.error("Failed to load graph", err);
+            }
+        }
+
+        async function loadImpactReport(vendorId) {
+            try {
+                const rep = await api.get(`/api/impact/vendors/${vendorId}`);
+                const panel = document.getElementById('impact-content');
+
+                const servicesHtml = rep.services.map(s => {
+                    const impact = escapeHtml(s.impactLevel);
+                    return `
+                        <div style="margin-bottom: 0.5rem; padding: 0.5rem; background: ${impact === 'DISRUPTED' ? '#fee2e2' : '#fef3c7'}; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.8125rem;">
+                                <span>${escapeHtml(s.name)}</span>
+                                <span class="badge ${impact === 'DISRUPTED' ? 'badge-disrupted' : 'badge-degraded'}">${impact}</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: #475569; margin-top: 0.25rem;">
+                                Tolerance: ${escapeHtml(s.impactToleranceHours || 'N/A')}h | Via: ${escapeHtml((s.viaApplications || []).join(', '))}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                panel.innerHTML = `
+                    <div style="margin-bottom: 1rem;">
+                        <span class="badge ${rep.summary.disruptedServices > 0 ? 'badge-critical' : 'badge-amber'}">
+                            ${escapeHtml(rep.summary.disruptedServices)} Disrupted / ${escapeHtml(rep.summary.services)} Exposed
+                        </span>
+                    </div>
+                    <div style="font-size: 0.8125rem; margin-bottom: 1rem;">
+                        <div><strong>Critical Services:</strong> ${escapeHtml(rep.summary.criticalServices)}</div>
+                        <div><strong>Tightest Tolerance:</strong> ${escapeHtml(rep.summary.tightestImpactToleranceHours != null ? rep.summary.tightestImpactToleranceHours + 'h' : 'N/A')}</div>
+                        <div><strong>Single Points of Failure:</strong> ${escapeHtml(rep.summary.singlePointsOfFailure)}</div>
+                    </div>
+                    <div class="card-title" style="font-size: 0.875rem; margin-top: 1rem;">Exposed Business Services</div>
+                    ${servicesHtml || '<p style="font-size: 0.8125rem; color: #64748b;">No direct service impact.</p>'}
+                `;
+            } catch (err) {
+                console.error("Failed to load impact report", err);
+            }
+        }
+
+        function renderCytoscape(graphData) {
+            // Calculate column-based positions for clean left-to-right presentation
+            // Column 0: SERVICE, Column 1: APPLICATION, Column 2: VENDOR, Column 3: FOURTH_PARTY
+            const counts = { SERVICE: 0, APPLICATION: 0, VENDOR: 0, FOURTH_PARTY: 0 };
+            const colX = { SERVICE: 80, APPLICATION: 380, VENDOR: 680, FOURTH_PARTY: 980 };
+
+            const elements = [
+                ...graphData.nodes.map(n => {
+                    const type = n.data.type || 'VENDOR';
+                    const idx = counts[type] || 0;
+                    counts[type] = idx + 1;
+                    return {
+                        data: n.data,
+                        position: {
+                            x: colX[type] || 500,
+                            y: 80 + (idx * 90)
+                        }
+                    };
+                }),
+                ...graphData.edges
+            ];
+
+            if (cy) {
+                cy.destroy();
+            }
+
+            cy = cytoscape({
+                container: document.getElementById('cy-container'),
+                elements: elements,
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'label': 'data(label)',
+                            'font-size': '11px',
+                            'font-family': 'sans-serif',
+                            'font-weight': 600,
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'text-wrap': 'wrap',
+                            'text-max-width': '120px',
+                            'color': '#ffffff',
+                            'background-color': '#1e3a5f',
+                            'border-width': 2,
+                            'border-color': '#0f2744',
+                            'width': '130px',
+                            'height': '45px',
+                            'shape': 'round-rectangle'
+                        }
+                    },
+                    {
+                        selector: 'node[type = "SERVICE"]',
+                        style: { 'background-color': '#0f2744' }
+                    },
+                    {
+                        selector: 'node[type = "APPLICATION"]',
+                        style: { 'background-color': '#0d9488' }
+                    },
+                    {
+                        selector: 'node[type = "VENDOR"]',
+                        style: { 'background-color': '#2563eb' }
+                    },
+                    {
+                        selector: 'node[type = "FOURTH_PARTY"]',
+                        style: { 'background-color': '#7c3aed' }
+                    },
+                    {
+                        selector: 'node[?affected]',
+                        style: {
+                            'background-color': '#dc2626',
+                            'border-color': '#7f1d1d',
+                            'border-width': 3,
+                            'color': '#ffffff'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#cbd5e1',
+                            'target-arrow-color': '#94a3b8',
+                            'target-arrow-shape': 'triangle',
+                            'curve-style': 'bezier',
+                            'arrow-scale': 0.8
+                        }
+                    },
+                    {
+                        selector: 'edge[?affected]',
+                        style: {
+                            'width': 3.5,
+                            'line-color': '#dc2626',
+                            'target-arrow-color': '#dc2626',
+                            'z-index': 10
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'preset',
+                    padding: 30
+                }
+            });
+
+            cy.fit(null, 40);
+        }
+    </script>
+</body>
+</html>

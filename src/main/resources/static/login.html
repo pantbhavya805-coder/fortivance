@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Sign In</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="brand">
+            <h1>Fortivance</h1>
+            <p class="subtitle">Operational Resilience &amp; TPRM</p>
+        </div>
+
+        <!-- Logout Banner -->
+        <div class="auth-banner banner-info" id="logout-banner">
+            You have been logged out successfully.
+        </div>
+
+        <!-- Error Banner -->
+        <div class="auth-banner banner-error" id="error-banner">
+            Invalid username or password. Please try again.
+        </div>
+
+        <form action="/login" method="post" class="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus autocomplete="username" placeholder="e.g. analyst">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </form>
+
+        <div class="auth-help">
+            <div style="font-weight: 500; color: var(--navy); margin-bottom: 0.25rem;">Authorized Banking Personnel Only</div>
+            <div>Demo accounts: <code>analyst</code> or <code>approver</code> (Password: <code>Fortivance@2026</code>)</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('logout')) {
+                const banner = document.getElementById('logout-banner');
+                if (banner) banner.style.display = 'block';
+            } else if (params.has('error')) {
+                const banner = document.getElementById('error-banner');
+                if (banner) banner.style.display = 'block';
+            } else {
+                // If user is already authenticated and pressed back into login,
+                // bounce them back to the application so they don't see the login form
+                fetch('/api/me', { credentials: 'include' })
+                    .then(res => {
+                        if (res.ok) {
+                            window.location.replace('/index.html');
+                        }
+                    })
+                    .catch(() => {});
+            }
+
+            // Also check on bfcache restore
+            window.addEventListener('pageshow', function() {
+                const p = new URLSearchParams(window.location.search);
+                if (!p.has('logout') && !p.has('error')) {
+                    fetch('/api/me', { credentials: 'include' })
+                        .then(res => {
+                            if (res.ok) {
+                                window.location.replace('/index.html');
+                            }
+                        })
+                        .catch(() => {});
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

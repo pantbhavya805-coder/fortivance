@@ -41,6 +41,15 @@ public class Vendor {
     @Column(nullable = false, length = 60)
     private String country;
 
+    @Column(name = "email_domain", length = 120)
+    private String emailDomain;
+
+    @Column(name = "outsourcing_scope", nullable = false, length = 20)
+    private String outsourcingScope = "IN_SCOPE";
+
+    @Column(name = "scope_note", length = 300)
+    private String scopeNote;
+
     @Column(name = "data_access", nullable = false, length = 30)
     private String dataAccess;
 
@@ -75,9 +84,13 @@ public class Vendor {
     public String getRiskTier() { return riskTier; }
     public boolean isMaterial() { return material; }
     public String getCountry() { return country; }
+    public String getEmailDomain() { return emailDomain; }
+    public String getOutsourcingScope() { return outsourcingScope; }
+    public String getScopeNote() { return scopeNote; }
     public String getDataAccess() { return dataAccess; }
     public LocalDate getContractStart() { return contractStart; }
     public LocalDate getContractEnd() { return contractEnd; }
+    public boolean isContractExpired() { return contractEnd != null && contractEnd.isBefore(LocalDate.now()); }
     public LocalDate getLastAssessedOn() { return lastAssessedOn; }
     public LocalDate getNextReviewDue() { return nextReviewDue; }
     public boolean isReviewOverdue() { return nextReviewDue != null && nextReviewDue.isBefore(LocalDate.now()); }
