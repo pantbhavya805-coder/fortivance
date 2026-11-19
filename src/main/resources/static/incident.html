@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fortivance - Incident Assessment</title>
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/ai-loader.css">
 </head>
 <body>
     <header class="header-nav">
@@ -17,6 +18,8 @@
             <a href="/graph.html" data-nav="graph">Dependency Graph</a>
             <a href="/incidents.html" data-nav="incidents" class="active">Incidents</a>
             <a href="/evidence.html" data-nav="evidence">Evidence</a>
+            <a href="/eval.html" data-nav="eval">Evaluation</a>
+            <a href="/about.html" data-nav="about">About</a>
         </nav>
         <div class="nav-user-section" id="nav-user"></div>
     </header>
@@ -223,6 +226,7 @@
     </main>
 
     <script src="/js/api.js"></script>
+    <script src="/js/ai-loader.js"></script>
     <script>
         let deadlineTimestamp = null;
         let clockInterval = null;
@@ -344,8 +348,13 @@
 
                 if (aiBadge) {
                     if (status === 'APPROVED') {
+                        aiBadge.className = 'badge badge-ai';
                         aiBadge.textContent = 'AI-GENERATED \u2022 HUMAN-APPROVED';
+                    } else if (status === 'REJECTED') {
+                        aiBadge.className = 'badge badge-grey';
+                        aiBadge.textContent = 'AI-GENERATED \u2022 REJECTED';
                     } else {
+                        aiBadge.className = 'badge badge-ai';
                         aiBadge.textContent = 'AI-GENERATED \u2022 NEEDS REVIEW';
                     }
                 }
@@ -421,22 +430,32 @@
                     decisionSection.style.display = 'none';
                 }
             } else if (hasPlanWithheld) {
-                if (aiBadge) aiBadge.textContent = 'AI-GENERATED \u2022 NEEDS REVIEW';
+                if (aiBadge) {
+                    aiBadge.className = 'badge badge-ai';
+                    aiBadge.textContent = 'AI-GENERATED \u2022 NEEDS REVIEW';
+                }
                 planBadge.style.display = 'none';
                 planContainer.style.display = 'none';
                 planWithheldBox.style.display = 'block';
                 decisionSection.style.display = 'none';
 
-                document.getElementById('verify-draft-btn').onclick = async () => {
+                const verifyDraftBtn = document.getElementById('verify-draft-btn');
+                verifyDraftBtn.onclick = async () => {
+                    verifyDraftBtn.disabled = true;
                     try {
-                        await api.post(`/api/incidents/${incidentId}/plan`);
+                        await AiLoader.run(() => api.post(`/api/incidents/${incidentId}/plan`), 'responsePlan');
                         window.location.reload();
                     } catch (err) {
                         alert('Drafting plan failed: ' + err.message);
+                    } finally {
+                        verifyDraftBtn.disabled = false;
                     }
                 };
             } else {
-                if (aiBadge) aiBadge.textContent = 'AI-GENERATED \u2022 NEEDS REVIEW';
+                if (aiBadge) {
+                    aiBadge.className = 'badge badge-ai';
+                    aiBadge.textContent = 'AI-GENERATED \u2022 NEEDS REVIEW';
+                }
                 planBadge.style.display = 'none';
                 planContainer.style.display = 'none';
                 planWithheldBox.style.display = 'none';
@@ -478,14 +497,13 @@
                 badge.style.display = 'none';
                 btn.onclick = async () => {
                     btn.disabled = true;
-                    btn.textContent = 'Drafting...';
                     try {
-                        await api.post(`/api/incidents/${inc.id}/escalation`);
+                        await AiLoader.run(() => api.post(`/api/incidents/${inc.id}/escalation`), 'escalation');
                         window.location.reload();
                     } catch (err) {
                         alert('Drafting escalation note failed: ' + err.message);
+                    } finally {
                         btn.disabled = false;
-                        btn.textContent = 'Draft escalation note';
                     }
                 };
                 return;
