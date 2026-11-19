@@ -74,6 +74,13 @@ chmod 600 .env
 All of `SITE_ADDRESS`, `ANTHROPIC_API_KEY`, `DB_PASSWORD` and `DB_ROOT_PASSWORD` must be set; the compose file
 has no fallback for them. Optional: `ANTHROPIC_MODEL` (defaults to `claude-sonnet-5-5`).
 
+Contact form (the About page sends messages to the domain mailbox; see "Domain email and contact form" below):
+```
+MAIL_USERNAME=admin@fortivance.in
+MAIL_PASSWORD=<the mailbox password>
+CONTACT_TO=admin@fortivance.in
+```
+
 `SITE_ADDRESS` is the address Caddy serves:
 - `fortivance.example.com` (your domain): HTTPS with an automatic Let's Encrypt certificate, and HTTP
   redirected to HTTPS.
@@ -107,6 +114,24 @@ result cache, so re-uploading the demo notices costs no extraction tokens. The s
 Demo files to upload afterwards:
 - `sample-docs/incident-notices/` (three vendor notices)
 - `sample-docs/test-inputs/INJECTION-TEST-notice.md` (prompt-injection test; the plan should be withheld)
+
+## Domain email and contact form
+
+The mailbox `admin@fortivance.in` is GoDaddy Professional Email (Titan, Pro Light).
+
+1. Send a test email from another account to `admin@fortivance.in` and check it arrives in webmail.
+2. Put `MAIL_USERNAME`, `MAIL_PASSWORD` and `CONTACT_TO` in `.env` on the server (never in the repository).
+3. Recreate the app: `docker compose -f docker-compose.prod.yml up -d --build app`.
+4. Open `https://fortivance.in/about.html#contact`, send a message, and check it arrives in the mailbox.
+   Replying to it goes to the visitor (their address is set as Reply-To).
+
+SMTP defaults: `smtpout.secureserver.net`, port 465 (SSL), full email address as the username. If the login is
+rejected, set `MAIL_HOST=smtp.titan.email` in `.env` and recreate the app. Errors appear in
+`docker compose -f docker-compose.prod.yml logs app | grep -i contact`.
+
+The endpoint (`POST /api/contact`) is public. It drops submissions that fill the hidden honeypot field and
+allows 5 messages per IP per hour (`CONTACT_MAX_PER_HOUR`). Without `MAIL_USERNAME` it answers 503 and the rest
+of the app runs normally.
 
 ## No domain yet
 

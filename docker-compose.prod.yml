@@ -35,6 +35,11 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
+      MAIL_HOST: ${MAIL_HOST:-smtpout.secureserver.net}
+      MAIL_PORT: ${MAIL_PORT:-465}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      CONTACT_TO: ${CONTACT_TO:-}
       JAVA_TOOL_OPTIONS: "-Xmx768m"
       SERVER_FORWARD_HEADERS_STRATEGY: framework
     expose:

@@ -17,6 +17,18 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  # Contact form SMTP (GoDaddy Titan mailbox). Credentials come only from the environment.
+  mail:
+    host: ${MAIL_HOST:smtpout.secureserver.net}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.ssl.enable: true
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
 
 anthropic:
   api-key: ${ANTHROPIC_API_KEY:}
@@ -24,8 +36,15 @@ anthropic:
 
 fortivance:
   sample-docs-path: ${SAMPLE_DOCS_PATH:./sample-docs}
+  contact:
+    to: ${CONTACT_TO:${MAIL_USERNAME:}}
+    max-per-hour: ${CONTACT_MAX_PER_HOUR:5}
 
 management:
+  health:
+    mail:
+      enabled: false   # a mail outage must not mark the app unhealthy
+
   endpoints:
     web:
       exposure:

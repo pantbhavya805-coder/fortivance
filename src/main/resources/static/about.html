@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fortivance - About</title>
     <link rel="stylesheet" href="/css/app.css">
     <link rel="stylesheet" href="/css/ai-loader.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <style>
         .about-hero {
             background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
@@ -14,70 +16,310 @@
             padding: 2.75rem 2.5rem;
             margin-bottom: 1.75rem;
         }
+
         .about-hero .eyebrow {
-            font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
-            color: var(--teal-light); font-weight: 600; margin-bottom: 0.75rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--teal-light);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
         }
-        .about-hero h1 { font-size: 2rem; line-height: 1.25; margin-bottom: 0.9rem; max-width: 760px; }
-        .about-hero p { font-size: 1.02rem; line-height: 1.65; color: #dbe4ee; max-width: 760px; }
-        .about-hero .hero-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
-        .about-hero .btn-secondary { background: transparent; color: #fff; border-color: rgba(255,255,255,0.45); }
 
-        .about-section { margin-bottom: 2.25rem; }
-        .about-section > h2 { font-size: 1.3rem; color: var(--navy); margin-bottom: 0.4rem; }
-        .about-section > .lead { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.1rem; max-width: 820px; }
+        .about-hero h1 {
+            font-size: 2rem;
+            line-height: 1.25;
+            margin-bottom: 0.9rem;
+            max-width: 760px;
+        }
 
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
-        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .about-hero p {
+            font-size: 1.02rem;
+            line-height: 1.65;
+            color: #dbe4ee;
+            max-width: 760px;
+        }
 
-        .stat-card { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.35rem; }
-        .stat-card .stat { font-size: 2.1rem; font-weight: 700; color: var(--navy); line-height: 1.1; }
-        .stat-card .stat-text { margin-top: 0.5rem; line-height: 1.5; font-size: 0.9rem; }
-        .stat-card .stat-source { margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); }
-        .stat-card .stat-source a { color: var(--text-secondary); }
+        .about-hero .hero-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
 
-        .module-card { background: #fff; border: 1px solid var(--border-color); border-top: 3px solid var(--teal); border-radius: 8px; padding: 1.25rem; }
-        .module-card h3 { font-size: 1rem; color: var(--navy); margin-bottom: 0.5rem; }
-        .module-card p { font-size: 0.875rem; line-height: 1.55; color: var(--text-secondary); }
-        .module-card .module-link { display: inline-block; margin-top: 0.75rem; font-size: 0.8125rem; font-weight: 600; color: var(--teal-dark); text-decoration: none; }
+        .about-hero .btn-secondary {
+            background: transparent;
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.45);
+        }
 
-        .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; counter-reset: step; }
-        .flow-step { position: relative; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 1rem 1rem 3rem; font-size: 0.85rem; line-height: 1.5; }
+        .about-section {
+            margin-bottom: 2.25rem;
+        }
+
+        .about-section>h2 {
+            font-size: 1.3rem;
+            color: var(--navy);
+            margin-bottom: 0.4rem;
+        }
+
+        .about-section>.lead {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.1rem;
+            max-width: 820px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.35rem;
+        }
+
+        .stat-card .stat {
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.1;
+        }
+
+        .stat-card .stat-text {
+            margin-top: 0.5rem;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .stat-card .stat-source {
+            margin-top: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stat-card .stat-source a {
+            color: var(--text-secondary);
+        }
+
+        .module-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-top: 3px solid var(--teal);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .module-card h3 {
+            font-size: 1rem;
+            color: var(--navy);
+            margin-bottom: 0.5rem;
+        }
+
+        .module-card p {
+            font-size: 0.875rem;
+            line-height: 1.55;
+            color: var(--text-secondary);
+        }
+
+        .module-card .module-link {
+            display: inline-block;
+            margin-top: 0.75rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--teal-dark);
+            text-decoration: none;
+        }
+
+        .flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.75rem;
+            counter-reset: step;
+        }
+
+        .flow-step {
+            position: relative;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1rem 1rem 3rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
         .flow-step::before {
-            counter-increment: step; content: counter(step);
-            position: absolute; left: 0.9rem; top: 1rem; width: 1.5rem; height: 1.5rem; border-radius: 50%;
-            background: var(--navy); color: #fff; font-size: 0.75rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center;
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0.9rem;
+            top: 1rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            background: var(--navy);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .flow-step strong { display: block; color: var(--navy); margin-bottom: 0.2rem; }
-        .flow-step .who { display: inline-block; margin-top: 0.4rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-        .who-code { color: var(--text-secondary); }
-        .who-ai { color: var(--ai-badge-text); }
-        .who-human { color: var(--status-amber); }
 
-        .live-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
-        .live-card { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.1rem; }
-        .live-card .v { font-size: 1.6rem; font-weight: 700; color: var(--teal-dark); }
-        .live-card .l { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; line-height: 1.4; }
+        .flow-step strong {
+            display: block;
+            color: var(--navy);
+            margin-bottom: 0.2rem;
+        }
 
-        .compare { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; font-size: 0.875rem; }
-        .compare th, .compare td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); vertical-align: top; line-height: 1.5; }
-        .compare th { background: var(--status-grey-bg); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
-        .compare td:first-child { font-weight: 600; color: var(--navy); width: 24%; }
+        .flow-step .who {
+            display: inline-block;
+            margin-top: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
 
-        .principles { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0.75rem; }
-        .principles li { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 1.1rem; font-size: 0.875rem; line-height: 1.55; }
-        .principles li strong { color: var(--navy); display: block; margin-bottom: 0.2rem; }
+        .who-code {
+            color: var(--text-secondary);
+        }
 
-        .note { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
-        .sources { font-size: 0.8rem; line-height: 1.8; color: var(--text-secondary); padding-left: 1.1rem; }
-        .sources a { color: var(--text-secondary); }
+        .who-ai {
+            color: var(--ai-badge-text);
+        }
+
+        .who-human {
+            color: var(--status-amber);
+        }
+
+        .live-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .live-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.1rem;
+        }
+
+        .live-card .v {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--teal-dark);
+        }
+
+        .live-card .l {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+            line-height: 1.4;
+        }
+
+        .compare {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 0.875rem;
+        }
+
+        .compare th,
+        .compare td {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+            line-height: 1.5;
+        }
+
+        .compare th {
+            background: var(--status-grey-bg);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .compare td:first-child {
+            font-weight: 600;
+            color: var(--navy);
+            width: 24%;
+        }
+
+        .principles {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .principles li {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.1rem;
+            font-size: 0.875rem;
+            line-height: 1.55;
+        }
+
+        .principles li strong {
+            color: var(--navy);
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .sources {
+            font-size: 0.8rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            padding-left: 1.1rem;
+        }
+
+        .sources a {
+            color: var(--text-secondary);
+        }
+
+        .contact-form { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.35rem; max-width: 640px; display: grid; gap: 0.9rem; }
+        .contact-form label { display: grid; gap: 0.3rem; font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+        .contact-form input, .contact-form textarea { font: inherit; font-weight: 400; padding: 0.6rem 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .contact-form textarea { min-height: 130px; resize: vertical; }
+        .contact-form .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+        .contact-form .form-status { font-size: 0.85rem; min-height: 1.2em; }
+        .contact-form .form-status.ok { color: var(--status-green); }
+        .contact-form .form-status.err { color: var(--status-red); }
     </style>
 </head>
+
 <body>
     <header class="header-nav">
         <div class="brand-section">
-            <a href="/" class="brand-title">Fortivance</a>
+            <a href="/" class="brand-title">
+                <img src="/images/logo-icon.svg" alt="Fortivance Logo" class="brand-logo">
+                <span>Fortivance</span>
+            </a>
             <span class="brand-subtitle">Operational Resilience &amp; TPRM</span>
         </div>
         <nav class="nav-links" id="nav-links" style="display: none;">
@@ -100,9 +342,12 @@
             <div class="eyebrow">Third-party risk intelligence for Indian banks</div>
             <h1>When a vendor has an incident, know what breaks in your bank before the reporting clock runs out.</h1>
             <p>
-                Fortivance connects vendor incidents, contracts and audit reports to the banking services that depend on them.
-                It shows a third-party risk team which customer services are exposed, how much of the six-hour RBI reporting
-                window is left, and whether the bank holds the contractual evidence regulators expect. AI does the reading and
+                Fortivance connects vendor incidents, contracts and audit reports to the banking services that depend on
+                them.
+                It shows a third-party risk team which customer services are exposed, how much of the six-hour RBI
+                reporting
+                window is left, and whether the bank holds the contractual evidence regulators expect. AI does the
+                reading and
                 drafting; people make every decision.
             </p>
             <div class="hero-actions">
@@ -115,29 +360,38 @@
         <section class="about-section">
             <h2>Why this matters</h2>
             <p class="lead">
-                Banks increasingly run on cloud providers, payment processors and technology vendors, and those vendors run on
-                their own subcontractors. When one link fails, the bank is still accountable to its customers and its regulator.
+                Banks increasingly run on cloud providers, payment processors and technology vendors, and those vendors
+                run on
+                their own subcontractors. When one link fails, the bank is still accountable to its customers and its
+                regulator.
             </p>
             <div class="grid-3">
                 <div class="stat-card">
                     <div class="stat">30%</div>
-                    <div class="stat-text">of confirmed data breaches involved a third party, double the 15% reported a year earlier.</div>
-                    <div class="stat-source">Verizon 2025 Data Breach Investigations Report (global, 12,195 breaches)</div>
+                    <div class="stat-text">of confirmed data breaches involved a third party, double the 15% reported a
+                        year earlier.</div>
+                    <div class="stat-source">Verizon 2025 Data Breach Investigations Report (global, 12,195 breaches)
+                    </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat">93%</div>
-                    <div class="stat-text">of Indian financial institutions surveyed by RBI depend partially or substantially on third parties for core cybersecurity work such as SOC monitoring, cloud security and threat intelligence.</div>
+                    <div class="stat-text">of Indian financial institutions surveyed by RBI depend partially or
+                        substantially on third parties for core cybersecurity work such as SOC monitoring, cloud
+                        security and threat intelligence.</div>
                     <div class="stat-source">RBI Financial Stability Report, June 2026</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat">6 hours</div>
-                    <div class="stat-text">to report a cyber incident to RBI through the DAKSH platform, counted from detection, with CERT-In notified as well. A vendor's late notice eats into that window.</div>
-                    <div class="stat-source">RBI Cybersecurity, Technology Risk, Resilience and Assurance Directions, 31 July 2026</div>
+                    <div class="stat-text">to report a cyber incident to RBI through the DAKSH platform, counted from
+                        detection, with CERT-In notified as well. A vendor's late notice eats into that window.</div>
+                    <div class="stat-source">RBI Cybersecurity, Technology Risk, Resilience and Assurance Directions, 31
+                        July 2026</div>
                 </div>
             </div>
             <p class="note" style="margin-top: 0.9rem;">
                 RBI's outsourcing Directions for commercial banks (28 November 2025) also require a central inventory of
-                outsourced IT services, mapping of dependencies on third parties and their key subcontractors, and contracts that
+                outsourced IT services, mapping of dependencies on third parties and their key subcontractors, and
+                contracts that
                 give the bank and RBI audit rights and timely incident notification.
             </p>
         </section>
@@ -145,31 +399,43 @@
         <!-- The gap -->
         <section class="about-section">
             <h2>The gap Fortivance closes</h2>
-            <p class="lead">Most vendor risk tools answer "is this vendor risky?". During an incident, the questions a bank actually has to answer are different.</p>
+            <p class="lead">Most vendor risk tools answer "is this vendor risky?". During an incident, the questions a
+                bank actually has to answer are different.</p>
             <table class="compare">
                 <thead>
-                    <tr><th>Question</th><th>Typical approach today</th><th>With Fortivance</th></tr>
+                    <tr>
+                        <th>Question</th>
+                        <th>Typical approach today</th>
+                        <th>With Fortivance</th>
+                    </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>Which of our services are affected?</td>
-                        <td>Calls and spreadsheets across IT, operations and vendor management while the clock runs.</td>
-                        <td>Impact traced in seconds from the vendor, through its subcontractors and the bank's applications, to each customer-facing service and its impact tolerance.</td>
+                        <td>Calls and spreadsheets across IT, operations and vendor management while the clock runs.
+                        </td>
+                        <td>Impact traced in seconds from the vendor, through its subcontractors and the bank's
+                            applications, to each customer-facing service and its impact tolerance.</td>
                     </tr>
                     <tr>
                         <td>How much time is left to report?</td>
-                        <td>Worked out by hand, often from the time the notice arrived rather than when the vendor detected the incident.</td>
-                        <td>A live countdown from the vendor's stated detection time, with the vendor's notification delay shown alongside it.</td>
+                        <td>Worked out by hand, often from the time the notice arrived rather than when the vendor
+                            detected the incident.</td>
+                        <td>A live countdown from the vendor's stated detection time, with the vendor's notification
+                            delay shown alongside it.</td>
                     </tr>
                     <tr>
                         <td>Is this notice genuine?</td>
                         <td>Rarely checked under time pressure.</td>
-                        <td>Sender domain checked against the vendor registry; embedded instructions aimed at automated systems are flagged and ignored.</td>
+                        <td>Sender domain checked against the vendor registry; embedded instructions aimed at automated
+                            systems are flagged and ignored.</td>
                     </tr>
                     <tr>
                         <td>Do our contracts actually cover this?</td>
-                        <td>A certificate or SOC 2 report on file is treated as proof, even when it does not cover the contract terms or carves out a subcontractor.</td>
-                        <td>Each requirement mapped to the exact clause that satisfies it, or flagged as missing, with the source text shown for a reviewer to verify.</td>
+                        <td>A certificate or SOC 2 report on file is treated as proof, even when it does not cover the
+                            contract terms or carves out a subcontractor.</td>
+                        <td>Each requirement mapped to the exact clause that satisfies it, or flagged as missing, with
+                            the source text shown for a reviewer to verify.</td>
                     </tr>
                 </tbody>
             </table>
@@ -181,27 +447,33 @@
             <div class="grid-4">
                 <div class="module-card">
                     <h3>Incident intelligence</h3>
-                    <p>Upload a vendor notice. Fortivance extracts the facts, identifies the vendor and any subcontractor involved, computes the impact, starts the reporting clock and drafts a response plan for approval.</p>
+                    <p>Upload a vendor notice. Fortivance extracts the facts, identifies the vendor and any
+                        subcontractor involved, computes the impact, starts the reporting clock and drafts a response
+                        plan for approval.</p>
                     <a class="module-link" href="/incidents.html">Open incidents</a>
                 </div>
                 <div class="module-card">
                     <h3>Dependency intelligence</h3>
-                    <p>A live map of vendors, fourth parties, applications and business services, with single points of failure and fallback options marked.</p>
+                    <p>A live map of vendors, fourth parties, applications and business services, with single points of
+                        failure and fallback options marked.</p>
                     <a class="module-link" href="/graph.html">Open dependency graph</a>
                 </div>
                 <div class="module-card">
                     <h3>Compliance intelligence</h3>
-                    <p>Contracts and assurance reports split into citable clauses and mapped to RBI outsourcing requirements. Analysts verify or dispute each finding; confirmed gaps become actions.</p>
+                    <p>Contracts and assurance reports split into citable clauses and mapped to RBI outsourcing
+                        requirements. Analysts verify or dispute each finding; confirmed gaps become actions.</p>
                     <a class="module-link" href="/evidence.html">Open evidence</a>
                 </div>
                 <div class="module-card">
                     <h3>Vendor intelligence</h3>
-                    <p>Vendor profiles with regulatory scope, overdue reviews, possible mis-tiering, and a rule-based risk score where every point is explained.</p>
+                    <p>Vendor profiles with regulatory scope, overdue reviews, possible mis-tiering, and a rule-based
+                        risk score where every point is explained.</p>
                     <a class="module-link" href="/index.html">Open dashboard</a>
                 </div>
                 <div class="module-card">
                     <h3>Continuous evaluation</h3>
-                    <p>Extraction accuracy, evidence status agreement and citation rejection rates measured against hand-labelled gold data.</p>
+                    <p>Extraction accuracy, evidence status agreement and citation rejection rates measured against
+                        hand-labelled gold data.</p>
                     <a class="module-link" href="/eval.html">Open evaluation</a>
                 </div>
             </div>
@@ -210,29 +482,56 @@
         <!-- How it works -->
         <section class="about-section">
             <h2>How an incident moves through Fortivance</h2>
-            <p class="lead">AI is used only where language has to be read or written. Everything that must be exact is ordinary, testable code.</p>
+            <p class="lead">AI is used only where language has to be read or written. Everything that must be exact is
+                ordinary, testable code.</p>
             <div class="flow">
-                <div class="flow-step"><strong>Read</strong>The notice text is extracted on the server.<span class="who who-code">Code</span></div>
-                <div class="flow-step"><strong>Extract</strong>Vendor, times, incident type and data exposure are pulled out as structured fields.<span class="who who-ai">AI: Claude Haiku</span></div>
-                <div class="flow-step"><strong>Verify and match</strong>Vendor matched to the registry; sender domain checked.<span class="who who-code">Code</span></div>
-                <div class="flow-step"><strong>Trace impact</strong>Vendor chain, applications and services computed from the dependency graph.<span class="who who-code">Code</span></div>
-                <div class="flow-step"><strong>Draft plan</strong>Actions, questions for the vendor and decisions for the analyst.<span class="who who-ai">AI: Claude Sonnet</span></div>
-                <div class="flow-step"><strong>Approve</strong>Head of third-party risk approves or rejects; actions are created only on approval.<span class="who who-human">Human</span></div>
-                <div class="flow-step"><strong>Escalate</strong>Briefing note for leadership drafted from the approved plan.<span class="who who-ai">AI: Claude Haiku</span></div>
+                <div class="flow-step"><strong>Read</strong>The notice text is extracted on the server.<span
+                        class="who who-code">Code</span></div>
+                <div class="flow-step"><strong>Extract</strong>Vendor, times, incident type and data exposure are pulled
+                    out as structured fields.<span class="who who-ai">AI: Claude Haiku</span></div>
+                <div class="flow-step"><strong>Verify and match</strong>Vendor matched to the registry; sender domain
+                    checked.<span class="who who-code">Code</span></div>
+                <div class="flow-step"><strong>Trace impact</strong>Vendor chain, applications and services computed
+                    from the dependency graph.<span class="who who-code">Code</span></div>
+                <div class="flow-step"><strong>Draft plan</strong>Actions, questions for the vendor and decisions for
+                    the analyst.<span class="who who-ai">AI: Claude Sonnet</span></div>
+                <div class="flow-step"><strong>Approve</strong>Head of third-party risk approves or rejects; actions are
+                    created only on approval.<span class="who who-human">Human</span></div>
+                <div class="flow-step"><strong>Escalate</strong>Briefing note for leadership drafted from the approved
+                    plan.<span class="who who-ai">AI: Claude Haiku</span></div>
             </div>
         </section>
 
         <!-- Live numbers -->
         <section class="about-section">
             <h2>Measured in this workspace</h2>
-            <p class="lead">These figures are calculated live from the incidents and evidence in this instance, not estimated.</p>
+            <p class="lead">These figures are calculated live from the incidents and evidence in this instance, not
+                estimated.</p>
             <div class="live-grid">
-                <div class="live-card"><div class="v" id="live-impact">-</div><div class="l">Average time from notice upload to impacted services identified</div></div>
-                <div class="live-card"><div class="v" id="live-action">-</div><div class="l">Average time from notice upload to first assigned action</div></div>
-                <div class="live-card"><div class="v" id="live-visibility">-</div><div class="l">Critical services with mapped vendor dependencies</div></div>
-                <div class="live-card"><div class="v" id="live-coverage">-</div><div class="l">Verified evidence coverage across in-scope vendors</div></div>
-                <div class="live-card"><div class="v" id="live-expired">-</div><div class="l">Expired documents and overdue vendor reviews</div></div>
-                <div class="live-card"><div class="v" id="live-actions">-</div><div class="l">Open remediation actions</div></div>
+                <div class="live-card">
+                    <div class="v" id="live-impact">-</div>
+                    <div class="l">Average time from notice upload to impacted services identified</div>
+                </div>
+                <div class="live-card">
+                    <div class="v" id="live-action">-</div>
+                    <div class="l">Average time from notice upload to first assigned action</div>
+                </div>
+                <div class="live-card">
+                    <div class="v" id="live-visibility">-</div>
+                    <div class="l">Critical services with mapped vendor dependencies</div>
+                </div>
+                <div class="live-card">
+                    <div class="v" id="live-coverage">-</div>
+                    <div class="l">Verified evidence coverage across in-scope vendors</div>
+                </div>
+                <div class="live-card">
+                    <div class="v" id="live-expired">-</div>
+                    <div class="l">Expired documents and overdue vendor reviews</div>
+                </div>
+                <div class="live-card">
+                    <div class="v" id="live-actions">-</div>
+                    <div class="l">Open remediation actions</div>
+                </div>
             </div>
         </section>
 
@@ -240,13 +539,22 @@
         <section class="about-section">
             <h2>How Fortivance uses AI responsibly</h2>
             <ul class="principles">
-                <li><strong>People decide</strong>Every AI output is marked as needing review. Response plans need an approver; evidence findings need an analyst to verify or dispute them.</li>
-                <li><strong>No regulatory verdicts</strong>Fortivance shows the reporting window but never decides whether an incident is reportable and never files a report.</li>
-                <li><strong>Citations that can be checked</strong>The AI may cite only clause identifiers from the document. Fortivance checks that each one exists and shows the original text; anything it cannot verify is sent back for review.</li>
-                <li><strong>Untrusted input stays untrusted</strong>Uploaded notices are treated as data. Instructions hidden inside them are flagged and ignored, and a notice from an unrecognised domain gets no automatic plan.</li>
-                <li><strong>Explainable risk scores</strong>Vendor risk scores are rule-based. Each contributing factor and its points are listed.</li>
-                <li><strong>Controlled cost</strong>Results are cached, every AI call is logged with its token usage, and a daily spending cap is enforced.</li>
-                <li><strong>Measured against gold data</strong>AI outputs for incident extraction, evidence mapping and citations are continuously measured against hand-labelled data on the Evaluation page.</li>
+                <li><strong>People decide</strong>Every AI output is marked as needing review. Response plans need an
+                    approver; evidence findings need an analyst to verify or dispute them.</li>
+                <li><strong>No regulatory verdicts</strong>Fortivance shows the reporting window but never decides
+                    whether an incident is reportable and never files a report.</li>
+                <li><strong>Citations that can be checked</strong>The AI may cite only clause identifiers from the
+                    document. Fortivance checks that each one exists and shows the original text; anything it cannot
+                    verify is sent back for review.</li>
+                <li><strong>Untrusted input stays untrusted</strong>Uploaded notices are treated as data. Instructions
+                    hidden inside them are flagged and ignored, and a notice from an unrecognised domain gets no
+                    automatic plan.</li>
+                <li><strong>Explainable risk scores</strong>Vendor risk scores are rule-based. Each contributing factor
+                    and its points are listed.</li>
+                <li><strong>Controlled cost</strong>Results are cached, every AI call is logged with its token usage,
+                    and a daily spending cap is enforced.</li>
+                <li><strong>Measured against gold data</strong>AI outputs for incident extraction, evidence mapping and
+                    citations are continuously measured against hand-labelled data on the Evaluation page.</li>
             </ul>
         </section>
 
@@ -254,26 +562,68 @@
         <section class="about-section">
             <h2>Who it is for</h2>
             <div class="grid-3">
-                <div class="stat-card"><div class="stat-text"><strong>Third-party risk analysts</strong> who triage vendor notices, review contracts and track remediation.</div></div>
-                <div class="stat-card"><div class="stat-text"><strong>CISO and CRO offices</strong> who need a defensible view of vendor exposure and reporting timelines.</div></div>
-                <div class="stat-card"><div class="stat-text"><strong>Compliance and internal audit</strong> who need traceable evidence of how outsourcing requirements are met.</div></div>
+                <div class="stat-card">
+                    <div class="stat-text"><strong>Third-party risk analysts</strong> who triage vendor notices, review
+                        contracts and track remediation.</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-text"><strong>CISO and CRO offices</strong> who need a defensible view of vendor
+                        exposure and reporting timelines.</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-text"><strong>Compliance and internal audit</strong> who need traceable evidence of
+                        how outsourcing requirements are met.</div>
+                </div>
             </div>
+        </section>
+
+        <!-- Contact -->
+        <section class="about-section" id="contact">
+            <h2>Contact us</h2>
+            <p class="lead">Questions, a pilot, or feedback on the demo? Send a message and we will reply by email.</p>
+            <form class="contact-form" id="contact-form" novalidate>
+                <label>Name
+                    <input type="text" name="name" required maxlength="100" autocomplete="name">
+                </label>
+                <label>Email
+                    <input type="email" name="email" required maxlength="200" autocomplete="email">
+                </label>
+                <label>Message
+                    <textarea name="message" required minlength="10" maxlength="5000"></textarea>
+                </label>
+                <div class="hp" aria-hidden="true">
+                    <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary" id="contact-submit">Send message</button>
+                </div>
+                <div class="form-status" id="contact-status" role="status" aria-live="polite"></div>
+            </form>
         </section>
 
         <!-- Disclaimer and sources -->
         <section class="about-section">
             <h2>About this instance</h2>
             <p class="note">
-                This is a demonstration built on synthetic data. Deccan Meridian Bank Ltd and every vendor, contract, report and
-                incident shown are fictional. Regulatory paragraph references marked "(verify)" should be checked against the
-                official RBI text before being relied on. Fortivance supports analysts; it is not legal or regulatory advice.
+                This is a demonstration built on synthetic data. Deccan Meridian Bank Ltd and every vendor, contract,
+                report and
+                incident shown are fictional. Regulatory paragraph references marked "(verify)" should be checked
+                against the
+                official RBI text before being relied on. Fortivance supports analysts; it is not legal or regulatory
+                advice.
             </p>
             <h2 style="font-size: 1rem; margin-top: 1.25rem;">Sources</h2>
             <ol class="sources">
-                <li><a href="https://www.verizon.com/about/news/2025-data-breach-investigations-report-emea" target="_blank" rel="noopener">Verizon, 2025 Data Breach Investigations Report</a></li>
-                <li><a href="https://www.outlookmoney.com/personal-finance/ai-enabled-cyber-threats-seen-as-biggest-risk-in-the-next-12-months-rbi" target="_blank" rel="noopener">RBI Financial Stability Report, June 2026 (survey findings as reported)</a></li>
-                <li><a href="https://kpmg.com/in/en/insights/2026/09/rbis-technology-focused-master-directions-issued-on-31-july-2026.html" target="_blank" rel="noopener">RBI technology-focused Master Directions, 31 July 2026 (KPMG summary)</a></li>
-                <li><a href="https://rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13139" target="_blank" rel="noopener">RBI (Commercial Banks - Managing Risks in Outsourcing) Directions, 2025</a></li>
+                <li><a href="https://www.verizon.com/about/news/2025-data-breach-investigations-report-emea"
+                        target="_blank" rel="noopener">Verizon, 2025 Data Breach Investigations Report</a></li>
+                <li><a href="https://www.outlookmoney.com/personal-finance/ai-enabled-cyber-threats-seen-as-biggest-risk-in-the-next-12-months-rbi"
+                        target="_blank" rel="noopener">RBI Financial Stability Report, June 2026 (survey findings as
+                        reported)</a></li>
+                <li><a href="https://kpmg.com/in/en/insights/2026/09/rbis-technology-focused-master-directions-issued-on-31-july-2026.html"
+                        target="_blank" rel="noopener">RBI technology-focused Master Directions, 31 July 2026 (KPMG
+                        summary)</a></li>
+                <li><a href="https://rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13139" target="_blank"
+                        rel="noopener">RBI (Commercial Banks - Managing Risks in Outsourcing) Directions, 2025</a></li>
             </ol>
         </section>
     </main>
@@ -289,6 +639,45 @@
         }
         function pct(v) { return v === null || v === undefined ? '-' : Number(v).toFixed(0) + '%'; }
         function num(v) { return v === null || v === undefined ? '-' : String(v); }
+
+        (function initContactForm() {
+            const form = document.getElementById('contact-form');
+            const status = document.getElementById('contact-status');
+            const submit = document.getElementById('contact-submit');
+            function show(msg, ok) {
+                status.textContent = msg;
+                status.className = 'form-status ' + (ok ? 'ok' : 'err');
+            }
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!form.checkValidity()) {
+                    show('Please fill in your name, a valid email and a message of at least 10 characters.', false);
+                    return;
+                }
+                const data = Object.fromEntries(new FormData(form).entries());
+                submit.disabled = true;
+                show('Sending...', true);
+                try {
+                    const res = await window.fetch('/api/contact', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(data)
+                    });
+                    const body = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                        form.reset();
+                        show('Thank you. Your message has been sent.', true);
+                    } else {
+                        show(body.error || 'Your message could not be sent. Please try again later.', false);
+                    }
+                } catch (_) {
+                    show('Network error. Please try again.', false);
+                } finally {
+                    submit.disabled = false;
+                }
+            });
+        })();
 
         (async () => {
             let user = null;
@@ -336,4 +725,5 @@
         })();
     </script>
 </body>
+
 </html>

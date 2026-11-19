@@ -48,11 +48,16 @@ public class SecurityConfig {
                     "/css/**",
                     "/js/**",
                     "/vendor/**",
+                    "/images/**",
+                    "/favicon.svg",
                     "/actuator/health",
+                    "/error",
                     "/favicon.ico"
                 ).permitAll()
                 // Public landing page (about.html) shows these aggregate counts only.
                 .requestMatchers(HttpMethod.GET, "/api/metrics").permitAll()
+                // Public contact form; rate-limited and honeypot-protected in ContactService.
+                .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                 .requestMatchers(approveOrRejectMatcher).hasAnyRole("APPROVER", "ADMIN")
                 .anyRequest().authenticated()
             )
