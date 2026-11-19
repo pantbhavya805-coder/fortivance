@@ -20,6 +20,25 @@ function fmtDate(value) {
 }
 window.fmtDate = fmtDate;
 
+function fmtDay(value) {
+    if (!value) return '-';
+    const str = String(value).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const parts = str.split('-');
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const date = new Date(y, m, d);
+        return date.toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+    return fmtDate(value);
+}
+window.fmtDay = fmtDay;
+
 function escapeHtml(str) {
     if (str == null) return '';
     return String(str)
@@ -34,6 +53,7 @@ window.escapeHtml = escapeHtml;
 const api = {
     escapeHtml,
     fmtDate,
+    fmtDay,
 
     async parseError(res, fallback) {
         if (!res) return fallback;

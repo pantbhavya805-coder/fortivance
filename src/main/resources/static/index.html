@@ -95,6 +95,24 @@
 
     <script src="/js/api.js"></script>
     <script>
+        function fmtDay(value) {
+            if (!value) return '-';
+            const str = String(value).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                const parts = str.split('-');
+                const y = parseInt(parts[0], 10);
+                const m = parseInt(parts[1], 10) - 1;
+                const d = parseInt(parts[2], 10);
+                const date = new Date(y, m, d);
+                return date.toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+            return fmtDate(value);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             await api.initNav('dashboard');
 
@@ -143,7 +161,7 @@
                             <td><span class="badge ${tierClass}">${tier}</span></td>
                             <td>${scopeBadge}</td>
                             <td><code>${escapeHtml(v.dataAccess || 'NONE')}</code></td>
-                            <td>${escapeHtml(fmtDate(v.nextReviewDue))}</td>
+                            <td>${escapeHtml(fmtDay(v.nextReviewDue))}</td>
                             <td>${flags.join(' ') || '-'}</td>
                             <td><a href="/vendor.html?id=${encodeURIComponent(v.id)}" class="btn btn-secondary">Profile</a></td>
                         </tr>

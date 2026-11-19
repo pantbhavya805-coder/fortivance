@@ -42,6 +42,7 @@
                 <div><strong style="color: var(--text-secondary);">Email Domain:</strong> <code id="v-email">-</code></div>
                 <div><strong style="color: var(--text-secondary);">Data Access:</strong> <code id="v-data-access">-</code></div>
                 <div><strong style="color: var(--text-secondary);">Contract Dates:</strong> <span id="v-contract-dates">-</span></div>
+                <div><strong style="color: var(--text-secondary);">Last Assessed:</strong> <span id="v-last-assessed">-</span></div>
                 <div><strong style="color: var(--text-secondary);">Next Review:</strong> <span id="v-next-review">-</span></div>
                 <div><strong style="color: var(--text-secondary);">Outsourcing Scope:</strong> <span id="v-scope">-</span></div>
                 <div><strong style="color: var(--text-secondary);">Active Actions:</strong> <span id="v-open-actions" class="badge badge-grey">0</span></div>
@@ -112,6 +113,24 @@
 
     <script src="/js/api.js"></script>
     <script>
+        function fmtDay(value) {
+            if (!value) return '-';
+            const str = String(value).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                const parts = str.split('-');
+                const y = parseInt(parts[0], 10);
+                const m = parseInt(parts[1], 10) - 1;
+                const d = parseInt(parts[2], 10);
+                const date = new Date(y, m, d);
+                return date.toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+            return fmtDate(value);
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             await api.initNav();
             const params = new URLSearchParams(window.location.search);
@@ -158,8 +177,10 @@
                 document.getElementById('v-country').textContent = p.country || 'India';
                 document.getElementById('v-email').textContent = p.emailDomain || 'None';
                 document.getElementById('v-data-access').textContent = p.dataAccess || 'NONE';
-                document.getElementById('v-contract-dates').textContent = `${fmtDate(p.contractStart)} to ${fmtDate(p.contractEnd)}`;
-                document.getElementById('v-next-review').textContent = fmtDate(p.nextReviewDue);
+                document.getElementById('v-contract-dates').textContent = `${fmtDay(p.contractStart)} to ${fmtDay(p.contractEnd)}`;
+                const lastAssessedEl = document.getElementById('v-last-assessed');
+                if (lastAssessedEl) lastAssessedEl.textContent = fmtDay(p.lastAssessedOn);
+                document.getElementById('v-next-review').textContent = fmtDay(p.nextReviewDue);
                 document.getElementById('v-scope').textContent = p.outsourcingScope || 'IN_SCOPE';
                 document.getElementById('v-open-actions').textContent = `${p.openActionsCount} Open`;
 
@@ -212,8 +233,8 @@
                             <td>${escapeHtml(d.id)}</td>
                             <td><span class="badge badge-grey">${escapeHtml(d.docType)}</span></td>
                             <td><strong>${escapeHtml(d.title)}</strong></td>
-                            <td>${escapeHtml(fmtDate(d.issuedOn))}</td>
-                            <td>${escapeHtml(fmtDate(d.validUntil))}</td>
+                            <td>${escapeHtml(fmtDay(d.issuedOn))}</td>
+                            <td>${escapeHtml(fmtDay(d.validUntil))}</td>
                             <td><span class="badge badge-green">${escapeHtml(d.processingStatus)}</span></td>
                         </tr>
                     `).join('');
