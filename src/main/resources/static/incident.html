@@ -181,6 +181,36 @@
                     </div>
                 </div>
 
+                <!-- Escalation Note (shown after plan approval) -->
+                <div class="card" id="escalation-card" style="display: none;">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Escalation Note</span>
+                        <span class="badge badge-ai" id="escalation-ai-badge" style="display: none;">AI-GENERATED &bull; NEEDS REVIEW</span>
+                    </div>
+                    <div id="escalation-empty" style="font-size: 0.875rem;">
+                        <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">Draft a short note for senior management based on the approved plan.</p>
+                        <button id="escalation-draft-btn" class="btn btn-primary" style="font-size: 0.8125rem;">Draft escalation note</button>
+                    </div>
+                    <div id="escalation-body" style="display: none; font-size: 0.875rem;">
+                        <div style="margin-bottom: 0.5rem;"><strong>Subject:</strong> <span id="esc-subject"></span></div>
+                        <p id="esc-summary" style="background: #f8fafc; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--border-color); margin-bottom: 0.75rem;"></p>
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong>Services at risk:</strong>
+                            <ul id="esc-services" style="margin-left: 1.25rem; margin-top: 0.25rem;"></ul>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong>Decisions needed:</strong>
+                            <ul id="esc-decisions" style="margin-left: 1.25rem; margin-top: 0.25rem;"></ul>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;"><strong>Next update by:</strong> <span id="esc-next"></span></div>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Analyst decision required. Fortivance does not determine reportability.</p>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <button id="escalation-copy-btn" class="btn btn-primary" style="font-size: 0.8125rem;">Copy</button>
+                            <span id="escalation-copy-status" style="font-size: 0.75rem; color: var(--text-secondary);"></span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Open Actions Card -->
                 <div class="card">
                     <div class="card-title">Remediation Action Items</div>
@@ -413,6 +443,8 @@
                 decisionSection.style.display = 'none';
             }
 
+            renderEscalation(inc);
+
             // Right Column: Actions
             if (inc.actions && inc.actions.length > 0) {
                 document.getElementById('actions-list').innerHTML = inc.actions.map(act => `
@@ -426,6 +458,73 @@
                     </div>
                 `).join('');
             }
+        }
+
+        function renderEscalation(inc) {
+            const card = document.getElementById('escalation-card');
+            const approved = inc.plan && inc.plan.reviewStatus === 'APPROVED';
+            if (!approved) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+
+            const empty = document.getElementById('escalation-empty');
+            const body = document.getElementById('escalation-body');
+            const badge = document.getElementById('escalation-ai-badge');
+            const btn = document.getElementById('escalation-draft-btn');
+            const e = inc.escalation;
+
+            if (!e) {
+                empty.style.display = 'block';
+                body.style.display = 'none';
+                badge.style.display = 'none';
+                btn.onclick = async () => {
+                    btn.disabled = true;
+                    btn.textContent = 'Drafting...';
+                    try {
+                        await api.post(`/api/incidents/${inc.id}/escalation`);
+                        window.location.reload();
+                    } catch (err) {
+                        alert('Drafting escalation note failed: ' + err.message);
+                        btn.disabled = false;
+                        btn.textContent = 'Draft escalation note';
+                    }
+                };
+                return;
+            }
+
+            empty.style.display = 'none';
+            body.style.display = 'block';
+            badge.style.display = 'inline-block';
+            document.getElementById('esc-subject').textContent = e.subject || '';
+            document.getElementById('esc-summary').textContent = e.summary || '';
+            document.getElementById('esc-services').innerHTML = (e.servicesAtRisk || []).map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li>None</li>';
+            document.getElementById('esc-decisions').innerHTML = (e.decisionsNeeded || []).map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li>None</li>';
+            document.getElementById('esc-next').textContent = e.nextUpdateBy ? fmtDate(e.nextUpdateBy) : '-';
+
+            document.getElementById('escalation-copy-btn').onclick = async () => {
+                const lines = [
+                    'Subject: ' + (e.subject || ''),
+                    '',
+                    e.summary || '',
+                    '',
+                    'Services at risk:',
+                    ...(e.servicesAtRisk || []).map(s => '- ' + s),
+                    '',
+                    'Decisions needed:',
+                    ...(e.decisionsNeeded || []).map(s => '- ' + s),
+                    '',
+                    'Next update by: ' + (e.nextUpdateBy ? fmtDate(e.nextUpdateBy) : '-'),
+                    '',
+                    'Analyst decision required. Fortivance does not determine reportability.',
+                    'Drafted with AI assistance from a human-approved response plan.'
+                ];
+                const status = document.getElementById('escalation-copy-status');
+                try {
+                    await navigator.clipboard.writeText(lines.join('\n'));
+                    status.textContent = 'Copied to clipboard';
+                } catch (err) {
+                    status.textContent = 'Copy failed: select the text manually';
+                }
+            };
         }
 
         function updateClock() {

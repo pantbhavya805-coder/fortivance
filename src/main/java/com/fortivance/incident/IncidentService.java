@@ -249,6 +249,97 @@ public class IncidentService {
                 Map.of("aiOutputId", outputId, "comment", comment == null ? "" : comment));
     }
 
+    // =================================================================== escalation note
+    /** Haiku drafts a short management note. Allowed only once a human has approved the response plan. */
+    public void draftEscalation(long incidentId, String username) {
+        Map<String, Object> inc = incidentRow(incidentId);
+        Map<String, Object> planRow = latestRow(incidentId, "RESPONSE_PLAN")
+                .filter(r -> "APPROVED".equals(r.get("review_status")))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
+                        "The response plan must be approved before an escalation note is drafted"));
+        JsonNode plan = ai.readJson((String) planRow.get("content_json"));
+        long vendorId = ((Number) inc.get("vendor_id")).longValue();
+        ImpactReport r = impact.analyse(vendorId);
+        LocalDateTime detected = (LocalDateTime) inc.get("detected_at");
+
+        // Only stable facts (no "minutes remaining"), so the input hash and result cache survive a demo reset.
+        ObjectNode facts = om.createObjectNode();
+        ObjectNode n = facts.putObject("incident");
+        n.put("reference_no", (String) inc.get("reference_no"));
+        n.put("type", (String) inc.get("incident_type"));
+        n.put("severity_reported", (String) inc.get("severity_reported"));
+        n.put("summary", (String) inc.get("summary"));
+        n.put("affected_vendor", (String) inc.get("vendor_name"));
+        n.put("reported_by", (String) inc.get("reporter_name"));
+        n.put("detected_at", iso(detected));
+        n.put("notified_at", iso((LocalDateTime) inc.get("notified_at")));
+        n.put("resolved_at", iso((LocalDateTime) inc.get("resolved_at")));
+        latestOutput(incidentId, "INCIDENT_EXTRACTION").ifPresent(e -> {
+            n.set("customer_data_exposure", e.path("customer_data_exposure"));
+            n.set("vendor_next_update_at", e.path("next_update_at"));
+        });
+
+        ObjectNode clock = facts.putObject("rbi_clock");
+        clock.put("starts_at_vendor_detection", iso(detected));
+        clock.put("deadline", iso(detected.plusHours(CLOCK_HOURS)));
+
+        ArrayNode chain = facts.putArray("vendor_chain");
+        r.vendorChain().forEach(v -> chain.add(v.name() + (v.fourthParty() ? " (fourth party)" : "")));
+        ObjectNode sum = facts.putObject("impact_summary");
+        sum.put("services", r.summary().services());
+        sum.put("disrupted_services", r.summary().disruptedServices());
+        ArrayNode svcs = facts.putArray("affected_services");
+        for (ImpactReport.AffectedService s : r.services()) {
+            ObjectNode o = svcs.addObject();
+            o.put("name", s.name()); o.put("criticality", s.criticality()); o.put("impact", s.impactLevel());
+            o.put("impact_tolerance_hours", s.impactToleranceHours());
+        }
+
+        ObjectNode approved = facts.putObject("approved_plan");
+        approved.set("situation_summary", plan.path("situation_summary"));
+        ArrayNode acts = approved.putArray("immediate_actions");
+        plan.path("immediate_actions").forEach(a -> acts.add(a.path("title").asText() + " (" + a.path("owner_team").asText() + ")"));
+        approved.set("decisions_for_analyst", plan.path("decisions_for_analyst"));
+        approved.set("continuity_options", plan.path("continuity_options"));
+
+        AiGateway.AiResult note = ai.run(new AiGateway.Request("ESCALATION_NOTE", fastModel, Prompts.ESCALATION_VERSION,
+                Prompts.ESCALATION_SYSTEM, "<facts>\n" + facts.toPrettyString() + "\n</facts>", Prompts.ESCALATION_TOOL,
+                Prompts.ESCALATION_TOOL_DESC, schema(Prompts.ESCALATION_SCHEMA), 1000, incidentId, null));
+
+        String actor = username == null ? "SYSTEM" : username;
+        event(incidentId, "ESCALATION_DRAFTED", LocalDateTime.now(IST), "AI:" + note.model(),
+                "Escalation note drafted" + (note.fromCache() ? " (cached result)" : ""));
+        audit(actor, "ESCALATION_DRAFTED", incidentId, Map.of("aiOutputId", note.aiOutputId()));
+    }
+
+    /** Code-side checks on the note: services must come from the impact analysis, summary capped at 60 words. */
+    private Map<String, Object> escalationView(Map<String, Object> row, ImpactReport r) {
+        JsonNode c = ai.readJson((String) row.get("content_json"));
+        Set<String> known = new HashSet<>();
+        r.services().forEach(s -> known.add(s.name().toLowerCase(Locale.ROOT)));
+
+        List<String> services = new ArrayList<>(), rejected = new ArrayList<>();
+        c.path("services_at_risk").forEach(s -> (known.contains(s.asText().toLowerCase(Locale.ROOT)) ? services : rejected).add(s.asText()));
+        List<String> decisions = new ArrayList<>();
+        c.path("decisions_needed").forEach(s -> decisions.add(s.asText()));
+
+        String summary = c.path("summary").asText("");
+        String[] words = summary.trim().split("\\s+");
+        if (words.length > 60) summary = String.join(" ", Arrays.copyOf(words, 60)) + " ...";
+
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("aiOutputId", row.get("id"));
+        m.put("model", row.get("model"));
+        m.put("reviewStatus", row.get("review_status"));
+        m.put("subject", c.path("subject").asText(""));
+        m.put("summary", summary);
+        m.put("servicesAtRisk", services);
+        m.put("decisionsNeeded", decisions);
+        m.put("nextUpdateBy", c.path("next_update_by").isTextual() ? c.path("next_update_by").asText() : null);
+        if (!rejected.isEmpty()) m.put("servicesRejected", rejected);
+        return m;
+    }
+
     // =================================================================== reads
     public List<Map<String, Object>> list() {
         List<Map<String, Object>> out = new ArrayList<>();
@@ -318,7 +409,8 @@ public class IncidentService {
         d.put("extraction", extraction);
 
         d.put("flags", jdbc.queryForList("SELECT description FROM incident_events WHERE incident_id = ? AND event_type = 'SECURITY_FLAG' ORDER BY id", String.class, id));
-        d.put("impact", impact.analyse(vendorId));
+        ImpactReport impactReport = impact.analyse(vendorId);
+        d.put("impact", impactReport);
 
         latestRow(id, "RESPONSE_PLAN").ifPresentOrElse(row -> {
             Map<String, Object> plan = new LinkedHashMap<>();
@@ -329,6 +421,7 @@ public class IncidentService {
             plan.put("content", camel(ai.readJson((String) row.get("content_json"))));
             d.put("plan", plan);
         }, () -> d.put("plan", null));
+        d.put("escalation", latestRow(id, "ESCALATION_NOTE").map(row -> escalationView(row, impactReport)).orElse(null));
 
         d.put("actions", jdbc.queryForList("SELECT id, title, owner_team AS ownerTeam, status, priority, source, due_at AS dueAt " +
                 "FROM actions WHERE incident_id = ? ORDER BY id", id));

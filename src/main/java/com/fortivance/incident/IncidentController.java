@@ -60,6 +60,13 @@ public class IncidentController {
         return service.detail(id);
     }
 
+    /** Haiku drafts a management escalation note; allowed only after the response plan is approved. */
+    @PostMapping("/{id}/escalation")
+    public Map<String, Object> escalation(@PathVariable long id, Principal principal) {
+        service.draftEscalation(id, name(principal));
+        return service.detail(id);
+    }
+
     private static String name(Principal p) {
         return p == null ? null : p.getName();
     }
