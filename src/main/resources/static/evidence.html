@@ -71,8 +71,9 @@
                     <span id="detail-vendor-name">Vendor Gap Report</span>
                     <span class="badge" id="detail-vendor-tier" style="margin-left: 0.5rem;">--</span>
                 </div>
-                <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span style="font-size: 0.8125rem; color: var(--text-secondary); margin-right: 0.5rem;" id="detail-coverage-summary"></span>
+                    <a id="export-pack-btn" href="#" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration: none;">Export evidence pack &nearr;</a>
                     <button class="btn btn-secondary btn-sm" id="close-vendor-detail">&times; Close</button>
                 </div>
             </div>
@@ -312,6 +313,11 @@
             const card = document.getElementById('vendor-detail-card');
             const tbody = document.getElementById('requirements-tbody');
             const errorBanner = document.getElementById('evidence-error-banner');
+            const exportBtn = document.getElementById('export-pack-btn');
+
+            if (exportBtn) {
+                exportBtn.href = `/evidence-pack.html?vendor=${encodeURIComponent(vendorId)}`;
+            }
 
             card.style.display = 'block';
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 1.5rem;">Loading vendor gap report...</td></tr>';

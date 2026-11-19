@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortivance - Vendor Evidence Assurance Pack</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <style>
+        /* Printable Evidence Pack Styles */
+        :root {
+            --pack-navy: #0f2744;
+            --pack-teal: #0d9488;
+            --pack-border: #cbd5e1;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Screen toolbar (hidden on print) */
+        .screen-toolbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .screen-toolbar .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .screen-toolbar .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pack-page-wrapper {
+            max-width: 960px;
+            margin: 2rem auto;
+            background: #ffffff;
+            border: 1px solid var(--pack-border);
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+            padding: 3rem 3.5rem;
+        }
+
+        /* Pack Document Header */
+        .pack-header {
+            border-bottom: 2px solid var(--pack-navy);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .pack-bank-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .pack-bank-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--pack-navy);
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+        }
+
+        .pack-bank-subtitle {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-top: 0.15rem;
+        }
+
+        .pack-meta-box {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .pack-doc-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--pack-navy);
+            margin-top: 0.75rem;
+            line-height: 1.25;
+        }
+
+        .pack-doc-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.35rem;
+        }
+
+        /* Section layout */
+        .pack-section {
+            margin-bottom: 2.25rem;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .pack-section-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--pack-navy);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.4rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.25rem;
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-item span, .info-item code {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Scope Banner */
+        .scope-box {
+            padding: 1rem 1.25rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+        .scope-in-scope {
+            background: #f0fdf4;
+            border-color: #86efac;
+            color: #166534;
+        }
+        .scope-excluded {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #475569;
+        }
+
+        /* Risk Scoring Summary */
+        .risk-pack-grid {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 1.5rem;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.25rem;
+        }
+
+        .risk-score-display {
+            text-align: center;
+            padding: 1rem;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .risk-score-num {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--pack-navy);
+            margin: 0.35rem 0;
+        }
+
+        /* Requirement Detail Cards */
+        .req-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: #ffffff;
+            margin-bottom: 1.25rem;
+            padding: 1.25rem;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .req-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 0.6rem;
+        }
+
+        .req-badges {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .req-rationale-box {
+            background: #f8fafc;
+            border-left: 3px solid var(--pack-teal);
+            padding: 0.6rem 0.85rem;
+            font-size: 0.8125rem;
+            margin: 0.6rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .citation-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
+            margin-top: 0.5rem;
+            font-size: 0.8125rem;
+        }
+
+        .citation-header {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--pack-teal);
+            margin-bottom: 0.25rem;
+        }
+
+        .citation-text {
+            font-style: italic;
+            color: #334155;
+            line-height: 1.4;
+            padding-left: 0.5rem;
+            border-left: 2px solid #cbd5e1;
+        }
+
+        .review-audit-box {
+            margin-top: 0.75rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed var(--border-color);
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pack-footer {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            margin-top: 3rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Print Media Styles */
+        @page {
+            size: A4 portrait;
+            margin: 15mm 12mm 15mm 12mm;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-size: 9.5pt !important;
+                line-height: 1.4 !important;
+            }
+
+            .pack-page-wrapper {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .pack-section, .req-card, .info-grid, .risk-pack-grid {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            a[href]:after {
+                content: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Screen Actions Toolbar (Hidden on Print) -->
+    <div class="screen-toolbar no-print">
+        <div class="toolbar-left">
+            <a href="/evidence.html" class="btn btn-secondary btn-sm">&larr; Back to Evidence Assurance</a>
+            <span style="font-weight: 700; color: var(--navy); font-size: 0.9375rem;">Evidence Pack Export</span>
+        </div>
+        <div class="toolbar-right">
+            <span style="font-size: 0.8125rem; color: var(--text-secondary);">Ready for audit export</span>
+            <button onclick="window.print()" class="btn btn-primary btn-sm" id="print-pack-btn">
+                Print / Save as PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Error / Loading Container -->
+    <div id="status-container" style="max-width: 800px; margin: 3rem auto; text-align: center;">
+        <div id="loading-state" class="card" style="padding: 3rem;">
+            <div class="spinner" style="margin: 0 auto 1rem;"></div>
+            <h2 style="color: var(--navy); font-size: 1.125rem;">Compiling Vendor Evidence Pack...</h2>
+            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+                Fetching vendor profile, evidence findings and actions.
+            </p>
+        </div>
+
+        <div id="error-state" class="card" style="display: none; padding: 2rem; border-left: 4px solid #dc2626; text-align: left;">
+            <h2 style="color: #991b1b; font-size: 1.125rem; margin-bottom: 0.5rem;">Unable to Generate Evidence Pack</h2>
+            <p id="error-message" style="color: #4b5563; font-size: 0.875rem; margin-bottom: 1rem;"></p>
+            <a href="/evidence.html" class="btn btn-secondary btn-sm">&larr; Return to Evidence Assurance</a>
+        </div>
+    </div>
+
+    <!-- Printable Dossier Page -->
+    <main class="pack-page-wrapper" id="pack-content" style="display: none;">
+        <!-- Header -->
+        <header class="pack-header">
+            <div class="pack-bank-row">
+                <div>
+                    <div class="pack-bank-title">Deccan Meridian Bank Ltd</div>
+                    <div class="pack-bank-subtitle">Third-Party Risk Management</div>
+                </div>
+                <div class="pack-meta-box">
+                    <div><strong>CLASSIFICATION:</strong> CONFIDENTIAL</div>
+                    <div><strong>REGULATORY REF:</strong> RBI outsourcing Directions</div>
+                    <div><strong>GENERATED:</strong> <span id="meta-generated-at">--</span></div>
+                </div>
+            </div>
+            <div>
+                <h1 class="pack-doc-title" id="pack-doc-heading">Vendor Evidence Assurance Dossier</h1>
+                <p class="pack-doc-subtitle">
+                    Obligation-to-contract evidence mapping and control assurance verification record
+                </p>
+            </div>
+        </header>
+
+        <!-- Section 1: Vendor Profile & Overview -->
+        <section class="pack-section">
+            <div class="pack-section-title">
+                <span>1. Vendor Profile &amp; Governance Details</span>
+                <span class="badge" id="v-tier-badge">--</span>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Vendor Legal Name</label>
+                    <span id="v-name">--</span>
+                </div>
+                <div class="info-item">
+                    <label>Service Category</label>
+                    <span id="v-category">--</span>
+                </div>
+                <div class="info-item">
+                    <label>Country of Operation</label>
+                    <span id="v-country">--</span>
+                </div>
+                <div class="info-item">
+                    <label>Inherent Data Access</label>
+                    <code id="v-data-access">--</code>
+                </div>
+                <div class="info-item">
+                    <label>Materiality Classification</label>
+                    <span id="v-materiality">--</span>
+                </div>
+                <div class="info-item">
+                    <label>Supply Chain Position</label>
+                    <span id="v-chain-position">--</span>
+                </div>
+                <div class="info-item">
+                    <label>Contract Period</label>
+                    <span id="v-contract-period">--</span>
+                </div>
+                <div class="info-item">
+                    <label>Next Scheduled Review</label>
+                    <span id="v-next-review">--</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: RBI Outsourcing Scope Determination -->
+        <section class="pack-section">
+            <div class="pack-section-title">
+                <span>2. RBI Regulatory Outsourcing Scope</span>
+                <span class="badge" id="v-scope-badge">--</span>
+            </div>
+            <div class="scope-box" id="v-scope-box">
+                <div style="font-weight: 700; margin-bottom: 0.35rem;" id="v-scope-heading">Regulatory Scope Determination</div>
+                <p style="font-size: 0.8125rem;" id="v-scope-description">--</p>
+            </div>
+        </section>
+
+        <!-- Section 3: Residual Risk & Factor Breakdown -->
+        <section class="pack-section">
+            <div class="pack-section-title">
+                <span>3. Residual Risk Assessment &amp; Scoring</span>
+                <span style="font-size: 0.8125rem; font-weight: normal; text-transform: none;" id="v-coverage-summary">--</span>
+            </div>
+            <div class="risk-pack-grid">
+                <div class="risk-score-display">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Residual Risk Score</span>
+                    <div class="risk-score-num" id="risk-score-val">--</div>
+                    <span class="badge" id="risk-band-badge">--</span>
+                </div>
+                <div>
+                    <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 0.75rem;" id="risk-method-desc">--</div>
+                    <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--pack-navy); margin-bottom: 0.4rem;">
+                        Contributing Risk Factors:
+                    </div>
+                    <ul class="risk-factors-list" id="risk-factors-list" style="margin-top: 0.25rem;">
+                        <li style="font-size: 0.8125rem; color: var(--text-secondary);">No contributing risk factors.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Obligation-to-Evidence Gap Report -->
+        <section class="pack-section">
+            <div class="pack-section-title">
+                <span>4. Control Requirements &amp; Evidence Assurance Findings</span>
+                <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-secondary);" id="req-count-badge">--</span>
+            </div>
+            <div id="requirements-container">
+                <!-- Dynamically populated requirement cards -->
+            </div>
+        </section>
+
+        <!-- Section 5: Open Remediation Actions -->
+        <section class="pack-section">
+            <div class="pack-section-title">
+                <span>5. Open Remediation Action Items</span>
+                <span class="badge badge-grey" id="actions-count-badge">0 Open</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table" id="actions-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Action ID</th>
+                            <th>Action Item Title</th>
+                            <th>Owner Team</th>
+                            <th style="width: 90px;">Priority</th>
+                            <th style="width: 90px;">Status</th>
+                            <th style="width: 140px;">Due Date (IST)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="actions-tbody">
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No remediation actions recorded.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 6: Registered Assurance Documents -->
+        <section class="pack-section">
+            <div class="pack-section-title">
+                <span>6. Assurance documents on file</span>
+                <span class="badge badge-grey" id="docs-count-badge">0 Documents</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 70px;">Doc ID</th>
+                            <th style="width: 120px;">Document Type</th>
+                            <th>Title</th>
+                            <th style="width: 130px;">Issued On</th>
+                            <th style="width: 130px;">Valid Until</th>
+                            <th style="width: 100px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docs-tbody">
+                        <tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No documents on file.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="pack-footer">
+            <div>
+                <strong>Deccan Meridian Bank Ltd</strong> &bull; Fortivance Third-Party Risk Intelligence
+            </div>
+            <div>
+                Confidential Regulatory Audit Record &bull; Generated <span id="footer-date">--</span>
+            </div>
+        </footer>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        function fmtDay(value) {
+            if (!value) return '-';
+            const str = String(value).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                const parts = str.split('-');
+                const y = parseInt(parts[0], 10);
+                const m = parseInt(parts[1], 10) - 1;
+                const d = parseInt(parts[2], 10);
+                const date = new Date(y, m, d);
+                return date.toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+            return fmtDate(value);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const rawVendor = params.get('vendor') || params.get('id');
+
+            const statusContainer = document.getElementById('status-container');
+            const loadingState = document.getElementById('loading-state');
+            const errorState = document.getElementById('error-state');
+            const errorMessage = document.getElementById('error-message');
+            const packContent = document.getElementById('pack-content');
+
+            // Validate that vendor is a positive integer
+            if (!rawVendor || !/^[1-9]\d*$/.test(String(rawVendor).trim())) {
+                loadingState.style.display = 'none';
+                errorMessage.textContent = "No valid vendor was specified.";
+                errorState.style.display = 'block';
+                return;
+            }
+
+            const vendorId = String(rawVendor).trim();
+
+            try {
+                // Fetch in parallel: vendor profile, evidence gap report, and actions
+                const [profile, evidenceReport, actions] = await Promise.all([
+                    api.get(`/api/vendors/${vendorId}/profile`),
+                    api.get(`/api/evidence/vendors/${vendorId}`),
+                    api.get(`/api/actions?vendorId=${vendorId}`).catch(() => [])
+                ]);
+
+                renderEvidencePack(profile, evidenceReport, actions);
+
+                statusContainer.style.display = 'none';
+                packContent.style.display = 'block';
+            } catch (err) {
+                console.error("Failed to load evidence pack data", err);
+                loadingState.style.display = 'none';
+                errorState.style.display = 'block';
+
+                if (err && (err.status === 404 || (err.message && err.message.includes('404')))) {
+                    errorMessage.textContent = `Vendor ${vendorId} was not found.`;
+                } else {
+                    errorMessage.textContent = "The evidence pack could not be loaded. Please try again.";
+                }
+            }
+        });
+
+        function renderEvidencePack(profile, report, actions) {
+            const v = profile || {};
+            const repVendor = report.vendor || {};
+            const risk = report.risk || {};
+            const reqs = report.requirements || [];
+
+            // Meta Timestamps
+            const now = new Date();
+            const nowFormatted = fmtDate(now);
+            document.getElementById('meta-generated-at').textContent = nowFormatted;
+            document.getElementById('footer-date').textContent = nowFormatted;
+            document.getElementById('pack-doc-heading').textContent = `Evidence Dossier: ${v.name || 'Vendor #' + v.id}`;
+
+            // Section 1: Vendor Profile
+            document.getElementById('v-name').textContent = v.name || '--';
+            document.getElementById('v-category').textContent = v.serviceCategory || '--';
+            document.getElementById('v-country').textContent = v.country || 'India';
+            document.getElementById('v-data-access').textContent = v.dataAccess || 'NONE';
+            document.getElementById('v-materiality').textContent = v.isMaterial ? 'MATERIAL VENDOR' : 'NON-MATERIAL';
+            
+            const tier = v.riskTier || 'UNKNOWN';
+            const tierBadge = document.getElementById('v-tier-badge');
+            tierBadge.textContent = `${tier} RISK`;
+            tierBadge.className = 'badge ' + (tier === 'CRITICAL' ? 'badge-critical' :
+                                             tier === 'HIGH' ? 'badge-high' :
+                                             tier === 'MEDIUM' ? 'badge-medium' : 'badge-grey');
+
+            const is4thParty = v.isFourthParty;
+            const parent = v.parentVendor;
+            let chainText = is4thParty ? '4th Party Subcontractor' : 'Direct Vendor (1st Tier)';
+            if (parent && parent.name) {
+                chainText += ` (Direct Contractor: ${parent.name})`;
+            }
+            document.getElementById('v-chain-position').textContent = chainText;
+
+            const cStart = fmtDay(v.contractStart);
+            const cEnd = fmtDay(v.contractEnd);
+            document.getElementById('v-contract-period').textContent = `${cStart} to ${cEnd}`;
+            document.getElementById('v-next-review').textContent = fmtDay(v.nextReviewDue);
+
+            // Section 2: Outsourcing Scope
+            let rawScope = v.outsourcingScope || repVendor.outsourcing_scope || 'IN_SCOPE';
+            if (!rawScope) rawScope = 'IN_SCOPE';
+            const scope = String(rawScope).toUpperCase();
+
+            const scopeBadge = document.getElementById('v-scope-badge');
+            const scopeBox = document.getElementById('v-scope-box');
+            const scopeHeading = document.getElementById('v-scope-heading');
+            const scopeDesc = document.getElementById('v-scope-description');
+
+            if (scope === 'EXCLUDED') {
+                scopeBadge.className = 'badge badge-grey';
+                scopeBadge.textContent = 'EXCLUDED';
+                scopeBox.className = 'scope-box scope-excluded';
+                scopeHeading.textContent = 'Outsourcing scope: excluded';
+                scopeDesc.textContent = v.scopeNote || repVendor.scope_note || 'This vendor has been assessed as exempt from mandatory IT Outsourcing directions.';
+            } else if (scope === 'UNDER_REVIEW') {
+                scopeBadge.className = 'badge badge-amber';
+                scopeBadge.textContent = 'SCOPE UNDER REVIEW';
+                scopeBox.className = 'scope-box';
+                scopeHeading.textContent = 'Outsourcing scope: under review';
+                scopeDesc.textContent = (v.scopeNote || repVendor.scope_note) ? (v.scopeNote || repVendor.scope_note) : 'Scope determination under the RBI outsourcing Directions is pending analyst review.';
+            } else {
+                // IN_SCOPE or default
+                scopeBadge.className = 'badge badge-green';
+                scopeBadge.textContent = 'IN SCOPE';
+                scopeBox.className = 'scope-box scope-in-scope';
+                scopeHeading.textContent = 'Outsourcing scope: in scope';
+                scopeDesc.textContent = 'In scope of the RBI outsourcing Directions. Evidence is assessed against the requirement set shown in section 4.';
+            }
+
+            // Section 3: Residual Risk
+            const isExcluded = scope === 'EXCLUDED';
+            const covPct = report.coveragePct != null ? `${report.coveragePct}%` : '--%';
+            const verPct = report.verifiedCoveragePct != null ? `${report.verifiedCoveragePct}%` : '--%';
+            document.getElementById('v-coverage-summary').textContent = isExcluded
+                ? 'Assurance Coverage: N/A (Excluded)'
+                : `Assurance Coverage: ${covPct} (${verPct} verified)`;
+
+            document.getElementById('risk-score-val').textContent = risk.score != null ? `${risk.score} / 100` : '--';
+            const band = risk.band || 'LOW';
+            const bandBadge = document.getElementById('risk-band-badge');
+            bandBadge.textContent = `${band} RESIDUAL RISK`;
+            bandBadge.className = 'badge ' + (band === 'HIGH' ? 'badge-red' : (band === 'MEDIUM' ? 'badge-amber' : 'badge-green'));
+
+            document.getElementById('risk-method-desc').textContent = risk.method || 'Rule-based scoring based on inherent risk, data access, overdue reviews, and evidence gaps.';
+
+            const factorsList = document.getElementById('risk-factors-list');
+            factorsList.innerHTML = '';
+            const factors = risk.factors || [];
+            if (factors.length === 0) {
+                factorsList.innerHTML = '<li style="font-size: 0.8125rem; color: var(--text-secondary);">No contributing risk factors recorded.</li>';
+            } else {
+                factors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.className = 'risk-factor-item';
+
+                    const desc = document.createElement('span');
+                    desc.textContent = f.factor || '';
+
+                    const pts = document.createElement('span');
+                    pts.className = 'badge badge-grey';
+                    pts.textContent = `+${f.points} pts`;
+
+                    li.appendChild(desc);
+                    li.appendChild(pts);
+                    factorsList.appendChild(li);
+                });
+            }
+
+            // Section 4: Control Requirements & Evidence
+            document.getElementById('req-count-badge').textContent = `${reqs.length} Requirements Assessed`;
+            const reqsContainer = document.getElementById('requirements-container');
+            reqsContainer.innerHTML = '';
+
+            if (reqs.length === 0) {
+                reqsContainer.innerHTML = '<div class="req-card" style="text-align: center; color: var(--text-secondary);">No compliance requirements mapped for this vendor.</div>';
+            } else {
+                reqs.forEach((r, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'req-card';
+
+                    const status = r.status || 'NOT_ASSESSED';
+                    const statusClass = status === 'FOUND' ? 'badge-green' :
+                                        status === 'PARTIAL' ? 'badge-amber' :
+                                        status === 'MISSING' ? 'badge-red' : 'badge-grey';
+
+                    const sourceRef = (r.sourceReference && r.sourceReference.trim() !== '')
+                        ? r.sourceReference
+                        : (r.sourceFramework || 'RBI IT Outsourcing Directions, 2025');
+
+                    const finding = r.bestFinding;
+                    const revStatus = (finding && finding.reviewStatus) || (r.needsReview ? 'PENDING' : null);
+                    let revBadgeHtml = '<span class="badge badge-grey">-</span>';
+                    if (revStatus === 'PENDING') {
+                        revBadgeHtml = '<span class="badge badge-ai" style="color: #b45309; border-color: #fcd34d; background: #fffbeb;">Needs review</span>';
+                    } else if (revStatus === 'APPROVED') {
+                        revBadgeHtml = '<span class="badge badge-green">Verified</span>';
+                    } else if (revStatus === 'REJECTED' || revStatus === 'EDITED') {
+                        revBadgeHtml = '<span class="badge badge-grey">Disputed</span>';
+                    }
+
+                    // Header
+                    card.innerHTML = `
+                        <div class="req-header">
+                            <div>
+                                <div style="font-size: 0.9375rem; font-weight: 700; color: var(--navy);">
+                                    <code>${escapeHtml(r.requirementCode)}</code> &mdash; ${escapeHtml(r.requirementTitle)}
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                                    Regulatory Obligation Reference: <strong>${escapeHtml(sourceRef)}</strong>
+                                </div>
+                            </div>
+                            <div class="req-badges">
+                                <span class="badge ${statusClass}">${escapeHtml(status)}</span>
+                                ${revBadgeHtml}
+                            </div>
+                        </div>
+                    `;
+
+                    // Finding Detail
+                    if (!finding) {
+                        const noFind = document.createElement('p');
+                        noFind.style.fontSize = '0.8125rem';
+                        noFind.style.color = 'var(--text-secondary)';
+                        noFind.style.fontStyle = 'italic';
+                        noFind.textContent = 'No evidence finding extracted or assessed.';
+                        card.appendChild(noFind);
+                    } else {
+                        // Document Meta
+                        const docMeta = document.createElement('div');
+                        docMeta.style.fontSize = '0.75rem';
+                        docMeta.style.color = 'var(--text-secondary)';
+                        docMeta.style.marginBottom = '0.4rem';
+                        const docTitle = finding.documentTitle || 'Document #' + finding.documentId;
+                        const docType = finding.documentType || 'DOCUMENT';
+                        const confPct = finding.confidence != null ? Math.round(finding.confidence * 100) : 0;
+                        docMeta.innerHTML = `Source Evidence Document: <strong>${escapeHtml(docTitle)}</strong> (${escapeHtml(docType)}) &bull; AI Confidence: <strong>${confPct}%</strong>`;
+                        card.appendChild(docMeta);
+
+                        // AI Rationale
+                        const ratLabel = document.createElement('div');
+                        ratLabel.style.fontSize = '0.7rem';
+                        ratLabel.style.fontWeight = '700';
+                        ratLabel.style.color = 'var(--navy)';
+                        ratLabel.style.textTransform = 'uppercase';
+                        ratLabel.textContent = 'Assurance Rationale:';
+                        card.appendChild(ratLabel);
+
+                        const ratBox = document.createElement('div');
+                        ratBox.className = 'req-rationale-box';
+                        ratBox.textContent = finding.rationale || 'No rationale recorded.';
+                        card.appendChild(ratBox);
+
+                        // Citations
+                        const citations = finding.citations || [];
+                        if (citations.length > 0) {
+                            const citContainer = document.createElement('div');
+                            citContainer.style.marginTop = '0.5rem';
+
+                            citations.forEach(c => {
+                                const cBox = document.createElement('div');
+                                cBox.className = 'citation-box';
+
+                                const cHead = document.createElement('div');
+                                cHead.className = 'citation-header';
+                                let refText = `[${c.key}]`;
+                                if (c.sectionRef) refText += ` ${c.sectionRef}`;
+                                if (c.page != null) refText += ` (Page ${c.page})`;
+                                cHead.textContent = refText;
+
+                                const cQuote = document.createElement('div');
+                                cQuote.className = 'citation-text';
+                                cQuote.textContent = `"${c.text || ''}"`;
+
+                                cBox.appendChild(cHead);
+                                cBox.appendChild(cQuote);
+                                citContainer.appendChild(cBox);
+                            });
+                            card.appendChild(citContainer);
+                        }
+
+                        // Review Audit Line
+                        const auditBox = document.createElement('div');
+                        auditBox.className = 'review-audit-box';
+
+                        let reviewLineText = '';
+                        const actor = finding.reviewedBy || 'Reviewer';
+                        const when = fmtDate(finding.reviewedAt);
+
+                        if (finding.reviewStatus === 'APPROVED') {
+                            reviewLineText = `Verified by ${actor} on ${when}`;
+                        } else if (finding.reviewStatus === 'REJECTED' || finding.reviewStatus === 'EDITED') {
+                            reviewLineText = `Disputed by ${actor} on ${when}`;
+                        } else {
+                            reviewLineText = `Pending human assurance review`;
+                        }
+
+                        const lineSpan = document.createElement('span');
+                        lineSpan.style.fontWeight = '600';
+                        lineSpan.style.color = (finding.reviewStatus === 'APPROVED') ? 'var(--status-green)' : 'var(--navy)';
+                        lineSpan.textContent = reviewLineText;
+                        auditBox.appendChild(lineSpan);
+
+                        if (finding.reviewerComment && finding.reviewerComment.trim()) {
+                            const commentSpan = document.createElement('span');
+                            commentSpan.style.fontStyle = 'italic';
+                            commentSpan.textContent = `Comment: "${finding.reviewerComment}"`;
+                            auditBox.appendChild(commentSpan);
+                        }
+
+                        card.appendChild(auditBox);
+                    }
+
+                    reqsContainer.appendChild(card);
+                });
+            }
+
+            // Section 5: Open Actions
+            const actionsList = Array.isArray(actions) ? actions : [];
+            const openActions = actionsList.filter(a => a.status === 'OPEN' || a.status === 'IN_PROGRESS');
+            document.getElementById('actions-count-badge').textContent = `${openActions.length} Open Actions`;
+
+            const actionsTbody = document.getElementById('actions-tbody');
+            if (openActions.length === 0) {
+                actionsTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 1.25rem;">No open remediation actions on file for this vendor.</td></tr>';
+            } else {
+                actionsTbody.innerHTML = openActions.map(act => {
+                    const prio = escapeHtml(act.priority || 'MEDIUM');
+                    const prioClass = prio === 'HIGH' ? 'badge-high' : (prio === 'CRITICAL' ? 'badge-critical' : 'badge-grey');
+                    return `
+                        <tr>
+                            <td><code>#${escapeHtml(act.id)}</code></td>
+                            <td><strong>${escapeHtml(act.title)}</strong></td>
+                            <td>${escapeHtml(act.ownerTeam || 'TPRM')}</td>
+                            <td><span class="badge ${prioClass}">${prio}</span></td>
+                            <td><span class="badge badge-grey">${escapeHtml(act.status)}</span></td>
+                            <td><small>${escapeHtml(fmtDate(act.dueAt))}</small></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Section 6: Registered Documents (Assurance documents only)
+            const allDocs = v.documents || [];
+            const docsList = allDocs.filter(d => (d.docType || d.doc_type) !== 'INCIDENT_NOTICE');
+            document.getElementById('docs-count-badge').textContent = `${docsList.length} Documents`;
+
+            const docsTbody = document.getElementById('docs-tbody');
+            if (docsList.length === 0) {
+                docsTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 1.25rem;">No assurance documents registered on file.</td></tr>';
+            } else {
+                docsTbody.innerHTML = docsList.map(d => `
+                    <tr>
+                        <td><code>#${escapeHtml(d.id)}</code></td>
+                        <td><span class="badge badge-grey">${escapeHtml(d.docType || d.doc_type)}</span></td>
+                        <td><strong>${escapeHtml(d.title)}</strong></td>
+                        <td><small>${escapeHtml(fmtDay(d.issuedOn || d.issued_on))}</small></td>
+                        <td><small>${escapeHtml(fmtDay(d.validUntil || d.valid_until))}</small></td>
+                        <td><span class="badge badge-green">${escapeHtml(d.processingStatus || d.processing_status)}</span></td>
+                    </tr>
+                `).join('');
+            }
+        }
+    </script>
+</body>
+</html>
