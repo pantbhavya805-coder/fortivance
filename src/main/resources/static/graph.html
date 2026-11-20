@@ -50,7 +50,7 @@
         <div class="graph-layout">
             <div id="cy-container"></div>
             <aside class="card" id="impact-panel">
-                <div class="card-title">Impact Assessment</div>
+                <div class="card-title"><span>Impact Assessment</span></div>
                 <div id="impact-content">
                     <p style="color: var(--text-secondary); font-size: 0.875rem;">
                         Select a vendor from the dropdown above to simulate an operational incident and trace systemic exposure across banking services.
@@ -145,7 +145,7 @@
                         <div><strong>Tightest Tolerance:</strong> ${escapeHtml(rep.summary.tightestImpactToleranceHours != null ? rep.summary.tightestImpactToleranceHours + 'h' : 'N/A')}</div>
                         <div><strong>Single Points of Failure:</strong> ${escapeHtml(rep.summary.singlePointsOfFailure)}</div>
                     </div>
-                    <div class="card-title" style="font-size: 0.875rem; margin-top: 1rem;">Exposed Business Services</div>
+                    <div class="card-title" style="font-size: 0.875rem; margin-top: 1rem;"><span>Exposed Business Services</span></div>
                     ${servicesHtml || '<p style="font-size: 0.8125rem; color: #64748b;">No direct service impact.</p>'}
                 `;
             } catch (err) {
