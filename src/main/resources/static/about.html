@@ -291,6 +291,8 @@
             line-height: 1.6;
         }
 
+        .why-list { margin: 0.25rem 0 0.75rem; padding-left: 1.2rem; }
+        .why-list li { margin-bottom: 0.55rem; line-height: 1.6; }
         .sources {
             font-size: 0.8rem;
             line-height: 1.8;
@@ -371,6 +373,57 @@
                 <a href="/guide.html" class="btn btn-secondary">Help guide</a>
                 <a href="/judges.html" class="btn btn-secondary">Judge guide</a>
             </div>
+        </section>
+
+        <!-- Why this idea -->
+        <section class="about-section" id="why-this-idea">
+            <h2>Why I chose this idea</h2>
+            <p class="lead">
+                Looking at how banks manage their vendors today, I saw two gaps that current solutions leave open.
+                Vendor evidence (contracts and audit reports) is still checked slowly and by hand, and when a vendor
+                has an incident, working out the impact and escalating it takes hours. Every hour lost there gives a
+                cyber attack, and the fraud that often follows it, more time to reach customers. I wanted to close
+                both gaps at the source, the vendor, so a bank can act before its customers are affected. Reading
+                notices and contracts quickly and accurately is exactly the kind of work AI is good at, which made
+                this a meaningful use of Claude rather than a decorative one.
+            </p>
+            <p>
+                The context: Indian banks have moved their most important services onto vendors, from cloud providers
+                and payment switches to SMS gateways and core-banking service providers. When one of them fails, the
+                bank's customers cannot pay, and the bank, not the vendor, answers to RBI.
+            </p>
+            <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">The problems Indian banks face today</h3>
+            <ul class="why-list">
+                <li><strong>One vendor, hundreds of banks.</strong> In July 2024 a ransomware attack on C-Edge
+                    Technologies, a technology provider to co-operative and regional rural banks, led NPCI to cut it
+                    off from the retail payment systems. Customers of around 300 small banks (reports range from 200
+                    to 300) lost UPI and other digital payments until an independent forensic audit cleared the
+                    vendor. None of those banks was attacked directly.</li>
+                <li><strong>The dependency is deep and growing.</strong> 93% of Indian financial institutions
+                    surveyed by RBI rely partly or substantially on third parties for core cybersecurity work alone.
+                    Behind each vendor sit its own subcontractors, which the bank rarely sees.</li>
+                <li><strong>The clock is short.</strong> A cyber incident must be reported to RBI within 6 hours of
+                    detection, and the vendor's notice often arrives hours into that window. Working out which
+                    customer services are affected still means calls and spreadsheets across IT, operations and
+                    vendor management.</li>
+                <li><strong>The rules now demand proof, not trust.</strong> RBI's 2025 outsourcing Directions require
+                    banks to map dependencies on vendors and their key subcontractors and to hold contracts with audit
+                    rights and incident-notification terms. That evidence sits in long contracts and audit reports that
+                    are reviewed by hand, often once a year.</li>
+                <li><strong>Small banks carry the same duty with far fewer people.</strong> A large bank has a
+                    third-party risk department; a co-operative bank, NBFC or fintech may have one or two people doing
+                    it alongside other work. They were the ones hit hardest in 2024.</li>
+            </ul>
+            <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">Why this approach</h3>
+            <p>
+                Most vendor-risk tools answer "is this vendor risky?" through annual questionnaires. Nobody was
+                answering the questions that matter during an incident: <em>which of our services are down, for how
+                long can they stay down, how much of the reporting window is left, and do our contracts cover this?</em>
+                The work behind those answers is mostly reading (notices, contracts, audit reports) and tracing (vendor
+                to system to service), which is exactly where Claude and ordinary code are each strongest. So Fortivance
+                lets Claude read and draft, lets code do everything that must be exact, and leaves every decision to a
+                person. It is built so that a two-person team at a small bank can do what a large bank's department does.
+            </p>
         </section>
 
         <!-- The problem -->
@@ -649,6 +702,83 @@
             </div>
         </section>
 
+        <!-- How close to reality -->
+        <section class="about-section" id="real-world">
+            <h2>How close is the demo to the real world?</h2>
+            <p class="lead">
+                The bank, its vendors and their documents are invented, because real contracts and incident notices are
+                confidential and real customer data cannot go into a public demo. Everything else is modelled on real
+                rules and real events, and nothing in the application is specific to the demo bank: a real bank would
+                load its own data into the same pipeline.
+            </p>
+            <table class="compare">
+                <thead>
+                    <tr><th>In the demo</th><th>Real-world basis</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>RBI 6-hour reporting clock</td><td>RBI Cybersecurity, Technology Risk, Resilience and Assurance Directions (31 July 2026): report to RBI within 6 hours of detection and notify CERT-In.</td></tr>
+                    <tr><td>Vendor requirements (audit access, incident notification, subcontracting control, tested BCP/DR)</td><td>RBI (Commercial Banks - Managing Risks in Outsourcing) Directions, 2025, which also exclude SMS gateways from the IT outsourcing provisions, as the demo does for NotifyHub.</td></tr>
+                    <tr><td>Impact tolerances, disrupted and degraded services</td><td>Standard operational-resilience practice, as in RBI's guidance on operational resilience and the Basel Committee principles: identify critical services, map their dependencies, set a tolerance for disruption.</td></tr>
+                    <tr><td>Audit reports that leave out a subcontractor</td><td>Normal SOC 2 practice: a cloud provider's report often "carves out" its data-centre operator, so the bank needs separate assurance.</td></tr>
+                </tbody>
+            </table>
+            <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">Each demo incident mirrors a real one</h3>
+            <table class="compare">
+                <thead>
+                    <tr><th>Demo incident</th><th>Real event of the same kind</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>PayRail: suspected ransomware at the payment switch</td><td><strong>C-Edge Technologies, July 2024:</strong> ransomware at a technology vendor; NPCI isolated it and around 300 co-operative and regional rural banks lost UPI and other digital payments until a forensic audit cleared the vendor.</td></tr>
+                    <tr><td>NimbusCloud: cooling failure at its data-centre subcontractor</td><td><strong>London heatwave, 19 July 2022:</strong> cooling failures forced Google Cloud and Oracle to shut down servers in their London data centres.</td></tr>
+                    <tr><td>NotifyHub: SMS and OTP delays from an undisclosed upstream partner</td><td>SMS gateway and aggregator outages, which stop OTPs and with them UPI and card payments.</td></tr>
+                    <tr><td>One vendor touching many services</td><td><strong>CrowdStrike, 19 July 2024:</strong> one security vendor's faulty update caused a global outage; RBI reported minor disruptions at 10 Indian banks and NBFCs.</td></tr>
+                </tbody>
+            </table>
+            <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">What is simplified, and what a real deployment needs</h3>
+            <ul class="why-list">
+                <li><strong>Data:</strong> the vendor register and the vendor-to-system-to-service map are seeded. A real bank would import its own, typically from spreadsheets or its IT asset inventory.</li>
+                <li><strong>Intake:</strong> notices are uploaded by hand. A real deployment would read them from the risk team's mailbox.</li>
+                <li><strong>Scope:</strong> five requirements are checked in the demo; the full Directions contain many more, and adding them is data, not code.</li>
+                <li><strong>Settings:</strong> impact tolerances and risk-score weights are the bank's own choices, as RBI expects; the demo values are examples.</li>
+                <li><strong>Validation:</strong> the AI is measured against a small hand-labelled set (see the Evaluation page). A pilot with a real bank's documents is the next step.</li>
+            </ul>
+        </section>
+
+        <!-- From demo to a real bank -->
+        <section class="about-section" id="real-bank">
+            <h2>From demo to a real bank</h2>
+            <p class="lead">
+                Today Fortivance runs as a working single-bank deployment loaded with a demo bank. There is no
+                self-service sign-up for banks yet, and that is deliberate: the next step is a guided onboarding,
+                described below, not an open sign-up form.
+            </p>
+            <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">Why one deployment per bank, not a shared sign-up</h3>
+            <p>
+                A bank's vendor register, contracts and incident data are sensitive, and for the bank, using
+                Fortivance is itself an IT outsourcing arrangement under the same RBI Directions it helps with. Banks
+                therefore expect their data to stay in India, isolated from other customers, and open to their own
+                and RBI's audit. The natural model is a dedicated instance per bank, hosted in India or on the bank's
+                own infrastructure. Fortivance already ships that way: one Docker stack (web server, application,
+                database) that starts with a single command. The data model is also organised by bank already:
+                vendors, applications and business services each belong to a bank record, and incidents and documents
+                hang off the vendor.
+            </p>
+            <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">Onboarding a bank: the roadmap</h3>
+            <table class="compare">
+                <thead>
+                    <tr><th>Step</th><th>What happens</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1. Provision</td><td>A dedicated instance with its own domain, database and administrator; staff sign in through the bank's single sign-on.</td><td>Deployment ready; single sign-on planned</td></tr>
+                    <tr><td>2. Load the vendor register</td><td>Import vendors, subcontractors, applications and business services from Excel templates, with validation of every dependency.</td><td>Planned (the demo data is loaded the same way, by script)</td></tr>
+                    <tr><td>3. Set the bank's rules</td><td>The bank's impact tolerances, continuity plans, risk-score weights and the full RBI requirement library.</td><td>Engine ready; settings screens planned</td></tr>
+                    <tr><td>4. Load evidence</td><td>Upload contracts and audit reports; Claude maps them to requirements for analysts to verify.</td><td>Working today</td></tr>
+                    <tr><td>5. Connect incident intake</td><td>Read vendor notices directly from the risk team's mailbox instead of manual upload.</td><td>Planned (upload works today)</td></tr>
+                    <tr><td>6. Integrate</td><td>Send approved actions to the bank's ticketing or GRC system; export evidence packs for RBI inspections.</td><td>Evidence pack export working; integrations planned</td></tr>
+                </tbody>
+            </table>
+        </section>
+
         <!-- Disclaimer and sources -->
         <section class="about-section">
             <h2>About this instance</h2>
@@ -672,6 +802,14 @@
                         summary)</a></li>
                 <li><a href="https://rbi.org.in/scripts/BS_ViewMasDirections.aspx?id=13139" target="_blank"
                         rel="noopener">RBI (Commercial Banks - Managing Risks in Outsourcing) Directions, 2025</a></li>
+                <li><a href="https://npci.org.in/PDF/npci/press-releases/2024/NPCI-Press-Release-Interruption-in-Retail-Payments.pdf"
+                        target="_blank" rel="noopener">NPCI press release: interruption in retail payments (C-Edge Technologies), 31 July 2024</a></li>
+                <li><a href="https://www.csoonline.com/article/3480250/over-300-indian-banks-suffer-payment-disruption-from-ransomware-attack.html"
+                        target="_blank" rel="noopener">CSO Online: over 300 Indian banks suffer payment disruption from ransomware attack</a></li>
+                <li><a href="https://website.rbi.org.in/web/rbi/-/press-releases/reserve-bank-of-india-clarifies-on-impact-of-outage-in-microsoft-services-on-its-regulated-entities"
+                        target="_blank" rel="noopener">RBI press release: impact of the July 2024 Microsoft services outage on regulated entities</a></li>
+                <li><a href="https://www.datacenterdynamics.com/en/news/googles-london-data-center-outage-during-heatwave-caused-by-simultaneous-failure-of-multiple-redundant-cooling-systems"
+                        target="_blank" rel="noopener">DatacenterDynamics: Google's London data centre outage during the 2022 heatwave</a></li>
             </ol>
         </section>
     </main>
