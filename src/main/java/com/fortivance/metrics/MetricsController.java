@@ -85,7 +85,7 @@ public class MetricsController {
                     Double.class
             );
             if (avgImpact != null) {
-                result.put("avgImpactAnalysisMinutes", Math.round(avgImpact * 10.0) / 10.0);
+                result.put("avgImpactAnalysisMinutes", Math.round(avgImpact * 100.0) / 100.0);
             } else {
                 result.put("avgImpactAnalysisMinutes", null);
             }
@@ -108,7 +108,7 @@ public class MetricsController {
                     Double.class
             );
             if (avgAction != null) {
-                result.put("avgTimeToFirstActionMinutes", Math.round(avgAction * 10.0) / 10.0);
+                result.put("avgTimeToFirstActionMinutes", Math.round(avgAction * 100.0) / 100.0);
             } else {
                 result.put("avgTimeToFirstActionMinutes", null);
             }

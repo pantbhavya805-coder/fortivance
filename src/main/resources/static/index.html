@@ -44,7 +44,7 @@
             <div class="metric-card">
                 <div class="metric-label">Evidence Coverage</div>
                 <div class="metric-value" id="m-coverage">--%</div>
-                <div class="metric-sub">In-demo requirements met</div>
+                <div class="metric-sub">Requirements met and verified by an analyst</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">Dependency Visibility</div>
@@ -104,6 +104,14 @@
     <script src="/js/api.js"></script>
     <script src="/js/ai-loader.js"></script>
     <script>
+        // Minutes from the API; under a minute is shown in seconds so a fast step never reads as 0.
+        function fmtDuration(v) {
+            if (v === null || v === undefined) return 'N/A';
+            const n = Number(v);
+            if (n < 1) return Math.max(1, Math.round(n * 60)) + ' sec';
+            return n.toFixed(1) + ' min';
+        }
+
         function fmtDay(value) {
             if (!value) return '-';
             const str = String(value).trim();
@@ -130,8 +138,8 @@
                 const m = await api.get('/api/metrics');
                 document.getElementById('m-coverage').textContent = m.evidenceCoveragePct != null ? `${m.evidenceCoveragePct}%` : 'N/A';
                 document.getElementById('m-visibility').textContent = m.dependencyVisibilityPct != null ? `${m.dependencyVisibilityPct}%` : 'N/A';
-                document.getElementById('m-impact-time').textContent = m.avgImpactAnalysisMinutes != null ? `${m.avgImpactAnalysisMinutes}m` : 'N/A';
-                document.getElementById('m-action-time').textContent = m.avgTimeToFirstActionMinutes != null ? `${m.avgTimeToFirstActionMinutes}m` : 'N/A';
+                document.getElementById('m-impact-time').textContent = fmtDuration(m.avgImpactAnalysisMinutes);
+                document.getElementById('m-action-time').textContent = fmtDuration(m.avgTimeToFirstActionMinutes);
                 document.getElementById('m-expired').textContent = m.expiredEvidenceCount != null ? m.expiredEvidenceCount : '0';
                 document.getElementById('m-open-actions').textContent = m.openActions != null ? m.openActions : '0';
             } catch (err) {
