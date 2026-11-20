@@ -347,7 +347,6 @@
             <a href="/about.html" data-nav="about">About</a>
         </nav>
         <div class="nav-user-section" id="nav-user">
-            <a href="/guide.html" class="btn btn-secondary" style="margin-right: 0.5rem;">Guide</a>
             <a href="/login.html" class="btn btn-primary">Log in</a>
         </div>
     </header>
@@ -584,7 +583,7 @@
                 </div>
                 <div class="live-card">
                     <div class="v" id="live-action">-</div>
-                    <div class="l">Average time from notice upload to first assigned action</div>
+                    <div class="l">Average time from notice upload to first assigned action (includes the wait for a person to approve the plan)</div>
                 </div>
                 <div class="live-card">
                     <div class="v" id="live-visibility">-</div>
@@ -736,7 +735,7 @@
             </table>
             <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">What is simplified, and what a real deployment needs</h3>
             <ul class="why-list">
-                <li><strong>Data:</strong> the vendor register and the vendor-to-system-to-service map are seeded. A real bank would import its own, typically from spreadsheets or its IT asset inventory.</li>
+                <li><strong>Data:</strong> the demo register is seeded. A real bank loads its own vendors, systems and services from Excel through the Import page (see the next section).</li>
                 <li><strong>Intake:</strong> notices are uploaded by hand. A real deployment would read them from the risk team's mailbox.</li>
                 <li><strong>Scope:</strong> five requirements are checked in the demo; the full Directions contain many more, and adding them is data, not code.</li>
                 <li><strong>Settings:</strong> impact tolerances and risk-score weights are the bank's own choices, as RBI expects; the demo values are examples.</li>
@@ -748,20 +747,30 @@
         <section class="about-section" id="real-bank">
             <h2>From demo to a real bank</h2>
             <p class="lead">
-                Today Fortivance runs as a working single-bank deployment loaded with a demo bank. There is no
-                self-service sign-up for banks yet, and that is deliberate: the next step is a guided onboarding,
-                described below, not an open sign-up form.
+                Fortivance does not offer an open sign-up where banks load their vendors into one shared system. Each
+                bank gets its own dedicated instance and loads its register from Excel. That is a deliberate choice,
+                driven by RBI's rules.
             </p>
-            <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">Why one deployment per bank, not a shared sign-up</h3>
+            <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">Why RBI's rules point to a dedicated instance per bank</h3>
             <p>
-                A bank's vendor register, contracts and incident data are sensitive, and for the bank, using
-                Fortivance is itself an IT outsourcing arrangement under the same RBI Directions it helps with. Banks
-                therefore expect their data to stay in India, isolated from other customers, and open to their own
-                and RBI's audit. The natural model is a dedicated instance per bank, hosted in India or on the bank's
-                own infrastructure. Fortivance already ships that way: one Docker stack (web server, application,
-                database) that starts with a single command. The data model is also organised by bank already:
-                vendors, applications and business services each belong to a bank record, and incidents and documents
-                hang off the vendor.
+                For a bank, using Fortivance is itself an IT outsourcing arrangement, covered by the same RBI
+                outsourcing Directions it helps with. The bank must keep full audit and inspection rights for itself and
+                for RBI, keep its data confidential and separated from other clients of the provider, and keep payment
+                data stored in India. A shared platform holding many banks' vendor contracts and incident data would
+                make each of those duties harder to prove, and every bank's own outsourcing review would have to
+                approve it. A dedicated instance, hosted in India or on the bank's own infrastructure, satisfies them
+                directly.
+            </p>
+            <p>
+                Fortivance already ships that way: one Docker stack (web server, application, database) that starts with
+                a single command, with a data model organised by bank. Onboarding a bank is then a matter of loading its
+                register: vendors and their subcontractors, the bank's systems, and the business services customers use.
+                That works today through the <a href="/import.html">Import Vendor Register</a> page (sign in first; it is under Dependency Graph) and three Excel
+                templates (<a href="/templates/vendors-template.csv" download>vendors</a>,
+                <a href="/templates/systems-template.csv" download>systems</a>,
+                <a href="/templates/services-template.csv" download>services</a>). Files are checked line by line
+                before anything is saved, records are matched by vendor name and system or service code, and nothing
+                is ever deleted.
             </p>
             <h3 style="font-size: 1rem; color: var(--navy); margin: 1.1rem 0 0.5rem;">Onboarding a bank: the roadmap</h3>
             <table class="compare">
@@ -770,7 +779,7 @@
                 </thead>
                 <tbody>
                     <tr><td>1. Provision</td><td>A dedicated instance with its own domain, database and administrator; staff sign in through the bank's single sign-on.</td><td>Deployment ready; single sign-on planned</td></tr>
-                    <tr><td>2. Load the vendor register</td><td>Import vendors, subcontractors, applications and business services from Excel templates, with validation of every dependency.</td><td>Planned (the demo data is loaded the same way, by script)</td></tr>
+                    <tr><td>2. Load the vendor register</td><td>Import vendors, subcontractors, systems and business services from three Excel (CSV) templates, with every row and dependency checked before anything is saved.</td><td>Working today (<a href="/import.html">Import page</a>, after signing in)</td></tr>
                     <tr><td>3. Set the bank's rules</td><td>The bank's impact tolerances, continuity plans, risk-score weights and the full RBI requirement library.</td><td>Engine ready; settings screens planned</td></tr>
                     <tr><td>4. Load evidence</td><td>Upload contracts and audit reports; Claude maps them to requirements for analysts to verify.</td><td>Working today</td></tr>
                     <tr><td>5. Connect incident intake</td><td>Read vendor notices directly from the risk team's mailbox instead of manual upload.</td><td>Planned (upload works today)</td></tr>
@@ -926,7 +935,7 @@
             } else {
                 if (navLinks) navLinks.style.display = 'none';
                 if (navUser) {
-                    navUser.innerHTML = '<a href="/guide.html" class="btn btn-secondary" style="margin-right: 0.5rem;">Guide</a><a href="/login.html" class="btn btn-primary">Log in</a>';
+                    navUser.innerHTML = '<a href="/login.html" class="btn btn-primary">Log in</a>';
                 }
                 if (trySection) {
                     trySection.style.display = 'block';

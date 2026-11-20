@@ -42,6 +42,7 @@
             </div>
             <div style="display: flex; gap: 0.75rem; align-items: center;">
                 <input type="file" id="incident-file-input" style="display: none;" accept=".md,.pdf,.txt">
+                <span id="uploads-left" style="font-size: 0.8125rem; color: var(--text-secondary);"></span>
                 <button id="upload-btn" class="btn btn-primary">
                     Upload Incident Notice
                 </button>
@@ -94,6 +95,24 @@
                 uploadBtn.title = 'Upload disabled while USE_MOCK is true';
             } else {
                 if (mockBadge) mockBadge.style.display = 'none';
+
+                // Demo accounts have a fixed number of uploads; show what is left and stop at zero.
+                let uploadsExhausted = false;
+                try {
+                    const limits = await api.get('/api/me/limits');
+                    const u = limits && limits.incidentUploads;
+                    if (limits && limits.limited && u) {
+                        const left = document.getElementById('uploads-left');
+                        left.textContent = u.remaining + ' of ' + u.limit + ' uploads left on this demo account';
+                        if (u.remaining <= 0) {
+                            uploadsExhausted = true;
+                            uploadBtn.disabled = true;
+                            uploadBtn.title = 'This demo account has used all its incident uploads';
+                            left.style.color = 'var(--status-red)';
+                        }
+                    }
+                } catch (_) { /* informational only */ }
+
                 uploadBtn.addEventListener('click', () => {
                     errorBanner.style.display = 'none';
                     fileInput.click();
@@ -115,7 +134,7 @@
                         errorBanner.textContent = err.message || 'Failed to upload incident notice';
                         errorBanner.style.display = 'block';
                     } finally {
-                        uploadBtn.disabled = false;
+                        uploadBtn.disabled = uploadsExhausted;
                         fileInput.value = '';
                     }
                 });

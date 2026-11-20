@@ -16,7 +16,7 @@ import java.util.Map;
  * Creates or updates the permanent (non-expiring) accounts at startup:
  * <ul>
  *   <li>{@code bhavya}: the administrator (role ADMIN, fixed). Signs in only at /admin/login.</li>
- *   <li>{@code judgedemo}: the test account for judges. Can switch between Analyst and Approver; the role it
+ *   <li>{@code judge}: the test account for judges. Can switch between Analyst and Approver; the role it
  *       last chose is kept across restarts.</li>
  * </ul>
  * Passwords are read from the environment (OWNER_PASSWORD, JUDGE_PASSWORD) and stored only as bcrypt hashes;
@@ -32,7 +32,7 @@ public class AccountBootstrap implements ApplicationRunner {
     record Account(String username, String displayName, String initialRole, boolean fixedRole) { }
 
     static final Account ADMIN = new Account("bhavya", "Bhavya Pant", "ADMIN", true);
-    static final Account JUDGE = new Account("judgedemo", "Judge (demo test account)", "ANALYST", false);
+    static final Account JUDGE = new Account("judge", "Judge (demo test account)", "ANALYST", false);
 
     private final JdbcTemplate jdbc;
     private final PasswordEncoder encoder;

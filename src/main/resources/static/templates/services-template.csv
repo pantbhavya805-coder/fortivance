@@ -1,0 +1,2 @@
+code,name,description,customer_facing,criticality,impact_tolerance_hours,bcp_plan_ref,business_owner,essential_systems,supporting_systems
+SVC-FRAUD,Fraud Monitoring & Card Blocking,Real-time fraud checks and instant card blocking for customers,yes,CRITICAL,1,BCP-07,Head of Fraud Risk,FRM,CNE

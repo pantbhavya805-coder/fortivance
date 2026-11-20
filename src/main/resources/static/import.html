@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Vendor Register</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        .imp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+        .imp-file { border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; background: #fff; }
+        .imp-file h3 { font-size: 0.95rem; color: var(--navy); margin: 0 0 0.35rem; }
+        .imp-file p { font-size: 0.8125rem; color: var(--text-secondary); margin: 0 0 0.75rem; line-height: 1.5; }
+        .imp-file input[type="file"] { width: 100%; font-size: 0.8125rem; }
+        .imp-file a.dl { display: inline-block; font-size: 0.8125rem; font-weight: 600; color: var(--teal); text-decoration: none; margin-bottom: 0.6rem; }
+        .steps { counter-reset: s; list-style: none; padding: 0; margin: 0 0 0.5rem; }
+        .steps li { counter-increment: s; position: relative; padding-left: 2.1rem; margin-bottom: 0.6rem; font-size: 0.875rem; line-height: 1.6; }
+        .steps li::before { content: counter(s); position: absolute; left: 0; top: 0.05rem; width: 1.45rem; height: 1.45rem; border-radius: 50%; background: var(--navy); color: #fff; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .ref table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; margin: 0.5rem 0 1rem; }
+        .ref th { text-align: left; background: #f1f5f9; padding: 0.4rem 0.5rem; color: var(--navy); }
+        .ref td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        .ref td:first-child { white-space: nowrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.78rem; }
+        .ref summary { cursor: pointer; font-weight: 600; color: var(--navy); font-size: 0.875rem; margin: 0.5rem 0; }
+        .result { margin-top: 1rem; }
+        .result h3 { font-size: 0.95rem; color: var(--navy); margin: 1rem 0 0.4rem; }
+        .issues { list-style: none; padding: 0; margin: 0; font-size: 0.8125rem; }
+        .issues li { padding: 0.4rem 0.6rem; border-radius: 4px; margin-bottom: 0.3rem; }
+        .issues .err { background: var(--status-red-bg); color: var(--status-red); }
+        .issues .warn { background: #fffbeb; color: #92400e; }
+        .issues code { font-weight: 700; margin-right: 0.35rem; }
+        .counts { border-collapse: collapse; font-size: 0.84rem; }
+        .counts th, .counts td { padding: 0.35rem 0.9rem 0.35rem 0; text-align: left; }
+        .banner { padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.875rem; margin-top: 0.75rem; }
+        .banner.ok { background: var(--status-green-bg); color: var(--status-green); border: 1px solid #86efac; }
+        .banner.bad { background: var(--status-red-bg); color: var(--status-red); border: 1px solid #fca5a5; }
+        .actions-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 1rem; }
+        @media (max-width: 860px) { .imp-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header class="header-nav">
+        <div class="brand-section">
+            <a href="/index.html" class="brand-title">
+                <img src="/images/logo-icon.svg" alt="Fortivance Logo" class="brand-logo">
+                <span>Fortivance</span>
+            </a>
+            <span class="brand-subtitle">Operational Resilience &amp; TPRM</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/index.html" data-nav="dashboard">Dashboard</a>
+            <a href="/graph.html" data-nav="graph" class="active">Dependency Graph</a>
+            <a href="/incidents.html" data-nav="incidents">Incidents</a>
+            <a href="/evidence.html" data-nav="evidence">Evidence</a>
+            <a href="/eval.html" data-nav="eval">Evaluation</a>
+            <a href="/guide.html" data-nav="guide">Guide</a>
+            <a href="/about.html" data-nav="about">About</a>
+        </nav>
+        <div class="nav-user-section" id="nav-user"></div>
+    </header>
+
+    <main class="main-container">
+        <div style="margin-bottom: 1rem;">
+            <a href="/graph.html" style="font-size: 0.8125rem; color: var(--teal); text-decoration: none;">&larr; Back to the dependency graph</a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Import Vendor Register</h1>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; max-width: 760px; line-height: 1.6;">
+                    Load a bank's vendors, subcontractors, systems and business services from Excel. This is how a bank's
+                    own Fortivance instance is set up: once imported, incidents are traced and evidence is checked against
+                    the bank's real dependency map.
+                </p>
+            </div>
+        </div>
+
+        <section class="card">
+            <div class="card-title">How it works</div>
+            <ol class="steps">
+                <li><strong>Download the three templates</strong> below and open them in Excel. Each has one example row (a fraud-analytics vendor) you can keep or replace.</li>
+                <li><strong>Fill in one row per vendor, system and service.</strong> Vendors are matched by name and systems and services by code, so the files can refer to records already in the register (for example <code>CNE</code> or <code>NimbusCloud Infra Pvt Ltd</code>).</li>
+                <li><strong>Save each sheet as CSV:</strong> in Excel, File &rarr; Save As &rarr; <em>CSV UTF-8 (Comma delimited)</em>. Semicolon-separated files from Excel's other regional settings work too.</li>
+                <li><strong>Check the files.</strong> Nothing is saved. Every problem is listed with its file and line, and you see exactly what would be created, updated or left unchanged.</li>
+                <li><strong>Import</strong> (Approver role). Everything is saved in one step, or nothing if any check fails. Nothing is ever deleted, and the import is recorded in the audit log.</li>
+            </ol>
+            <p id="update-note" style="font-size: 0.8125rem; color: var(--text-secondary); margin: 0;"></p>
+        </section>
+
+        <section class="card">
+            <div class="card-title">Templates and files</div>
+            <div class="imp-grid">
+                <div class="imp-file">
+                    <h3>1. Vendors</h3>
+                    <p>Direct vendors and their subcontractors (fourth parties): tier, data access, contract dates, regulatory scope.</p>
+                    <a class="dl" href="/templates/vendors-template.csv" download>&darr; vendors-template.csv</a>
+                    <input type="file" id="file-vendors" accept=".csv,text/csv" aria-label="Vendors CSV file">
+                </div>
+                <div class="imp-file">
+                    <h3>2. Systems</h3>
+                    <p>The bank's applications, their recovery targets, and which vendors each depends on.</p>
+                    <a class="dl" href="/templates/systems-template.csv" download>&darr; systems-template.csv</a>
+                    <input type="file" id="file-systems" accept=".csv,text/csv" aria-label="Systems CSV file">
+                </div>
+                <div class="imp-file">
+                    <h3>3. Business services</h3>
+                    <p>What customers use, its impact tolerance and continuity plan, and the systems it needs.</p>
+                    <a class="dl" href="/templates/services-template.csv" download>&darr; services-template.csv</a>
+                    <input type="file" id="file-services" accept=".csv,text/csv" aria-label="Services CSV file">
+                </div>
+            </div>
+            <div class="actions-row">
+                <button type="button" class="btn btn-primary" id="check-btn" disabled title="Choose at least one CSV file first">Check files</button>
+                <button type="button" class="btn btn-primary" id="import-btn" disabled title="Check the files first">Import</button>
+                <span id="role-note" style="font-size: 0.8125rem; color: var(--text-secondary);"></span>
+            </div>
+            <div class="result" id="result" aria-live="polite"></div>
+        </section>
+
+        <section class="card ref">
+            <div class="card-title">Column reference</div>
+            <p style="font-size: 0.8125rem; color: var(--text-secondary); margin: 0;">Columns marked * are required. Lists use <code>;</code> between items. Dates: <code>YYYY-MM-DD</code> or <code>DD/MM/YYYY</code>. Yes/no columns accept yes, no, true, false, 1 or 0. Blank optional cells are saved as empty.</p>
+            <details open>
+                <summary>vendors.csv</summary>
+                <table>
+                    <tbody>
+                        <tr><td>name *</td><td>Legal name; vendors are matched by name (not case-sensitive).</td></tr>
+                        <tr><td>parent_vendor</td><td>For a subcontractor: the name of the direct vendor that uses it. Leave blank for direct vendors. Only one level is allowed.</td></tr>
+                        <tr><td>service_category *</td><td>Short category such as CLOUD_HOSTING, PAYMENTS, MESSAGING, IDENTITY_VERIFICATION.</td></tr>
+                        <tr><td>service_description</td><td>What the vendor does for the bank (up to 500 characters).</td></tr>
+                        <tr><td>risk_tier *</td><td>CRITICAL, HIGH, MEDIUM or LOW.</td></tr>
+                        <tr><td>material</td><td>Material outsourcing under the RBI Directions (yes/no, default no).</td></tr>
+                        <tr><td>data_access *</td><td>FINANCIAL, CUSTOMER_PII, INTERNAL or NONE.</td></tr>
+                        <tr><td>outsourcing_scope</td><td>IN_SCOPE (default), EXCLUDED (for example SMS gateways) or UNDER_REVIEW.</td></tr>
+                        <tr><td>scope_note</td><td>Why the vendor is excluded or under review.</td></tr>
+                        <tr><td>email_domain</td><td>Domain the vendor sends notices from (for example vendor.com); used to spot spoofed incident notices.</td></tr>
+                        <tr><td>contract_start, contract_end, last_assessed_on, next_review_due</td><td>Dates. An overdue next_review_due adds to the vendor's risk score.</td></tr>
+                    </tbody>
+                </table>
+            </details>
+            <details>
+                <summary>systems.csv</summary>
+                <table>
+                    <tbody>
+                        <tr><td>code *</td><td>Short unique code such as CBS or FRM (capital letters, digits, - or _).</td></tr>
+                        <tr><td>name *</td><td>Full name of the system.</td></tr>
+                        <tr><td>description</td><td>What it does.</td></tr>
+                        <tr><td>criticality *</td><td>CRITICAL, HIGH, MEDIUM or LOW.</td></tr>
+                        <tr><td>owner_team</td><td>Team responsible for the system.</td></tr>
+                        <tr><td>rto_hours, rpo_minutes</td><td>Recovery time and recovery point objectives (whole numbers).</td></tr>
+                        <tr><td>vendors</td><td>Vendors the system depends on, by name, separated by <code>;</code>. They may be in vendors.csv or already in the register.</td></tr>
+                        <tr><td>single_point_vendors</td><td>Those of the above with no alternative: a single point of failure.</td></tr>
+                    </tbody>
+                </table>
+            </details>
+            <details>
+                <summary>services.csv</summary>
+                <table>
+                    <tbody>
+                        <tr><td>code *</td><td>Short unique code such as SVC-PAY.</td></tr>
+                        <tr><td>name *</td><td>What customers call it.</td></tr>
+                        <tr><td>description</td><td>What it covers.</td></tr>
+                        <tr><td>customer_facing</td><td>yes/no (default yes).</td></tr>
+                        <tr><td>criticality *</td><td>CRITICAL, HIGH, MEDIUM or LOW.</td></tr>
+                        <tr><td>impact_tolerance_hours</td><td>Longest acceptable disruption, in hours.</td></tr>
+                        <tr><td>bcp_plan_ref</td><td>Reference of the business continuity plan, such as BCP-07.</td></tr>
+                        <tr><td>business_owner</td><td>Accountable owner, such as Head of Payments.</td></tr>
+                        <tr><td>essential_systems</td><td>System codes the service cannot work without (a failure makes it DISRUPTED), separated by <code>;</code>.</td></tr>
+                        <tr><td>supporting_systems</td><td>System codes whose failure only makes it DEGRADED.</td></tr>
+                    </tbody>
+                </table>
+            </details>
+        </section>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        (async function () {
+            await api.initNav('graph');
+            const me = await api.me();
+            const canImport = me && ['APPROVER', 'ADMIN'].includes(String(me.role).toUpperCase());
+            const resultEl = document.getElementById('result');
+            const checkBtn = document.getElementById('check-btn');
+            const importBtn = document.getElementById('import-btn');
+            const roleNote = document.getElementById('role-note');
+            const inputs = { vendors: 'file-vendors', systems: 'file-systems', services: 'file-services' };
+            let lastCheckOk = false;
+
+            roleNote.textContent = canImport ? '' : 'Checking is open to everyone; importing needs the Approver role (switch in the header).';
+
+            // Demo accounts can import a fixed number of times; checking is never limited.
+            let importsLeft = null;
+            async function refreshLimits() {
+                try {
+                    const limits = await api.get('/api/me/limits');
+                    const r = limits && limits.registerImports;
+                    if (limits && limits.limited && r) {
+                        importsLeft = r.remaining;
+                        const note = r.remaining + ' of ' + r.limit + ' imports left on this demo account (checking files is unlimited).';
+                        roleNote.textContent = (canImport ? '' : 'Importing needs the Approver role (switch in the header). ') + note;
+                        roleNote.style.color = r.remaining <= 0 ? 'var(--status-red)' : '';
+                    }
+                } catch (_) { /* informational only */ }
+            }
+            await refreshLimits();
+
+            try {
+                const res = await api.fetch('/api/register-import/settings', { method: 'GET' });
+                const s = res && res.ok ? await res.json() : null;
+                if (s) {
+                    document.getElementById('update-note').textContent = s.updatesAllowed
+                        ? 'This instance updates existing records when a file changes them.'
+                        : 'On this shared demo, existing records are protected: you can add new vendors, systems and services, but changes to existing ones are reported and not saved. A bank’s own instance turns updates on.';
+                }
+            } catch (_) { /* informational only */ }
+
+            function anyFileChosen() {
+                return Object.values(inputs).some(id => document.getElementById(id).files.length > 0);
+            }
+            function updateCheckButton() {
+                checkBtn.disabled = !anyFileChosen();
+                checkBtn.title = checkBtn.disabled ? 'Choose at least one CSV file first' : 'Validate the files without saving anything';
+            }
+            updateCheckButton();
+
+            Object.values(inputs).forEach(id => document.getElementById(id).addEventListener('change', () => {
+                updateCheckButton();
+                lastCheckOk = false;
+                importBtn.disabled = true;
+                importBtn.title = 'Check the files first';
+            }));
+
+            function el(tag, text, cls) {
+                const e = document.createElement(tag);
+                if (cls) e.className = cls;
+                if (text !== undefined) e.textContent = text;
+                return e;
+            }
+
+            function render(data, applied) {
+                resultEl.replaceChildren();
+                if (!data) return;
+                const ok = data.ok;
+                const banner = el('div', '', 'banner ' + (ok ? 'ok' : 'bad'));
+                if (applied) banner.textContent = 'Imported. The dependency graph, incident impact tracing and the vendor list now include these records.';
+                else if (ok) banner.textContent = 'All checks passed. Nothing has been saved yet' + (canImport ? ': press Import to save.' : '.');
+                else banner.textContent = data.error || ((data.errors || []).length + ' problem(s) found. Fix them in Excel, save as CSV and check again. Nothing has been saved.');
+                resultEl.appendChild(banner);
+
+                if (data.summary) {
+                    resultEl.appendChild(el('h3', applied ? 'What was imported' : 'What an import would do'));
+                    const t = el('table', undefined, 'counts');
+                    const head = el('tr');
+                    ['', 'Create', 'Update', 'Unchanged'].forEach(h => head.appendChild(el('th', h)));
+                    t.appendChild(head);
+                    [['Vendors', 'vendors'], ['Systems', 'systems'], ['Services', 'services']].forEach(([label, k]) => {
+                        const c = data.summary[k] || {};
+                        const tr = el('tr');
+                        tr.appendChild(el('td', label));
+                        [c.create, c.update, c.unchanged].forEach(n => tr.appendChild(el('td', String(n || 0))));
+                        t.appendChild(tr);
+                    });
+                    resultEl.appendChild(t);
+                }
+
+                const list = (title, items, cls) => {
+                    if (!items || !items.length) return;
+                    resultEl.appendChild(el('h3', title));
+                    const ul = el('ul', undefined, 'issues');
+                    items.forEach(i => {
+                        const li = el('li', undefined, cls);
+                        li.appendChild(el('code', i.line > 0 ? i.file + '.csv line ' + i.line : i.file));
+                        li.appendChild(document.createTextNode(i.message));
+                        ul.appendChild(li);
+                    });
+                    resultEl.appendChild(ul);
+                };
+                list('Problems', data.errors, 'err');
+                list('Warnings', data.warnings, 'warn');
+
+                const changes = (data.changes || []).filter(c => c.action !== 'UNCHANGED');
+                if (changes.length) {
+                    resultEl.appendChild(el('h3', applied ? 'Records saved' : 'Records that would be saved'));
+                    const ul = el('ul', undefined, 'issues');
+                    changes.forEach(c => ul.appendChild(el('li', (c.action === 'CREATE' ? 'New ' : 'Update ') + c.type + ': ' + c.label)));
+                    resultEl.appendChild(ul);
+                }
+                if (applied) {
+                    const links = el('div', undefined, 'actions-row');
+                    const a1 = el('a', 'Open the dependency graph', 'btn btn-secondary'); a1.href = '/graph.html';
+                    const a2 = el('a', 'Go to the dashboard', 'btn btn-secondary'); a2.href = '/index.html';
+                    links.append(a1, a2);
+                    resultEl.appendChild(links);
+                }
+            }
+
+            async function send(apply) {
+                const fd = new FormData();
+                let any = false;
+                Object.entries(inputs).forEach(([name, id]) => {
+                    const f = document.getElementById(id).files[0];
+                    if (f) { fd.append(name, f); any = true; }
+                });
+                if (!any) {
+                    render({ ok: false, error: 'Choose at least one CSV file to check.' });
+                    return;
+                }
+                fd.append('apply', String(apply));
+                checkBtn.disabled = true;
+                importBtn.disabled = true;
+                const label = apply ? importBtn : checkBtn;
+                const original = label.textContent;
+                label.textContent = apply ? 'Importing…' : 'Checking…';
+                try {
+                    const res = await api.fetch('/api/register-import', { method: 'POST', body: fd });
+                    if (!res) return;
+                    let data = {};
+                    try { data = await res.json(); } catch (_) { data = { ok: false, error: 'Unexpected response (' + res.status + ').' }; }
+                    if (res.status === 403 || res.status === 429) data = { ok: false, error: data.error };
+                    if (apply) await refreshLimits();
+                    render(data, apply && data.applied);
+                    lastCheckOk = !apply && data.ok === true;
+                    const s = data.summary || {};
+                    const pending = ['vendors', 'systems', 'services'].some(k => s[k] && (s[k].create || s[k].update));
+                    importBtn.disabled = !(lastCheckOk && canImport && pending && importsLeft !== 0);
+                    importBtn.title = !importBtn.disabled ? 'Save the checked files'
+                        : importsLeft === 0 ? 'This demo account has used all its imports'
+                        : !canImport ? 'Importing needs the Approver role'
+                        : !lastCheckOk ? 'Fix the problems and check the files again'
+                        : 'Nothing new to import';
+                    if (apply && data.applied) {
+                        Object.values(inputs).forEach(id => { document.getElementById(id).value = ''; });
+                        importBtn.disabled = true;
+                        importBtn.title = 'Check the files first';
+                    }
+                } catch (_) {
+                    render({ ok: false, error: 'The files could not be sent. Check your connection and try again.' });
+                } finally {
+                    label.textContent = original;
+                    updateCheckButton();
+                }
+            }
+
+            checkBtn.addEventListener('click', () => send(false));
+            importBtn.addEventListener('click', () => { if (lastCheckOk) send(true); });
+        })();
+    </script>
+    <script src="/js/glossary.js" data-guide="setting"></script>
+</body>
+</html>

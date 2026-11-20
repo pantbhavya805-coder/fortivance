@@ -13,3 +13,6 @@ target/
 .mailmap
 # GoDaddy CLI config (may hold credentials)
 godaddy.toml
+
+# Working notes, not part of the submission
+docs/ANTIGRAVITY_TASKS.md

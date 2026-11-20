@@ -85,9 +85,19 @@ Permanent accounts (created or updated at startup; they never expire). Use singl
 treats `$` in an unquoted value as a variable.
 ```
 OWNER_PASSWORD='<password for the admin account bhavya (admin console only)>'
-JUDGE_PASSWORD='<password for the judges test account judgedemo>'
-JUDGE_PASSWORD_PUBLIC=true   # show the judgedemo password on /judges.html (default false)
+JUDGE_PASSWORD='<password for the judges test account judge>'
+JUDGE_PASSWORD_PUBLIC=true   # show the judge password on /judges.html (default false)
 ```
+
+Vendor register import (`/import.html`): by default existing vendors, systems and services cannot be changed by an
+import, only new ones added, so the shared demo stays intact. On a bank's own instance set
+`IMPORT_UPDATE_EXISTING=true` so re-importing an edited register updates it.
+
+Demo accounts (created through Request a demo) have hard, lifetime limits so one visitor cannot exhaust the AI
+budget or fill the shared register: 10 incident notice uploads (`DEMO_MAX_INCIDENT_UPLOADS`) and 2 register imports
+(`DEMO_MAX_REGISTER_IMPORTS`). Failed uploads and imports that save nothing do not count; checking import files is
+unlimited. `judge` and the admin account are not limited. The counts live on the account (migration V8), so a demo
+reset does not refill them.
 The old shared `analyst` / `approver` accounts are disabled by migration V4. Visitors get personal 24-hour
 accounts through `/request-demo.html`.
 

@@ -1,9 +1,31 @@
 # Fortivance
 
-Third-party risk intelligence and operational resilience for banks.
-MVP focus: **Compliance & Dependency Intelligence** for a fictional Indian commercial bank.
+Third-party risk intelligence and operational resilience for Indian banks.
 
-> All organisations, contracts, reports and incidents in this repo are **synthetic**.
+> All organisations, contracts, reports and incidents in this repo are **synthetic**. The demo runs on a
+> fictional bank, Deccan Meridian Bank, and its invented vendors.
+
+## What it is
+
+Banks run their critical services on vendors (cloud hosts, payment processors, KYC and messaging providers) and on
+those vendors' own subcontractors. When a vendor has a cyber incident, the bank has hours, not days, to work out
+which of its services are hit and to report to RBI (the clock starts when the bank learns of the incident).
+Today that work is mostly done by hand: reading the vendor's email, searching spreadsheets for what depends on the
+vendor, and checking audit reports page by page. Fortivance does that work in minutes and leaves every decision
+with a person.
+
+## What you can do with it
+
+| Use | What happens | Page |
+|---|---|---|
+| **Handle a vendor incident** | Upload the vendor's incident notice (PDF or text). Claude extracts the facts, Fortivance matches the vendor, walks the dependency graph to the affected business services, starts the 6-hour reporting clock and drafts a response plan. An Approver approves or rejects it; on approval the actions are created and Claude drafts an escalation note for leadership. Every step goes to the audit log. | `/incidents.html` |
+| **Review vendor evidence** | Claude reads a vendor's contract and SOC 2 report and finds the passage that meets each requirement the bank takes from the RBI Directions. The gap report shows each requirement as found, partial or missing with the cited passage and a rule-based risk score; an analyst verifies or rejects every finding. | `/evidence.html` |
+| **See dependencies** | An interactive graph from business services to systems, vendors and fourth parties, with a simulation of what a vendor outage reaches. | `/graph.html` |
+| **Track resilience** | A dashboard of six resilience metrics, a vendor register with tiers and contract dates, vendor profiles with mis-tiering alerts, and remediation actions. | `/index.html`, `/vendor.html` |
+| **Load a bank's own register** | Import vendors, systems and services from three CSV templates, checked row by row before anything is saved. | `/import.html` |
+
+New to the banking terms? Read the glossary below, or the in-app **Guide** at `/guide.html`. Judges: see
+`/judges.html` for the demo path and how the app meets the hackathon checklist.
 
 ## Glossary: the demo setting and its terms
 
@@ -103,23 +125,58 @@ Failures travel along this chain: **vendor → application → business service*
 | VS-BCP-01 | Tested BCP/DR: the vendor has a continuity and DR plan, tested periodically, with results shared | RBI Directions, para 78 (applying 40-43) |
 | VS-SEC-02 | Subservice organisations covered: where a SOC 2 report carves out a subcontractor, the bank gets separate assurance | Internal policy |
 
+## Loading a bank's own register
+
+Each bank runs its own Fortivance instance (RBI's outsourcing rules make a shared multi-bank platform hard to
+justify: the bank must keep audit rights, data separation and Indian data residency for any tool it outsources to).
+The register is loaded at `/import.html` from three CSV templates (`static/templates/`): vendors (with
+subcontractors), systems (with the vendors each depends on) and business services (with essential and supporting
+systems). A check run validates every row and reports problems by file and line without saving; the import then
+saves everything in one transaction, never deletes, and is audit-logged. It needs the Approver role. Updating
+existing records is allowed only with `IMPORT_UPDATE_EXISTING=true` (off by default, so the shared demo is protected).
+
 ## Stack
 Java 21 · Spring Boot 3.3 · MySQL 8.4 · Flyway · Docker Compose · Claude API · Cytoscape.js
 
-## Run it
+## Run it locally
 
+**You need:** Docker Desktop (with Docker Compose), and an Anthropic API key for the AI steps. Java 21 and Maven
+are only needed to run the tests outside Docker.
+
+1. **Get the code**
+   ```bash
+   git clone <this repo>
+   cd fortivance
+   ```
+2. **Create your settings file.** Copy the example and fill it in. The real `.env` is git-ignored; never commit it.
+   ```bash
+   cp .env.example .env          # PowerShell: Copy-Item .env.example .env
+   ```
+   | Variable | Needed for |
+   |---|---|
+   | `ANTHROPIC_API_KEY` | Incident extraction, response plans and evidence mapping (without it the rest of the app still works) |
+   | `JUDGE_PASSWORD` | Creates the `judge` account you sign in with locally |
+   | `OWNER_PASSWORD` | Creates the admin account for the admin console (optional) |
+   | `DB_PASSWORD`, `DB_ROOT_PASSWORD` | MySQL passwords (defaults work for local use) |
+   | `MAIL_USERNAME`, `MAIL_PASSWORD`, `CONTACT_TO` | Contact form, demo welcome and password reset emails (optional locally; without them, use the `judge` account) |
+3. **Start it**
+   ```bash
+   docker compose up --build
+   ```
+   The first start builds the app and runs the Flyway migrations `V1` to `V9` (schema, synthetic seed data,
+   workflow, demo requests, admin console, demo limits).
+4. **Open** `http://localhost:8080`. It opens on the About page; choose **Log in** and sign in as `judge` with
+   your `JUDGE_PASSWORD`. Switch between Analyst and Approver in the header.
+5. **Try an incident.** On Incidents, upload `sample-docs/incident-notices/live-demo/PR-SEC-2026-0031.md`
+   (or any notice in `sample-docs/incident-notices/`), then open it to see the clock, impact and plan.
+
+MySQL is exposed on host port `3307`. To start again from clean data, run the reset script (below). To stop:
+`docker compose down` (add `-v` to delete the database too).
+
+**Run the tests** (no database needed):
 ```bash
-cp .env.example .env        # add your ANTHROPIC_API_KEY and DB passwords
-docker compose up --build
+mvn test
 ```
-
-Flyway runs on startup:
-- `V1__init_schema.sql`: 10 core tables
-- `V2__seed_synthetic_data.sql`: demo data
-- `V3__workflow_ai_and_audit.sql`: workflow, users, passages, audit log, actions
-
-Application runs on: `http://localhost:8080`
-MySQL exposed on host port: `3307`
 
 ## Request a Demo
 
@@ -127,7 +184,7 @@ Visitors request access at `/request-demo.html`. The system creates one personal
 
 Before access expires, a demo user can open `/profile.html` and extend it by 24 hours, up to two times. Passwords are stored only as bcrypt hashes; accounts become active only after the welcome email is sent. Permanent owner and judge accounts are created at startup from `OWNER_PASSWORD` and `JUDGE_PASSWORD` in `.env` (see `deploy/DEPLOY.md`).
 
-**Accounts.** `judgedemo` is a permanent test account for judges (Analyst/Approver switch, no expiry); its password comes from `JUDGE_PASSWORD` and is shared privately. The administrator account signs in only through a separate, unlinked admin console (address shared privately), where it can view every account, disable or enable it, delete a demo account, and add up to 48 hours of access to a demo account. Admin accounts cannot sign in to the application, the admin area answers 404 to everyone else, sign-in locks for 15 minutes after 5 failures, and admin actions require a CSRF token.
+**Accounts.** `judge` is a permanent test account for judges (Analyst/Approver switch, no expiry); its password comes from `JUDGE_PASSWORD` and is shared privately. The administrator account signs in only through a separate, unlinked admin console (address shared privately), where it can view every account, disable or enable it, delete a demo account, and add up to 48 hours of access to a demo account. Admin accounts cannot sign in to the application, the admin area answers 404 to everyone else, sign-in locks for 15 minutes after 5 failures, and admin actions require a CSRF token.
 
 ## Security & Known Simplifications
 
@@ -138,15 +195,20 @@ Before access expires, a demo user can open `/profile.html` and extend it by 24 
 
 ## Web Application Pages
 
-- `/about.html`: Public landing page with operational resilience overview and live metrics.
+- `/about.html`: Public landing page: the problem, why this idea, how close the demo is to a real bank, live metrics and contact form.
+- `/guide.html`: Public help guide: the setting, incident and evidence walkthroughs and an A-Z glossary.
+- `/judges.html`: Public judge guide: demo path, checklist and rubric mapping, where Claude and the mailbox are used.
 - `/request-demo.html`: Public request form for personal 24-hour demo accounts.
-- `/login.html`: Clean session login form.
+- `/login.html`: Sign-in form (`/login` redirects here). Logging out returns to the About page.
 - `/profile.html`: Signed-in user's demo access details, expiry countdown and extension button.
 - `/index.html`: Executive dashboard with 6 resilience metric cards and vendor risk registry.
 - `/graph.html`: Interactive Cytoscape.js dependency graph mapping Business Services &rarr; Applications &rarr; Vendors &rarr; 4th Parties, with live vendor incident cascade simulation.
 - `/vendor.html?id=`: Detailed vendor risk profile, contract validity, mis-tiering alerts, subcontractors, and dependent applications.
-- `/incidents.html`: Active incident triage list.
-- `/incident.html?id=`: Incident detail with live **RBI 6-Hour Reporting Window** countdown clock, monospace notice text, AI extraction, and response plan approval workflow.
+- `/incidents.html`: Incident list and notice upload.
+- `/incident.html?id=`: Incident detail with live **RBI 6-Hour Reporting Window** countdown clock, notice text, AI extraction, and response plan approval workflow.
+- `/evidence.html`, `/evidence-pack.html`: Vendor evidence, gap reports, risk score and verify/dispute.
+- `/import.html`: Vendor register import from CSV templates (check, then import as Approver).
+- `/eval.html`: Accuracy of the stored AI outputs against hand-labelled answers (`docs/eval/gold.json`).
 
 ## REST APIs
 

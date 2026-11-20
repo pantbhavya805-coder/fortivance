@@ -9,7 +9,7 @@ class JudgeAccessControllerTest {
     @Test
     void passwordIsHiddenUnlessExplicitlyPublic() {
         var hidden = new JudgeAccessController("Secret!2026", false).access();
-        assertThat(hidden.getBody()).containsEntry("username", "judgedemo").containsEntry("password", null);
+        assertThat(hidden.getBody()).containsEntry("username", "judge").containsEntry("password", null);
         assertThat(hidden.getHeaders().getCacheControl()).contains("no-store");
 
         assertThat(new JudgeAccessController("Secret!2026", true).access().getBody())

@@ -140,6 +140,7 @@ public class SecurityConfig {
                     "/logout",
                     "/css/**",
                     "/js/**",
+                    "/templates/**",
                     "/vendor/**",
                     "/images/**",
                     "/favicon.svg",
@@ -172,7 +173,7 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
-                .logoutSuccessUrl("/login.html?logout")
+                .logoutSuccessUrl("/about.html")
                 .permitAll()
             )
             .httpBasic(Customizer.withDefaults())

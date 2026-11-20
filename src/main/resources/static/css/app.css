@@ -676,3 +676,15 @@ table.data-table tr:hover td {
     max-width: 480px;
     padding: 1.5rem;
 }
+
+/* Disabled buttons look disabled everywhere (for example Import before the files are checked). */
+.btn:disabled,
+.btn[disabled],
+.btn:disabled:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}

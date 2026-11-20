@@ -56,10 +56,17 @@ fortivance:
     judge-password: ${JUDGE_PASSWORD:}
     # true shows the judges' test account password on /judges.html (read from JUDGE_PASSWORD, never the repo).
     judge-password-public: ${JUDGE_PASSWORD_PUBLIC:false}
+  # Vendor register import (/import.html). false: new records can be added but existing ones are never
+  # changed (keeps a shared demo intact). Set true on a bank's own instance.
+  import:
+    update-existing: ${IMPORT_UPDATE_EXISTING:false}
   demo:
     access-hours: ${DEMO_ACCESS_HOURS:24}
     max-extensions: ${DEMO_MAX_EXTENSIONS:2}
     requests-per-hour: ${DEMO_REQUESTS_PER_HOUR:3}
+    # Hard limits per demo account (not for the judge account or the admin).
+    max-incident-uploads: ${DEMO_MAX_INCIDENT_UPLOADS:10}
+    max-register-imports: ${DEMO_MAX_REGISTER_IMPORTS:2}
 
 management:
   health:

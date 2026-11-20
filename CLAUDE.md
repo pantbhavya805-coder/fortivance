@@ -34,7 +34,6 @@ All data is synthetic: fictional bank "Deccan Meridian Bank Ltd", 6 vendors (Nim
 - `evidence/` passages, mapping, gap report, verify/dispute, risk score
 - `ai/` `ClaudeClient`, `AiGateway`, `Prompts`
 - `security/`, `audit/`, `action/`, `metrics/`, `vendor/`
-- `docs/ANTIGRAVITY_TASKS.md` brief for the UI work done in parallel by another agent
 
 ## Status (Thu 19 Nov, 13:00)
 Done and tested end to end: incident flow (4 notices incl. prompt-injection test), clock, impact, plan approval, actions, graph, vendor profiles, metrics, audit log, evidence module and UI, verify/dispute.

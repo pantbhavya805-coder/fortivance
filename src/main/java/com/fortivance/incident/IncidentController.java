@@ -1,5 +1,7 @@
 package com.fortivance.incident;
 
+import com.fortivance.demo.DemoQuotaService;
+import com.fortivance.security.CurrentUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,9 +16,11 @@ import java.util.Map;
 public class IncidentController {
 
     private final IncidentService service;
+    private final DemoQuotaService quota;
 
-    public IncidentController(IncidentService service) {
+    public IncidentController(IncidentService service, DemoQuotaService quota) {
         this.service = service;
+        this.quota = quota;
     }
 
     /** Upload a vendor notice (.pdf, .md or .txt). Returns the full incident detail. */
@@ -25,7 +29,17 @@ public class IncidentController {
                                       @RequestParam(defaultValue = "true") boolean draftPlan,
                                       Principal principal) throws Exception {
         if (file.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty file");
-        long id = service.ingest(file.getOriginalFilename(), file.getBytes(), name(principal), draftPlan);
+        Long userId = CurrentUser.userId();
+        if (!quota.tryUse(userId, DemoQuotaService.Kind.INCIDENT_UPLOAD)) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, quota.limitMessage(DemoQuotaService.Kind.INCIDENT_UPLOAD));
+        }
+        long id;
+        try {
+            id = service.ingest(file.getOriginalFilename(), file.getBytes(), name(principal), draftPlan);
+        } catch (Exception | Error e) {
+            quota.release(userId, DemoQuotaService.Kind.INCIDENT_UPLOAD); // a failed upload does not count
+            throw e;
+        }
         return service.detail(id);
     }
 

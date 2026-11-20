@@ -1,0 +1,2 @@
+code,name,description,criticality,owner_team,rto_hours,rpo_minutes,vendors,single_point_vendors
+FRM,Fraud Risk Management,Scores every UPI and card transaction for fraud before it is approved,CRITICAL,Fraud Operations,1,5,LedgerLine Analytics Pvt Ltd;NimbusCloud Infra Pvt Ltd,LedgerLine Analytics Pvt Ltd

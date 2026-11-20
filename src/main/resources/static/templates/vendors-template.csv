@@ -1,0 +1,3 @@
+name,parent_vendor,service_category,service_description,risk_tier,material,data_access,outsourcing_scope,scope_note,email_domain,contract_start,contract_end,last_assessed_on,next_review_due
+LedgerLine Analytics Pvt Ltd,,FRAUD_ANALYTICS,Real-time fraud scoring for UPI and card transactions,HIGH,yes,FINANCIAL,IN_SCOPE,,ledgerline.example,2026-01-01,2028-12-31,2026-06-30,2027-06-30
+QuantaGrid Hosting Pvt Ltd,LedgerLine Analytics Pvt Ltd,CLOUD_HOSTING,Hosts the LedgerLine scoring platform (subcontractor of LedgerLine),HIGH,no,FINANCIAL,IN_SCOPE,,quantagrid.example,,,,
