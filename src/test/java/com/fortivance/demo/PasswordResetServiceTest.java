@@ -119,9 +119,9 @@ class PasswordResetServiceTest {
         String token = PasswordResetService.newToken();
         tokenRow(token, NOW.plusSeconds(600), null);
 
-        assertThat(service.reset(token, "NewSecret2026", "1.1.1.1").status()).isEqualTo(CHANGED);
+        assertThat(service.reset(token, "NewSecret!2026", "1.1.1.1").status()).isEqualTo(CHANGED);
         verify(jdbc).update(contains("UPDATE users SET password_hash"),
-                argThat((Object h) -> h instanceof String s && encoder.matches("NewSecret2026", s)), eq(9L));
+                argThat((Object h) -> h instanceof String s && encoder.matches("NewSecret!2026", s)), eq(9L));
         verify(jdbc).update(contains("SET used_at"), any(Timestamp.class), eq(9L));
     }
 
@@ -129,14 +129,14 @@ class PasswordResetServiceTest {
     void expiredOrUsedOrMalformedTokensAreRejected() {
         String expired = PasswordResetService.newToken();
         tokenRow(expired, NOW.minusSeconds(1), null);
-        assertThat(service.reset(expired, "NewSecret2026", "1.1.1.1").status()).isEqualTo(INVALID_TOKEN);
+        assertThat(service.reset(expired, "NewSecret!2026", "1.1.1.1").status()).isEqualTo(INVALID_TOKEN);
 
         String used = PasswordResetService.newToken();
         tokenRow(used, NOW.plusSeconds(600), NOW.minusSeconds(60));
-        assertThat(service.reset(used, "NewSecret2026", "1.1.1.1").status()).isEqualTo(INVALID_TOKEN);
+        assertThat(service.reset(used, "NewSecret!2026", "1.1.1.1").status()).isEqualTo(INVALID_TOKEN);
 
-        assertThat(service.reset("not-a-token", "NewSecret2026", "1.1.1.1").status()).isEqualTo(INVALID_TOKEN);
-        assertThat(service.reset(null, "NewSecret2026", "1.1.1.1").status()).isEqualTo(INVALID_TOKEN);
+        assertThat(service.reset("not-a-token", "NewSecret!2026", "1.1.1.1").status()).isEqualTo(INVALID_TOKEN);
+        assertThat(service.reset(null, "NewSecret!2026", "1.1.1.1").status()).isEqualTo(INVALID_TOKEN);
         verify(jdbc, never()).update(contains("UPDATE users SET password_hash"), any(Object[].class));
     }
 

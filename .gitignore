@@ -11,3 +11,5 @@ target/
 # Local tool settings
 .claude/
 .mailmap
+# GoDaddy CLI config (may hold credentials)
+godaddy.toml

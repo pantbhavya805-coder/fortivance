@@ -13,10 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Creates or updates the permanent (non-expiring) accounts at startup: {@code bhavya} (owner) and
- * {@code judge}. Both can switch between Analyst and Approver; the role they last chose is kept across
- * restarts. Passwords are read from the environment (OWNER_PASSWORD, JUDGE_PASSWORD) and stored only as
- * bcrypt hashes; an empty password leaves that account untouched.
+ * Creates or updates the permanent (non-expiring) accounts at startup:
+ * <ul>
+ *   <li>{@code bhavya}: the administrator (role ADMIN, fixed). Signs in only at /admin/login.</li>
+ *   <li>{@code judgedemo}: the test account for judges. Can switch between Analyst and Approver; the role it
+ *       last chose is kept across restarts.</li>
+ * </ul>
+ * Passwords are read from the environment (OWNER_PASSWORD, JUDGE_PASSWORD) and stored only as bcrypt hashes;
+ * an empty password leaves that account untouched.
  */
 @Component
 public class AccountBootstrap implements ApplicationRunner {
@@ -24,10 +28,11 @@ public class AccountBootstrap implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(AccountBootstrap.class);
     private static final String TEAM = "Third-Party Risk";
 
-    record Account(String username, String displayName, String initialRole) { }
+    /** {@code fixedRole}: the role is always reset to {@code initialRole} (true for the admin). */
+    record Account(String username, String displayName, String initialRole, boolean fixedRole) { }
 
-    static final Account OWNER = new Account("bhavya", "Bhavya Pant", "APPROVER");
-    static final Account JUDGE = new Account("judge", "Judge", "ANALYST");
+    static final Account ADMIN = new Account("bhavya", "Bhavya Pant", "ADMIN", true);
+    static final Account JUDGE = new Account("judgedemo", "Judge (demo test account)", "ANALYST", false);
 
     private final JdbcTemplate jdbc;
     private final PasswordEncoder encoder;
@@ -45,7 +50,7 @@ public class AccountBootstrap implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        ensure(OWNER, ownerPassword, "OWNER_PASSWORD");
+        ensure(ADMIN, ownerPassword, "OWNER_PASSWORD");
         ensure(JUDGE, judgePassword, "JUDGE_PASSWORD");
     }
 
@@ -55,7 +60,7 @@ public class AccountBootstrap implements ApplicationRunner {
             return;
         }
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "SELECT password_hash, active, expires_at, role FROM users WHERE username = ?", a.username());
+                "SELECT password_hash, active, expires_at, role, deleted_at FROM users WHERE username = ?", a.username());
         if (rows.isEmpty()) {
             jdbc.update("INSERT INTO users (username, display_name, password_hash, role, team, active) "
                             + "VALUES (?, ?, ?, ?, ?, TRUE)",
@@ -64,18 +69,18 @@ public class AccountBootstrap implements ApplicationRunner {
             return;
         }
         Map<String, Object> r = rows.get(0);
-        boolean switchableRole = UserPrincipal.SWITCHABLE_ROLES.contains(String.valueOf(r.get("role")));
+        String currentRole = String.valueOf(r.get("role"));
+        String role = a.fixedRole() || !UserPrincipal.SWITCHABLE_ROLES.contains(currentRole) ? a.initialRole() : currentRole;
         boolean upToDate = Boolean.TRUE.equals(r.get("active"))
                 && r.get("expires_at") == null
-                && switchableRole
+                && r.get("deleted_at") == null
+                && role.equals(currentRole)
                 && encoder.matches(password, (String) r.get("password_hash"));
         if (upToDate) {
             return;
         }
-        // Keep the role the user last switched to; only repair it if it is not a switchable role.
-        String role = switchableRole ? String.valueOf(r.get("role")) : a.initialRole();
-        jdbc.update("UPDATE users SET password_hash = ?, display_name = ?, role = ?, team = ?, "
-                        + "active = TRUE, expires_at = NULL, demo_request_id = NULL WHERE username = ?",
+        jdbc.update("UPDATE users SET password_hash = ?, display_name = ?, role = ?, team = ?, active = TRUE, "
+                        + "expires_at = NULL, demo_request_id = NULL, deleted_at = NULL WHERE username = ?",
                 encoder.encode(password), a.displayName(), role, TEAM, a.username());
         log.info("Updated permanent account {}", a.username());
     }

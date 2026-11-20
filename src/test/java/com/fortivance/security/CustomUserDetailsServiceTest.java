@@ -29,11 +29,10 @@ class CustomUserDetailsServiceTest {
     }
 
     @Test
-    void permanentAccountHasNoDemoRequestAndIsAdmin() throws Exception {
+    void permanentAccountHasNoDemoRequest() throws Exception {
         UserPrincipal p = CustomUserDetailsService.map(row("bhavya", null, null));
         assertThat(p.getDemoRequestId()).isNull();
         assertThat(p.getExpiresAt()).isNull();
-        assertThat(new AdminAccess("bhavya,judge", "bhavya").isAdmin(p)).isTrue();
     }
 
     @Test

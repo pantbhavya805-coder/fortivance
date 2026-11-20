@@ -35,11 +35,11 @@ class DemoRequestServiceTest {
 
     private DemoRequestService service(int perHour) {
         return new DemoRequestService(jdbc, tx, mock(PasswordEncoder.class), mailer, mock(AuditService.class),
-                Duration.ofHours(24), perHour, Clock.fixed(Instant.parse("2026-11-19T10:00:00Z"), ZoneOffset.UTC));
+                new com.fortivance.security.AccountRevocations(), Duration.ofHours(24), perHour, Clock.fixed(Instant.parse("2026-11-19T10:00:00Z"), ZoneOffset.UTC));
     }
 
     private static DemoRequestForm form(String website) {
-        return new DemoRequestForm("jane@acme.com", "Acme", null, PURPOSE, website);
+        return new DemoRequestForm("jane@acme.com", "Acme", null, PURPOSE, "Str0ng!Passw0rd", website);
     }
 
     @Test
@@ -67,17 +67,28 @@ class DemoRequestServiceTest {
     void existingRequestIsReportedAsDuplicateAndNoMailIsSent() throws Exception {
         // provision() returns null for an existing, non-retryable request
         assertThat(service(3).submit(form(null), "1.1.1.1").outcome()).isEqualTo(DemoRequestService.Outcome.DUPLICATE);
-        verify(mailer, never()).sendWelcome(any(), any(), any(), any(), any());
+        verify(mailer, never()).sendWelcome(any(), any(), any(), any());
+    }
+
+    @Test
+    void weakOrEmailBasedPasswordIsRejectedBeforeAnythingIsStored() throws Exception {
+        DemoRequestService s = service(3);
+        DemoRequestForm weak = new DemoRequestForm("jane@acme.com", "Acme", null, PURPOSE, "password123", null);
+        assertThat(s.submit(weak, "1.1.1.1").outcome()).isEqualTo(DemoRequestService.Outcome.WEAK_PASSWORD);
+        DemoRequestForm emailBased = new DemoRequestForm("jane.doe@acme.com", "Acme", null, PURPOSE, "Jane.Doe!2026", null);
+        assertThat(DemoRequestService.passwordProblem(emailBased)).contains("email");
+        assertThat(DemoRequestService.passwordProblem(form(null))).isNull();
+        verify(mailer, never()).sendWelcome(any(), any(), any(), any());
     }
 
     @Test
     void welcomeEmailEscapesUserInput() {
         DemoMailer real = new DemoMailer(mock(JavaMailSender.class), "admin@fortivance.in", "admin@fortivance.in",
                 "https://fortivance.in");
-        String html = real.welcomeHtml("<script>alert(1)</script>", "jane@acme.com", "Pass2345abcdEF",
+        String html = real.welcomeHtml("<script>alert(1)</script>", "jane@acme.com",
                 Instant.parse("2026-11-20T10:00:00Z"), false);
         assertThat(html).doesNotContain("<script>").contains("&lt;script&gt;")
-                .contains("jane@acme.com").contains("Pass2345abcdEF").contains("Approver")
+                .contains("jane@acme.com").contains("the one you chose").contains("Approver")
                 .contains("20 Nov 2026, 3:30 PM IST")
                 .contains("https://fortivance.in/profile.html");
     }

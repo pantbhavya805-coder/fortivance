@@ -2,6 +2,7 @@ package com.fortivance.audit;
 
 import com.fortivance.security.UserPrincipal;
 import org.springframework.context.event.EventListener;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
 import org.springframework.security.authentication.event.InteractiveAuthenticationSuccessEvent;
 import org.springframework.stereotype.Component;
@@ -13,9 +14,11 @@ import java.util.Map;
 public class SecurityAuditListener {
 
     private final AuditService auditService;
+    private final JdbcTemplate jdbc;
 
-    public SecurityAuditListener(AuditService auditService) {
+    public SecurityAuditListener(AuditService auditService, JdbcTemplate jdbc) {
         this.auditService = auditService;
+        this.jdbc = jdbc;
     }
 
     @EventListener
@@ -24,6 +27,8 @@ public class SecurityAuditListener {
         Long userId = null;
         if (event.getAuthentication().getPrincipal() instanceof UserPrincipal principal) {
             userId = principal.getId();
+            // shown as "Last sign-in" in the admin console (interactive sign-ins only, not every API call)
+            jdbc.update("UPDATE users SET last_login_at = NOW() WHERE id = ?", userId);
         }
         Map<String, Object> detail = new HashMap<>();
         detail.put("authType", event.getAuthentication().getClass().getSimpleName());

@@ -95,7 +95,7 @@ public class PasswordResetService {
         }
         List<Map<String, Object>> users = jdbc.queryForList(
                 "SELECT id, display_name, expires_at FROM users "
-                        + "WHERE username = ? AND demo_request_id IS NOT NULL AND active = TRUE", email);
+                        + "WHERE username = ? AND demo_request_id IS NOT NULL AND active = TRUE AND deleted_at IS NULL", email);
         if (users.isEmpty()) {
             return true;
         }
@@ -144,7 +144,7 @@ public class PasswordResetService {
             List<Map<String, Object>> rows = jdbc.queryForList(
                     "SELECT t.id, t.user_id, t.expires_at, t.used_at FROM password_reset_tokens t "
                             + "JOIN users u ON u.id = t.user_id "
-                            + "WHERE t.token_hash = ? AND u.active = TRUE AND u.demo_request_id IS NOT NULL FOR UPDATE",
+                            + "WHERE t.token_hash = ? AND u.active = TRUE AND u.deleted_at IS NULL AND u.demo_request_id IS NOT NULL FOR UPDATE",
                     sha256(token));
             if (rows.isEmpty()) {
                 return null;

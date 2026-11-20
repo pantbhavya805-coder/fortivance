@@ -1,6 +1,7 @@
 package com.fortivance.demo;
 
 import com.fortivance.audit.AuditService;
+import com.fortivance.security.AccountRevocations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,26 +27,27 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Handles a public demo request: stores it (one per email), creates a personal analyst and approver
- * account that expire after the access period, and emails the credentials.
+ * Handles a public demo request: stores it (one per email) and creates a personal account (username = the
+ * email, password chosen by the requester) that expires after the access period, then sends a welcome email.
  *
- * Passwords exist in plain text only in memory and in the welcome email; the database stores bcrypt
- * hashes. The accounts stay inactive until the welcome email has been handed to the SMTP server, so a
- * failed delivery never leaves usable accounts that nobody received. A request whose email failed can
- * be submitted again; it is re-provisioned with new passwords.
+ * The password is never stored or sent in plain text: the database keeps a bcrypt hash and the welcome email
+ * does not repeat it. The account stays inactive until the welcome email has been handed to the SMTP server,
+ * which confirms the address. A request whose email failed can be submitted again with a new password.
  */
 @Service
 public class DemoRequestService {
 
-    public enum Outcome { CREATED, IGNORED, DUPLICATE, RATE_LIMITED, NOT_CONFIGURED, MAIL_FAILED }
+    public enum Outcome { CREATED, IGNORED, WEAK_PASSWORD, DUPLICATE, RATE_LIMITED, NOT_CONFIGURED, MAIL_FAILED }
 
     private static final Logger log = LoggerFactory.getLogger(DemoRequestService.class);
     static final String STATUS_PENDING = "PENDING";
     static final String STATUS_PROVISIONED = "PROVISIONED";
     static final String STATUS_MAIL_FAILED = "MAIL_FAILED";
+    /** Deleted by the admin: the old account can never sign in again, but the email may request anew. */
+    static final String STATUS_DELETED = "DELETED";
 
     /** The single demo account: the username is the requester's email address. */
-    record Provisioned(long requestId, String username, String password, Instant expiresAt) { }
+    record Provisioned(long requestId, String username, Instant expiresAt) { }
 
     /** {@code credentials} is set only when the outcome is CREATED. */
     public record SubmitResult(Outcome outcome, Provisioned credentials) {
@@ -59,26 +61,29 @@ public class DemoRequestService {
     private final PasswordEncoder encoder;
     private final DemoMailer mailer;
     private final AuditService audit;
+    private final AccountRevocations revocations;
     private final SlidingWindowRateLimiter limiter;
     private final Duration accessPeriod;
     private final Clock clock;
 
     @Autowired
     public DemoRequestService(JdbcTemplate jdbc, PlatformTransactionManager txManager, PasswordEncoder encoder,
-                              DemoMailer mailer, AuditService audit,
+                              DemoMailer mailer, AuditService audit, AccountRevocations revocations,
                               @Value("${fortivance.demo.access-hours:24}") int accessHours,
                               @Value("${fortivance.demo.requests-per-hour:3}") int requestsPerHour) {
-        this(jdbc, new TransactionTemplate(txManager), encoder, mailer, audit,
+        this(jdbc, new TransactionTemplate(txManager), encoder, mailer, audit, revocations,
                 Duration.ofHours(accessHours), requestsPerHour, Clock.systemUTC());
     }
 
     DemoRequestService(JdbcTemplate jdbc, TransactionTemplate tx, PasswordEncoder encoder, DemoMailer mailer,
-                       AuditService audit, Duration accessPeriod, int requestsPerHour, Clock clock) {
+                       AuditService audit, AccountRevocations revocations, Duration accessPeriod,
+                       int requestsPerHour, Clock clock) {
         this.jdbc = jdbc;
         this.tx = tx;
         this.encoder = encoder;
         this.mailer = mailer;
         this.audit = audit;
+        this.revocations = revocations;
         this.accessPeriod = accessPeriod;
         this.clock = clock;
         this.limiter = new SlidingWindowRateLimiter(requestsPerHour, Duration.ofHours(1), clock);
@@ -88,6 +93,9 @@ public class DemoRequestService {
         if (form.website() != null && !form.website().isBlank()) {
             log.info("Demo request honeypot triggered; dropped");
             return SubmitResult.of(Outcome.IGNORED);
+        }
+        if (passwordProblem(form) != null) {
+            return SubmitResult.of(Outcome.WEAK_PASSWORD);
         }
         if (!mailer.isConfigured()) {
             log.warn("Demo request received but mail is not configured (MAIL_USERNAME)");
@@ -102,7 +110,7 @@ public class DemoRequestService {
 
         Provisioned p;
         try {
-            p = tx.execute(status -> provision(email, form.name(), phone, form.purpose(), clientIp));
+            p = tx.execute(status -> provision(email, form.name(), phone, form.purpose(), form.password(), clientIp));
         } catch (DuplicateKeyException e) {
             return SubmitResult.of(Outcome.DUPLICATE); // two submissions for the same email at the same moment
         }
@@ -111,7 +119,7 @@ public class DemoRequestService {
         }
 
         try {
-            mailer.sendWelcome(email, form.name(), p.username(), p.password(), p.expiresAt());
+            mailer.sendWelcome(email, form.name(), p.username(), p.expiresAt());
         } catch (Exception e) {
             log.error("Demo welcome email to request {} failed: {}", p.requestId(), e.getMessage());
             jdbc.update("UPDATE demo_requests SET status = ? WHERE id = ?", STATUS_MAIL_FAILED, p.requestId());
@@ -123,8 +131,12 @@ public class DemoRequestService {
         tx.executeWithoutResult(status -> {
             jdbc.update("UPDATE demo_requests SET status = ?, mail_sent_at = ? WHERE id = ?",
                     STATUS_PROVISIONED, Timestamp.from(clock.instant()), p.requestId());
-            jdbc.update("UPDATE users SET active = TRUE WHERE demo_request_id = ?", p.requestId());
+            jdbc.update("UPDATE users SET active = TRUE WHERE demo_request_id = ? AND deleted_at IS NULL",
+                    p.requestId());
         });
+        // A re-used account (previously deleted by the admin) must not stay blocked for open sessions.
+        jdbc.queryForList("SELECT id FROM users WHERE demo_request_id = ? AND deleted_at IS NULL", Long.class,
+                p.requestId()).forEach(revocations::restore);
         Map<String, Object> detail = new LinkedHashMap<>();
         detail.put("email", email);
         detail.put("username", p.username());
@@ -140,10 +152,10 @@ public class DemoRequestService {
      * Creates one account (username = email, role ANALYST; the user can switch to APPROVER), inactive until
      * the welcome email has been sent.
      */
-    Provisioned provision(String email, String name, String phone, String purpose, String clientIp) {
+    Provisioned provision(String email, String name, String phone, String purpose, String password,
+                          String clientIp) {
         Instant expiresAt = clock.instant().plus(accessPeriod);
         Timestamp expiresTs = Timestamp.from(expiresAt);
-        String password = Credentials.password();
 
         List<Map<String, Object>> existing = jdbc.queryForList(
                 "SELECT id, status, username, analyst_username FROM demo_requests WHERE email = ? FOR UPDATE",
@@ -151,19 +163,22 @@ public class DemoRequestService {
 
         if (!existing.isEmpty()) {
             Map<String, Object> row = existing.get(0);
-            if (!STATUS_MAIL_FAILED.equals(row.get("status"))) {
+            Object status = row.get("status");
+            if (!STATUS_MAIL_FAILED.equals(status) && !STATUS_DELETED.equals(status)) {
                 return null;
             }
-            // The earlier welcome email never left; issue a new password on the same account.
+            // The earlier welcome email never left, or the admin deleted the account: set the new password on
+            // the same account and start a fresh access period.
             long id = ((Number) row.get("id")).longValue();
             String username = row.get("username") != null
                     ? (String) row.get("username") : (String) row.get("analyst_username");
             jdbc.update("UPDATE demo_requests SET name = ?, phone = ?, purpose = ?, client_ip = ?, status = ?, "
-                            + "access_expires_at = ?, extension_count = 0 WHERE id = ?",
+                            + "access_expires_at = ?, extension_count = 0, admin_extension_hours = 0 WHERE id = ?",
                     name, phone, purpose, clientIp, STATUS_PENDING, expiresTs, id);
-            jdbc.update("UPDATE users SET password_hash = ?, active = FALSE, expires_at = ? WHERE username = ?",
+            jdbc.update("UPDATE users SET password_hash = ?, active = FALSE, expires_at = ?, deleted_at = NULL "
+                            + "WHERE username = ?",
                     encoder.encode(password), expiresTs, username);
-            return new Provisioned(id, username, password, expiresAt);
+            return new Provisioned(id, username, expiresAt);
         }
 
         KeyHolder key = new GeneratedKeyHolder();
@@ -187,7 +202,20 @@ public class DemoRequestService {
         jdbc.update("INSERT INTO users (username, display_name, password_hash, role, team, active, expires_at, "
                         + "demo_request_id) VALUES (?, ?, ?, 'ANALYST', ?, FALSE, ?, ?)",
                 email, truncate(name, 100), encoder.encode(password), truncate(name, 100), expiresTs, id);
-        return new Provisioned(id, email, password, expiresAt);
+        return new Provisioned(id, email, expiresAt);
+    }
+
+    /** Returns what is wrong with the chosen password, or null if it is acceptable. */
+    public static String passwordProblem(DemoRequestForm form) {
+        String problem = PasswordChangeService.strengthProblem(null, form.password());
+        if (problem != null) {
+            return problem;
+        }
+        String local = form.email() == null ? "" : form.email().split("@", 2)[0].toLowerCase(Locale.ROOT);
+        if (local.length() >= 4 && form.password().toLowerCase(Locale.ROOT).contains(local)) {
+            return "The password must not contain your email address.";
+        }
+        return null;
     }
 
     private static String truncate(String s, int max) {

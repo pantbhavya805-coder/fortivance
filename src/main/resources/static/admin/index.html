@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Fortivance - Admin Console</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+    <header class="admin-header">
+        <a href="/admin/" class="admin-header-brand">
+            <img src="/images/logo-icon.svg" alt="Fortivance Logo" width="28" height="28">
+            <span>Fortivance Admin</span>
+            <span class="admin-header-badge">Console</span>
+        </a>
+        <div class="admin-header-user">
+            <span class="admin-user-name" id="admin-user-name">Admin</span>
+            <a href="/admin/logout" class="admin-logout-link" id="admin-logout-btn">Sign out</a>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Summary Cards Grid -->
+        <section class="admin-summary-grid">
+            <div class="admin-summary-card">
+                <div class="admin-summary-label">Active</div>
+                <div class="admin-summary-value" id="count-active" style="color: var(--status-green);">0</div>
+            </div>
+            <div class="admin-summary-card">
+                <div class="admin-summary-label">Expiring within 6 h</div>
+                <div class="admin-summary-value" id="count-expiring" style="color: var(--status-amber);">0</div>
+            </div>
+            <div class="admin-summary-card">
+                <div class="admin-summary-label">Expired</div>
+                <div class="admin-summary-value" id="count-expired" style="color: var(--status-red);">0</div>
+            </div>
+            <div class="admin-summary-card">
+                <div class="admin-summary-label">Disabled</div>
+                <div class="admin-summary-value" id="count-disabled" style="color: var(--status-grey);">0</div>
+            </div>
+            <div class="admin-summary-card">
+                <div class="admin-summary-label">Deleted</div>
+                <div class="admin-summary-value" id="count-deleted" style="color: #64748b;">0</div>
+            </div>
+        </section>
+
+        <!-- Toolbar -->
+        <section class="admin-toolbar">
+            <div class="admin-toolbar-left" id="filter-chips">
+                <button type="button" class="admin-filter-chip active" data-filter="ALL">All</button>
+                <button type="button" class="admin-filter-chip" data-filter="ACTIVE">Active</button>
+                <button type="button" class="admin-filter-chip" data-filter="EXPIRING_SOON">Expiring soon</button>
+                <button type="button" class="admin-filter-chip" data-filter="EXPIRED">Expired</button>
+                <button type="button" class="admin-filter-chip" data-filter="DISABLED">Disabled</button>
+                <button type="button" class="admin-filter-chip" data-filter="NOT_ACTIVATED">Not activated</button>
+            </div>
+            <div class="admin-toolbar-right">
+                <input type="text" id="search-input" class="admin-search-input" placeholder="Search email, username, name...">
+                <label class="admin-checkbox-label">
+                    <input type="checkbox" id="show-deleted-checkbox">
+                    <span>Show deleted</span>
+                </label>
+                <button type="button" class="btn btn-secondary" id="refresh-btn" style="padding: 0.35rem 0.75rem; font-size: 0.8125rem;">Refresh</button>
+                <span class="admin-updated-label" id="updated-label">-</span>
+            </div>
+        </section>
+
+        <!-- Accounts Table -->
+        <section class="admin-table-card">
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Account</th>
+                            <th>Name / organisation</th>
+                            <th>Role</th>
+                            <th>Requested</th>
+                            <th>Access until</th>
+                            <th>Time left</th>
+                            <th>Extensions</th>
+                            <th>Last sign-in</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accounts-tbody">
+                        <tr>
+                            <td colspan="10" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                Loading accounts...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div id="delete-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Delete Account</h2>
+            </div>
+            <div class="modal-body">
+                <p id="delete-modal-text"></p>
+                <p style="margin-top: 0.75rem; font-weight: 500;">
+                    To confirm, type <code id="delete-modal-expected" style="background:#f1f5f9; padding:0.15rem 0.35rem; border-radius:3px; color:var(--status-red);"></code> below:
+                </p>
+                <input type="text" id="delete-modal-input" class="modal-input" autocomplete="off" spellcheck="false" placeholder="Type username here">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="delete-cancel-btn">Cancel</button>
+                <button type="button" class="btn btn-danger" id="delete-confirm-btn" disabled>Delete account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <script src="/admin/admin.js"></script>
+</body>
+</html>

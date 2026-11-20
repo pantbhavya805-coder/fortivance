@@ -25,14 +25,16 @@ import java.util.List;
 public class DemoExpiryFilter extends OncePerRequestFilter {
 
     private final JdbcTemplate jdbc;
+    private final AccountRevocations revocations;
     private final Clock clock;
 
-    public DemoExpiryFilter(JdbcTemplate jdbc) {
-        this(jdbc, Clock.systemUTC());
+    public DemoExpiryFilter(JdbcTemplate jdbc, AccountRevocations revocations) {
+        this(jdbc, revocations, Clock.systemUTC());
     }
 
-    DemoExpiryFilter(JdbcTemplate jdbc, Clock clock) {
+    DemoExpiryFilter(JdbcTemplate jdbc, AccountRevocations revocations, Clock clock) {
         this.jdbc = jdbc;
+        this.revocations = revocations;
         this.clock = clock;
     }
 
@@ -41,31 +43,42 @@ public class DemoExpiryFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof UserPrincipal p) {
+            // Disabled or deleted by the admin: end the session now.
+            if (revocations.isRevoked(p.getId())) {
+                endSession(request, response, "{\"error\":\"Your access has been disabled.\"}", "/login.html?error");
+                return;
+            }
             Instant now = clock.instant();
             if (p.isExpiredAt(now) && !refreshedStillValid(p, now)) {
-                SecurityContextHolder.clearContext();
-                HttpSession session = request.getSession(false);
-                if (session != null) {
-                    session.invalidate();
-                }
-                if (request.getRequestURI().startsWith("/api/")) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"error\":\"Your demo access has expired.\",\"expired\":true}");
-                } else {
-                    response.sendRedirect("/login.html?error=expired");
-                }
+                endSession(request, response, "{\"error\":\"Your demo access has expired.\",\"expired\":true}",
+                        "/login.html?error=expired");
                 return;
             }
         }
         chain.doFilter(request, response);
     }
 
+    private static void endSession(HttpServletRequest request, HttpServletResponse response, String json,
+                                   String redirect) throws IOException {
+        SecurityContextHolder.clearContext();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        if (request.getRequestURI().startsWith("/api/")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(json);
+        } else {
+            response.sendRedirect(redirect);
+        }
+    }
+
     /** Re-reads the account; if it was extended, updates the cached expiry and returns true. */
     private boolean refreshedStillValid(UserPrincipal p, Instant now) {
         List<Timestamp> rows = jdbc.queryForList(
-                "SELECT expires_at FROM users WHERE id = ? AND active = TRUE", Timestamp.class, p.getId());
+                "SELECT expires_at FROM users WHERE id = ? AND active = TRUE AND deleted_at IS NULL", Timestamp.class, p.getId());
         if (rows.isEmpty()) {
             return false;
         }

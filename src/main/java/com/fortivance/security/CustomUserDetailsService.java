@@ -23,7 +23,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        String sql = "SELECT id, username, display_name, password_hash, role, team, active, expires_at, demo_request_id "
+        String sql = "SELECT id, username, display_name, password_hash, role, team, active, expires_at, demo_request_id, deleted_at "
                 + "FROM users WHERE username = ?";
         List<UserPrincipal> users = jdbcTemplate.query(sql, (rs, rowNum) -> map(rs),
                 username == null ? "" : username.trim()); // the column's collation is case-insensitive
@@ -48,7 +48,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 rs.getString("password_hash"),
                 role,
                 rs.getString("team"),
-                rs.getBoolean("active"),
+                rs.getBoolean("active") && rs.getTimestamp("deleted_at") == null, // deleted accounts never sign in
                 List.of(new SimpleGrantedAuthority(authority)),
                 expires != null ? expires.toInstant() : null,
                 demoRequestId

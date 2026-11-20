@@ -460,6 +460,17 @@
                     <ul class="risk-factors-list" id="risk-factors-list" style="margin-top: 0.25rem;">
                         <li style="font-size: 0.8125rem; color: var(--text-secondary);">No contributing risk factors.</li>
                     </ul>
+                    <div style="margin-top: 0.75rem; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.55;">
+                        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--pack-navy); margin-bottom: 0.4rem;">How the score works</div>
+                            <p style="margin: 0 0 0.5rem;">The score shows how much risk is <strong>left</strong> after counting what the bank can prove is under control (residual risk), on a scale of 0 to 100.</p>
+                            <ul style="margin: 0 0 0.5rem; padding-left: 1.1rem;">
+                                <li><strong>Starting point (inherent risk):</strong> how critical the vendor is (CRITICAL 40, HIGH 30, MEDIUM 20, LOW 10) and what data it handles (financial 15, customer personal data 10, internal 5).</li>
+                                <li><strong>Missing or partial evidence (+8 / +4 per requirement):</strong> a control the bank cannot prove exists gives no protection, so the risk stays.</li>
+                                <li><strong>Open incidents in the vendor's chain (+5 each):</strong> something is going wrong right now. These points drop off when the incident is closed.</li>
+                                <li><strong>Overdue periodic review (+10)</strong> and <strong>subcontractors with no assurance report on file (+5 each):</strong> blind spots in oversight and in the supply chain.</li>
+                            </ul>
+                            <p style="margin: 0;">Bands: 70 and above HIGH, 40 to 69 MEDIUM, below 40 LOW. The checks follow the RBI Outsourcing Directions 2025; the point weights are the bank's own settings, not an RBI formula. No AI is used in the score.</p>
+                    </div>
                 </div>
             </div>
         </section>

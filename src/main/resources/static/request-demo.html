@@ -44,6 +44,7 @@
         }
         .form-group input[type="text"],
         .form-group input[type="email"],
+        .form-group input[type="password"],
         .form-group textarea {
             width: 100%;
             padding: 0.625rem 0.875rem;
@@ -58,6 +59,7 @@
         }
         .form-group input[type="text"]:focus,
         .form-group input[type="email"]:focus,
+        .form-group input[type="password"]:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: var(--teal);
@@ -67,6 +69,17 @@
             min-height: 120px;
             resize: vertical;
         }
+        .pw-wrap { position: relative; display: block; }
+        .pw-wrap input { padding-right: 2.75rem !important; }
+        .pw-toggle {
+            position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+            display: flex; align-items: center; justify-content: center;
+            width: 2rem; height: 2rem; padding: 0; border: none; border-radius: 4px;
+            background: transparent; color: var(--text-secondary); cursor: pointer;
+        }
+        .pw-toggle:hover { color: var(--navy); background: rgba(15, 39, 68, 0.06); }
+        .pw-toggle:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+        .pw-hint { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.3rem; }
         .input-error {
             border-color: var(--status-red) !important;
         }
@@ -205,7 +218,7 @@
                 <div class="demo-header">
                     <h1>Request a Demo</h1>
                     <p class="demo-intro">
-                        We will email you a personal account (sign in with your email) so you can try the full incident workflow as an analyst and as an approver. Access lasts 24 hours and runs on synthetic data.
+                        Choose a password and you get a personal account (sign in with your email) so you can try the full incident workflow as an analyst and as an approver. Access lasts 24 hours and runs on synthetic data.
                     </p>
                 </div>
 
@@ -243,7 +256,20 @@
                         </div>
                     </div>
 
-                    <!-- 5. Honeypot (hidden from human visitors) -->
+                    <!-- 5. Password chosen by the requester -->
+                    <div class="form-group">
+                        <label for="field-password">Choose a password <span style="color: var(--status-red);">*</span></label>
+                        <span class="pw-wrap"><input type="password" id="field-password" name="password" required minlength="8" maxlength="64" autocomplete="new-password"><button type="button" class="pw-toggle" data-target="field-password" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span>
+                        <div class="pw-hint">8 to 64 characters, with an uppercase letter, a lowercase letter, a number and a symbol. Do not reuse a password from another site.</div>
+                        <div class="field-error" id="error-password"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="field-password2">Confirm password <span style="color: var(--status-red);">*</span></label>
+                        <span class="pw-wrap"><input type="password" id="field-password2" required maxlength="64" autocomplete="new-password"><button type="button" class="pw-toggle" data-target="field-password2" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-closed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></span>
+                        <div class="field-error" id="error-password2"></div>
+                    </div>
+
+                    <!-- 6. Honeypot (hidden from human visitors) -->
                     <div class="hp-field" aria-hidden="true">
                         <label for="field-website">Website</label>
                         <input type="text" id="field-website" name="website" tabindex="-1" autocomplete="off">
@@ -259,17 +285,11 @@
                 <div id="success-panel" class="success-card">
                     <h2>Your demo access is ready</h2>
                     <p>
-                        Thank you. We have also emailed these credentials to <strong id="success-email"></strong>.
-                        Access is valid until <strong id="success-expiry"></strong>.
+                        Thank you. Sign in with <strong id="success-email"></strong> and the password you just chose.
+                        Access is valid until <strong id="success-expiry"></strong>. We have sent a welcome email with the details.
                     </p>
                     <div id="cred-section" style="display: none;">
-                        <div class="cred-box">
-                            <h3>Your sign-in details</h3>
-                            <div class="cred-row"><span class="cred-label">Email</span><code id="cred-user"></code><button type="button" class="copy-btn" data-copy="cred-user">Copy</button></div>
-                            <div class="cred-row"><span class="cred-label">Password</span><code id="cred-pass"></code><button type="button" class="copy-btn" data-copy="cred-pass">Copy</button></div>
-                        </div>
-                        <p style="font-size: 0.85rem; color: var(--navy); margin-bottom: 0.75rem;">You start as an Analyst. Switch to Approver at any time from the header after signing in.</p>
-                        <p class="cred-note">Save these now: this page will not show them again. You can change your password from your profile after signing in.</p>
+                        <p style="font-size: 0.85rem; color: var(--navy); margin-bottom: 0.75rem;">You start as an Analyst. Switch to Approver at any time from the header after signing in. Forgot your password? Use "Forgot password?" on the sign-in page.</p>
                     </div>
                     <div>
                         <a href="/login.html" class="btn btn-primary">Proceed to sign in</a>
@@ -302,6 +322,52 @@
             const errorName = document.getElementById('error-name');
             const errorPhone = document.getElementById('error-phone');
             const errorPurpose = document.getElementById('error-purpose');
+            const passwordInput = document.getElementById('field-password');
+            const password2Input = document.getElementById('field-password2');
+            const errorPassword = document.getElementById('error-password');
+            const errorPassword2 = document.getElementById('error-password2');
+
+            // Same rule as the server (PasswordChangeService.strengthProblem / DemoRequestService.passwordProblem)
+            function validatePassword(pw, email) {
+                if (!pw) return 'Please choose a password.';
+                if (pw.length < 8 || pw.length > 64) return 'The password must be 8 to 64 characters long.';
+                if (!/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw) || !/[^A-Za-z0-9\s]/.test(pw)) {
+                    return 'The password must include an uppercase letter, a lowercase letter, a number and a symbol.';
+                }
+                const local = ((email || '').trim().split('@')[0] || '').toLowerCase();
+                if (local.length >= 4 && pw.toLowerCase().includes(local)) {
+                    return 'The password must not contain your email address.';
+                }
+                return '';
+            }
+            function validatePassword2(pw, pw2) {
+                if (!pw2) return 'Please confirm your password.';
+                if (pw !== pw2) return 'The passwords do not match.';
+                return '';
+            }
+            function hidePasswords() {
+                document.querySelectorAll('.pw-toggle').forEach(function(btn) {
+                    document.getElementById(btn.dataset.target).type = 'password';
+                    btn.setAttribute('aria-pressed', 'false');
+                    btn.setAttribute('aria-label', 'Show password');
+                    btn.title = 'Show password';
+                    btn.querySelector('.eye-open').style.display = '';
+                    btn.querySelector('.eye-closed').style.display = 'none';
+                });
+            }
+            document.querySelectorAll('.pw-toggle').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const input = document.getElementById(btn.dataset.target);
+                    const show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    btn.setAttribute('aria-pressed', String(show));
+                    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    btn.title = show ? 'Hide password' : 'Show password';
+                    btn.querySelector('.eye-open').style.display = show ? 'none' : '';
+                    btn.querySelector('.eye-closed').style.display = show ? '' : 'none';
+                    input.focus();
+                });
+            });
 
             function validateEmail(val) {
                 const s = (val || '').trim();
@@ -381,6 +447,12 @@
                 setFieldStatus(purposeInput, errorPurpose, validatePurpose(purposeInput.value));
             });
 
+            passwordInput.addEventListener('blur', function() {
+                setFieldStatus(passwordInput, errorPassword, validatePassword(passwordInput.value, emailInput.value));
+            });
+            password2Input.addEventListener('blur', function() {
+                setFieldStatus(password2Input, errorPassword2, validatePassword2(passwordInput.value, password2Input.value));
+            });
             purposeInput.addEventListener('input', function() {
                 const len = purposeInput.value.trim().length; // same rule as the server (trimmed)
                 purposeCounter.textContent = len + ' / 1000 (minimum 50)';
@@ -403,19 +475,26 @@
                 const nameErr = validateName(nameInput.value);
                 const phoneErr = validatePhone(phoneInput.value);
                 const purposeErr = validatePurpose(purposeInput.value);
+                const passwordErr = validatePassword(passwordInput.value, emailInput.value);
+                const password2Err = passwordErr ? '' : validatePassword2(passwordInput.value, password2Input.value);
 
+                setFieldStatus(passwordInput, errorPassword, passwordErr);
+                setFieldStatus(password2Input, errorPassword2, password2Err);
                 setFieldStatus(emailInput, errorEmail, emailErr);
                 setFieldStatus(nameInput, errorName, nameErr);
                 setFieldStatus(phoneInput, errorPhone, phoneErr);
                 setFieldStatus(purposeInput, errorPurpose, purposeErr);
 
-                if (emailErr || nameErr || phoneErr || purposeErr) {
+                if (emailErr || nameErr || phoneErr || purposeErr || passwordErr || password2Err) {
                     if (emailErr) emailInput.focus();
                     else if (nameErr) nameInput.focus();
                     else if (phoneErr) phoneInput.focus();
                     else if (purposeErr) purposeInput.focus();
+                    else if (passwordErr) passwordInput.focus();
+                    else password2Input.focus();
                     return;
                 }
+                hidePasswords();
 
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Sending...';
@@ -425,6 +504,7 @@
                     name: nameInput.value.trim(),
                     phone: phoneInput.value.trim(),
                     purpose: purposeInput.value.trim(),
+                    password: passwordInput.value,
                     website: websiteInput.value || ''
                 };
 
@@ -448,11 +528,9 @@
                         successEmail.textContent = payload.email;
                         document.getElementById('success-expiry').textContent =
                             data.accessExpiresAt ? fmtExpiry(data.accessExpiresAt) : '24 hours from now';
-                        if (data.username && data.password) {
-                            document.getElementById('cred-user').textContent = data.username;
-                            document.getElementById('cred-pass').textContent = data.password;
-                            document.getElementById('cred-section').style.display = 'block';
-                        }
+                        passwordInput.value = '';
+                        password2Input.value = '';
+                        document.getElementById('cred-section').style.display = 'block';
                         successPanel.style.display = 'block';
                         return;
                     }
@@ -464,6 +542,10 @@
                         else if (field === 'name') setFieldStatus(nameInput, errorName, errMsg);
                         else if (field === 'phone') setFieldStatus(phoneInput, errorPhone, errMsg);
                         else if (field === 'purpose') setFieldStatus(purposeInput, errorPurpose, errMsg);
+                        else if (field === 'password') {
+                            setFieldStatus(passwordInput, errorPassword, errMsg);
+                            passwordInput.focus();
+                        }
                         else {
                             generalError.textContent = errMsg;
                             generalError.style.display = 'block';

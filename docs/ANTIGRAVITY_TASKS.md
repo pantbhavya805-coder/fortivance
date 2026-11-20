@@ -422,3 +422,159 @@ Use `window.fetch` directly on the public pages (`forgot-password.html`, `reset-
 - Remove every remaining reference to `analystUsername` / `approverUsername`.
 - Checks: a demo account shows one sign-in card with its email and role; permanent accounts still show
   "This account does not expire"; no console errors.
+
+---
+
+# Round 4 (20 Nov): separate admin console, tasks AD1 to AD4
+
+Rounds 1 to 3 are complete. Do only the tasks in this section.
+
+## What changes
+- The old admin panel (`/admin.html`, the "Admin" header link) is **removed by the other developer**. Do not
+  restore it and do not edit `js/api.js` for this round.
+- **`bhavya` becomes a dedicated admin account.** It signs in only at the hidden page **`/admin/login`** and
+  uses a separate admin console at **`/admin/`**. It can no longer sign in on `/login.html`.
+- **`judge` is renamed `judgedemo`**: a normal permanent test account (Analyst/Approver switch, no expiry, no
+  admin rights).
+- Nothing on the public site may link to `/admin/...`. Logged-out visitors and normal users get a plain 404 there.
+- The backend (Java, security, database) is built by another developer at the same time against the contract
+  below. Build the UI only.
+
+## Rules (same as before)
+1. **Never read, print or edit `.env`.**
+2. Edit only `src/main/resources/static/**`. No Java, `pom.xml`, `application.yml`, Docker files or migrations.
+3. Do not reformat files you touch; change only what the task needs.
+4. Plain HTML/CSS/JS, no frameworks or CDNs. Reuse `/css/app.css`, `/favicon.svg`, `/images/logo-icon.svg`.
+5. Insert every server-provided value with `textContent` (or `createElement`), never `innerHTML`. Names,
+   purposes and emails come from public forms.
+6. Do **not** load `/js/api.js` on admin pages (it redirects to the user login). Use `window.fetch` with
+   `credentials: 'same-origin'`.
+7. Stop after each task and list the files changed (one line each).
+
+## File locations and URLs
+| File | URL |
+|---|---|
+| `static/admin/login.html` | `/admin/login` (the server forwards this URL to the file) |
+| `static/admin/index.html` | `/admin/` |
+| `static/admin/admin.css` | `/admin/admin.css` (optional, admin-only styles) |
+| `static/admin/admin.js` | `/admin/admin.js` |
+
+Every admin page must have `<meta name="robots" content="noindex, nofollow">` in `<head>`.
+
+## API contract (code against this exactly)
+
+**Admin sign-in** is a normal HTML form post (not fetch):
+```html
+<form method="post" action="/admin/login">
+  <input name="username"> <input name="password" type="password">
+</form>
+```
+On failure the server redirects to `/admin/login?error`; after 5 failed attempts from the same network it
+redirects to `/admin/login?error=locked`; after signing out, `/admin/login?logout`. Success goes to `/admin/`.
+Sign out: a plain link to **`/admin/logout`**.
+
+**CSRF for admin actions.** The server sets a cookie named `XSRF-TOKEN`. Every admin `POST` and `DELETE` must
+send its value in the header `X-XSRF-TOKEN`:
+```js
+function csrfToken() {
+  const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+```
+`GET` requests do not need it.
+
+**Session ended or not an admin:** every `/api/admin/**` call then answers **404** `{ "error": "Not found" }`.
+On any 404 from these endpoints, go to `/admin/login`.
+
+**`GET /api/admin/me`** -> `{ "username": "bhavya", "displayName": "Bhavya Pant" }`
+
+**`GET /api/admin/accounts`** (add `?includeDeleted=true` to include deleted accounts)
+```json
+{
+  "generatedAt": "2026-11-20T18:05:00+05:30",
+  "counts": { "ACTIVE": 3, "EXPIRING_SOON": 1, "EXPIRED": 2, "DISABLED": 1, "DELETED": 0 },
+  "accounts": [
+    {
+      "userId": 12, "requestId": 4, "type": "DEMO",
+      "username": "jane@acmebank.com", "email": "jane@acmebank.com", "name": "Acme Bank",
+      "phone": "+91 98765 43210", "purpose": "Who they are and why they need access...",
+      "role": "ANALYST", "state": "ACTIVE", "active": true,
+      "requestedAt": "2026-11-20T10:00:00+05:30", "accessExpiresAt": "2026-11-21T10:00:00+05:30",
+      "minutesLeft": 960, "extensionCount": 1, "maxExtensions": 2, "adminExtensionHours": 48,
+      "lastLoginAt": "2026-11-20T12:30:00+05:30", "deletedAt": null
+    }
+  ]
+}
+```
+- `type`: `DEMO` (requested through the form, expires) or `TEST` (permanent test account such as `judgedemo`;
+  `requestId`, `accessExpiresAt`, `minutesLeft`, `phone`, `purpose` are null).
+- `state`: `ACTIVE`, `EXPIRING_SOON` (under 6 hours left), `EXPIRED`, `DISABLED`, `DELETED`, or for a request
+  whose welcome email failed, `NOT_ACTIVATED`.
+- Any value may be null; show "-" for null.
+
+**Actions** (send `X-XSRF-TOKEN`; each returns 200 with the **updated account object** in the same shape as
+above, except delete):
+| Request | Allowed for | Notes |
+|---|---|---|
+| `POST /api/admin/accounts/{userId}/disable` | DEMO, TEST | Ends the user's open session immediately. |
+| `POST /api/admin/accounts/{userId}/enable` | DEMO, TEST | |
+| `POST /api/admin/accounts/{userId}/extend` body `{ "hours": 24 }` | DEMO only | `hours` is 24 or 48. **The admin may add at most 48 hours in total per account** (`adminExtensionHours` + `hours` must not exceed 48; otherwise 409). Extends from the current expiry, or from now if already expired. Does not use up the user's own 2 extensions. |
+| `DELETE /api/admin/accounts/{userId}` | DEMO only | 200 `{ "status": "deleted" }`. Permanent: the account can never sign in again. The request record is kept and that email may request a new demo. |
+
+Errors: 400 `{ "error": "..." }` (for example extend on a TEST account, or invalid hours); 409 `{ "error": "..." }`
+(already in that state); 404 as above.
+
+## Task AD1: `static/admin/login.html`
+- A centred card like `login.html`, but titled **"Fortivance Admin"** with the line "Restricted area. Authorised
+  administrators only." No "Request a demo", no "Forgot password?", no link back to the public site, and no
+  hint of any username.
+- Form: Username, Password (with the same eye show/hide toggle as `login.html`, reset to hidden on submit),
+  "Sign in" button, posting to `/admin/login` as above. `autocomplete="username"` / `"current-password"`.
+- Messages from the query string (use `textContent`):
+  `?error` -> "Invalid credentials.";
+  `?error=locked` -> "Too many failed attempts. Try again in 15 minutes.";
+  `?logout` -> "You have been signed out." (green).
+- Visually distinct from the user login so the two are not confused (for example a dark navy page background
+  with a white card and a small "ADMIN" label above the title).
+
+## Task AD2: `static/admin/index.html` + `admin.js`: the admin console
+Layout:
+- A slim dark header: logo + "Fortivance Admin", on the right the admin's display name (from `/api/admin/me`)
+  and a "Sign out" link to `/admin/logout`. No links to the public app pages.
+- Summary cards from `counts`: Active, Expiring within 6 h, Expired, Disabled, Deleted.
+- Toolbar: filter chips (All, Active, Expiring soon, Expired, Disabled, Not activated), a search box (email,
+  username, name), a "Show deleted" checkbox (reloads with `?includeDeleted=true`), a Refresh button, and an
+  "Updated <time>" label. Auto-refresh every 60 seconds.
+- Table columns: Status (coloured pill), Account (username, with a small grey "Test account" tag for `TEST`),
+  Name / organisation, Role, Requested, Access until (IST), Time left, Extensions (user `extensionCount of
+  maxExtensions`, plus "+N h by admin" when `adminExtensionHours` > 0), Last sign-in, Actions.
+- Clicking a row (or a "Details" button) expands it to show phone and purpose (purpose keeps line breaks).
+
+Actions column (buttons; disable all of a row's buttons while one of its requests is in flight):
+- **Extend**: opens a small inline menu with **24 h** and **48 h**, offering only what still fits in the 48-hour admin
+  allowance (`48 - adminExtensionHours`; for example after 24 h only "24 h" remains). Show "Admin extension used
+  (48 h)" instead of the button once `adminExtensionHours` is 48. Hidden for `TEST` and `DELETED` accounts.
+- **Disable** / **Enable** (whichever applies; hidden for `DELETED`). Disable asks for confirmation:
+  "Disable <username>? They will be signed out immediately."
+- **Delete** (DEMO only, not shown for `DELETED`): a confirmation dialog that requires typing the account's
+  username exactly before the Delete button enables. Text: "Delete <username>? They can never sign in with this
+  account again. The request record is kept and this email may request a new demo."
+- After each successful action, replace that row with the returned account (delete: reload the list) and show a
+  short green toast such as "Extended jane@acmebank.com by 48 h". On an error, show the `error` text in a red
+  toast. Never use `alert()`.
+- Times in IST, for example "21 Nov, 6:05 PM". Time left as "15 h 20 min", "Expired" or "-".
+
+## Task AD3: small text updates on public pages
+- `forgot-password.html`: change "Owner and judge accounts are managed by the administrator." to
+  "Test accounts are managed by the administrator."
+- Search `static/` (excluding `static/admin/`) for any other mention of "judge" or "owner" account wording and
+  list what you find; change only user-facing text.
+- Do not add any link to `/admin/` anywhere outside `static/admin/`.
+
+## Task AD4: checks
+- `/admin/login` loads the admin page; the public login and About pages contain no link to it.
+- Admin pages have the `noindex` meta tag and do not include `/js/api.js`.
+- With the backend running: sign in as the admin, filter, search, extend, disable, enable, and delete a test
+  demo account; each action updates its row and shows a toast; a 404 from any admin API returns you to
+  `/admin/login`.
+- No console errors on any admin page.

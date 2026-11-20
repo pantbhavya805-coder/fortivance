@@ -12,6 +12,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DemoRequestFormTest {
 
+    private static final String PW = "Str0ng!Passw0rd";
+
     private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
     private static final String PURPOSE = "I lead third-party risk at a bank and want to evaluate incident triage.";
 
@@ -23,14 +25,14 @@ class DemoRequestFormTest {
 
     @Test
     void validFormPasses() {
-        assertThat(invalidFields(new DemoRequestForm("jane@acme.com", "Acme Bank", "", PURPOSE, ""))).isEmpty();
-        assertThat(invalidFields(new DemoRequestForm("jane@acme.com", "Acme Bank", "+91 (22) 4000-1234", PURPOSE, null)))
+        assertThat(invalidFields(new DemoRequestForm("jane@acme.com", "Acme Bank", "", PURPOSE, PW, ""))).isEmpty();
+        assertThat(invalidFields(new DemoRequestForm("jane@acme.com", "Acme Bank", "+91 (22) 4000-1234", PURPOSE, PW, null)))
                 .isEmpty();
     }
 
     @Test
     void fieldsAreTrimmed() {
-        DemoRequestForm f = new DemoRequestForm("  jane@acme.com ", "  Acme ", " ", "  " + PURPOSE + "  ", null);
+        DemoRequestForm f = new DemoRequestForm("  jane@acme.com ", "  Acme ", " ", "  " + PURPOSE + "  ", PW, null);
         assertThat(f.email()).isEqualTo("jane@acme.com");
         assertThat(f.name()).isEqualTo("Acme");
         assertThat(f.phone()).isEmpty();
@@ -39,22 +41,22 @@ class DemoRequestFormTest {
 
     @Test
     void rejectsBadEmail() {
-        assertThat(invalidFields(new DemoRequestForm("jane@acme", "Acme", null, PURPOSE, null))).contains("email");
-        assertThat(invalidFields(new DemoRequestForm("not-an-email", "Acme", null, PURPOSE, null))).contains("email");
+        assertThat(invalidFields(new DemoRequestForm("jane@acme", "Acme", null, PURPOSE, PW, null))).contains("email");
+        assertThat(invalidFields(new DemoRequestForm("not-an-email", "Acme", null, PURPOSE, PW, null))).contains("email");
     }
 
     @Test
     void enforcesPurposeLengthAfterTrimming() {
         String padded = "x".repeat(49) + " ".repeat(20);
-        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", null, padded, null))).contains("purpose");
-        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", null, "x".repeat(1001), null))).contains("purpose");
-        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", null, "x".repeat(50), null))).isEmpty();
+        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", null, padded, PW, null))).contains("purpose");
+        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", null, "x".repeat(1001), PW, null))).contains("purpose");
+        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", null, "x".repeat(50), PW, null))).isEmpty();
     }
 
     @Test
     void rejectsBadPhoneAndShortName() {
-        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", "abc1234", PURPOSE, null))).contains("phone");
-        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", "12345", PURPOSE, null))).contains("phone");
-        assertThat(invalidFields(new DemoRequestForm("j@a.co", "A", null, PURPOSE, null))).contains("name");
+        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", "abc1234", PURPOSE, PW, null))).contains("phone");
+        assertThat(invalidFields(new DemoRequestForm("j@a.co", "Acme", "12345", PURPOSE, PW, null))).contains("phone");
+        assertThat(invalidFields(new DemoRequestForm("j@a.co", "A", null, PURPOSE, PW, null))).contains("name");
     }
 }

@@ -23,6 +23,10 @@ public record DemoRequestForm(
         @NotBlank @Size(min = 50, max = 1000)
         String purpose,
 
+        /** Chosen by the requester; strength is checked by DemoRequestService.passwordProblem. Not trimmed. */
+        @NotBlank @Size(max = 64)
+        String password,
+
         @Size(max = 200)
         String website
 ) {
@@ -31,6 +35,12 @@ public record DemoRequestForm(
         name = strip(name);
         phone = strip(phone);
         purpose = strip(purpose);
+    }
+
+    /** Never print the password (records include every field in toString by default). */
+    @Override
+    public String toString() {
+        return "DemoRequestForm[email=" + email + ", name=" + name + "]";
     }
 
     private static String strip(String s) {

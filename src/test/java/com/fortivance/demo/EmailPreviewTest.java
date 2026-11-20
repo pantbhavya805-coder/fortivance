@@ -20,7 +20,7 @@ class EmailPreviewTest {
         boolean hasLogo = Files.exists(logo);
         DemoMailer mailer = new DemoMailer(mock(JavaMailSender.class), "admin@fortivance.in", "admin@fortivance.in",
                 "https://fortivance.in");
-        String html = mailer.welcomeHtml("Acme Bank", "jane@acmebank.com", "Kp7mQx2RtW9aZe",
+        String html = mailer.welcomeHtml("Acme Bank", "jane@acmebank.com",
                 Instant.parse("2026-11-21T12:35:00Z"), hasLogo);
 
         assertThat(html).contains("jane@acmebank.com").contains("Sign in to Fortivance");

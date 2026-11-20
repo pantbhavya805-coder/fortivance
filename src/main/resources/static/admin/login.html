@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Fortivance Admin - Sign In</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        body.admin-auth-page {
+            background-color: #07101e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        .admin-card {
+            background: #ffffff;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            padding: 2.25rem;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+            box-sizing: border-box;
+        }
+        .admin-brand {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .admin-badge-pill {
+            display: inline-block;
+            background: var(--navy);
+            color: #ffffff;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            padding: 0.2rem 0.55rem;
+            border-radius: 3px;
+            text-transform: uppercase;
+            margin-bottom: 0.65rem;
+        }
+        .admin-brand h1 {
+            font-size: 1.45rem;
+            color: var(--navy);
+            margin: 0 0 0.4rem 0;
+            font-weight: 700;
+        }
+        .admin-brand .subtitle {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+        .auth-banner {
+            padding: 0.65rem 0.875rem;
+            border-radius: 4px;
+            font-size: 0.8125rem;
+            margin-bottom: 1.25rem;
+            display: none;
+            line-height: 1.4;
+        }
+        .banner-error {
+            background-color: var(--status-red-bg);
+            color: var(--status-red);
+            border: 1px solid #fca5a5;
+        }
+        .banner-success {
+            background-color: var(--status-green-bg);
+            color: var(--status-green);
+            border: 1px solid #86efac;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 0.35rem;
+        }
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            color: var(--text-primary);
+        }
+        .form-group input[type="text"]:focus,
+        .pw-wrap input:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+        }
+        .pw-wrap {
+            position: relative;
+        }
+        .pw-wrap input {
+            width: 100%;
+            padding: 0.625rem 2.75rem 0.625rem 0.75rem !important;
+            font-size: 0.875rem;
+            font-family: inherit;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            color: var(--text-primary);
+        }
+        .pw-toggle {
+            position: absolute;
+            top: 50%;
+            right: 0.5rem;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .pw-toggle:hover {
+            color: var(--navy);
+            background: rgba(15, 39, 68, 0.06);
+        }
+        .pw-toggle:focus-visible {
+            outline: 2px solid var(--teal);
+            outline-offset: 1px;
+        }
+        .btn-block {
+            width: 100%;
+            padding: 0.7rem;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="admin-auth-page">
+    <div class="admin-card">
+        <div class="admin-brand">
+            <div class="admin-badge-pill">ADMIN</div>
+            <h1>Fortivance Admin</h1>
+            <p class="subtitle">Restricted area. Authorised administrators only.</p>
+        </div>
+
+        <div class="auth-banner" id="banner" role="alert"></div>
+
+        <form method="post" action="/admin/login" novalidate id="admin-login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus autocomplete="username" placeholder="Username" autocapitalize="none" spellcheck="false">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="pw-wrap">
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Password">
+                    <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password" aria-pressed="false" title="Show password">
+                        <svg class="eye-open" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="eye-closed" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Sign in</button>
+        </form>
+    </div>
+
+    <script>
+        (function() {
+            // Password toggle
+            const pwInput = document.getElementById('password');
+            const pwToggle = document.getElementById('pw-toggle');
+            if (pwInput && pwToggle) {
+                pwToggle.addEventListener('click', function() {
+                    const show = pwInput.type === 'password';
+                    pwInput.type = show ? 'text' : 'password';
+                    pwToggle.setAttribute('aria-pressed', String(show));
+                    pwToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    pwToggle.title = show ? 'Hide password' : 'Show password';
+                    pwToggle.querySelector('.eye-open').style.display = show ? 'none' : '';
+                    pwToggle.querySelector('.eye-closed').style.display = show ? '' : 'none';
+                    pwInput.focus();
+                });
+
+                // Reset to password on submit
+                const form = document.getElementById('admin-login-form');
+                if (form) {
+                    form.addEventListener('submit', function() {
+                        pwInput.type = 'password';
+                    });
+                }
+            }
+
+            // Parse URL parameters
+            const params = new URLSearchParams(window.location.search);
+            const banner = document.getElementById('banner');
+            if (banner) {
+                if (params.get('error') === 'locked') {
+                    banner.textContent = 'Too many failed attempts. Try again in 15 minutes.';
+                    banner.className = 'auth-banner banner-error';
+                    banner.style.display = 'block';
+                } else if (params.has('error')) {
+                    banner.textContent = 'Invalid credentials.';
+                    banner.className = 'auth-banner banner-error';
+                    banner.style.display = 'block';
+                } else if (params.has('logout')) {
+                    banner.textContent = 'You have been signed out.';
+                    banner.className = 'auth-banner banner-success';
+                    banner.style.display = 'block';
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

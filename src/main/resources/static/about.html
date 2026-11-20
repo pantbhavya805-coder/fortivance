@@ -303,6 +303,26 @@
         }
 
 
+        .contact-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 1.5rem; align-items: start; }
+        @media (max-width: 860px) { .contact-wrap { grid-template-columns: 1fr; } }
+        .contact-aside { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; font-size: 0.875rem; line-height: 1.6; color: var(--text-secondary); }
+        .contact-aside strong { color: var(--navy); }
+        .contact-aside a { color: var(--teal-dark); }
+        .contact-form { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.35rem; display: grid; gap: 0.9rem; }
+        .contact-form .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+        @media (max-width: 600px) { .contact-form .row-2 { grid-template-columns: 1fr; } }
+        .contact-form label { display: grid; gap: 0.3rem; font-size: 0.8125rem; font-weight: 600; color: var(--navy); }
+        .contact-form input, .contact-form select, .contact-form textarea {
+            font: inherit; font-weight: 400; font-size: 0.875rem; padding: 0.6rem 0.75rem; border: 1px solid var(--border-color);
+            border-radius: 4px; width: 100%; box-sizing: border-box; background: #fff; color: var(--text-primary); }
+        .contact-form textarea { min-height: 130px; resize: vertical; }
+        .contact-form .input-error { border-color: var(--status-red); }
+        .contact-form .field-error { font-size: 0.75rem; font-weight: 500; color: var(--status-red); min-height: 1em; }
+        .contact-form .counter { font-size: 0.75rem; color: var(--text-secondary); text-align: right; font-weight: 400; }
+        .contact-form .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+        .contact-status { display: none; padding: 0.75rem 1rem; border-radius: 4px; font-size: 0.875rem; }
+        .contact-status.ok { display: block; background: var(--status-green-bg); color: var(--status-green); border: 1px solid #86efac; }
+        .contact-status.err { display: block; background: var(--status-red-bg); color: var(--status-red); border: 1px solid #fca5a5; }
     </style>
 </head>
 
@@ -321,9 +341,11 @@
             <a href="/incidents.html" data-nav="incidents">Incidents</a>
             <a href="/evidence.html" data-nav="evidence">Evidence</a>
             <a href="/eval.html" data-nav="eval">Evaluation</a>
+            <a href="/guide.html" data-nav="guide">Guide</a>
             <a href="/about.html" data-nav="about">About</a>
         </nav>
         <div class="nav-user-section" id="nav-user">
+            <a href="/guide.html" class="btn btn-secondary" style="margin-right: 0.5rem;">Guide</a>
             <a href="/login.html" class="btn btn-primary">Log in</a>
         </div>
     </header>
@@ -346,6 +368,8 @@
             <div class="hero-actions" id="hero-actions">
                 <a href="/request-demo.html" class="btn btn-primary">Request a demo</a>
                 <a href="/login.html" class="btn btn-secondary">Log in</a>
+                <a href="/guide.html" class="btn btn-secondary">Help guide</a>
+                <a href="/judges.html" class="btn btn-secondary">Judge guide</a>
             </div>
         </section>
 
@@ -579,6 +603,52 @@
             </div>
         </section>
 
+        <!-- Contact -->
+        <section class="about-section" id="contact">
+            <h2>Contact us</h2>
+            <p class="lead">Questions about Fortivance, a pilot for your organisation, or something not working? Send us a message and we will reply shortly.</p>
+            <div class="contact-wrap">
+                <div class="contact-aside">
+                    <p><strong>What happens next</strong></p>
+                    <p>Your message goes straight to our team at <strong>admin@fortivance.in</strong>. You will get an automatic confirmation by email, and a reply from us, usually within one working day.</p>
+                    <p style="margin-top: 0.75rem;">Want to try the product right away? <a href="/request-demo.html">Request a demo</a> for a personal 24-hour account.</p>
+                </div>
+                <form class="contact-form" id="contact-form" novalidate>
+                    <div class="row-2">
+                        <label for="contact-name">Name
+                            <input type="text" id="contact-name" name="name" required minlength="2" maxlength="100" autocomplete="name">
+                            <span class="field-error" id="contact-name-error"></span>
+                        </label>
+                        <label for="contact-email">Email
+                            <input type="email" id="contact-email" name="email" required maxlength="200" autocomplete="email">
+                            <span class="field-error" id="contact-email-error"></span>
+                        </label>
+                    </div>
+                    <label for="contact-topic">What is it about?
+                        <select id="contact-topic" name="topic" required>
+                            <option value="">Choose a topic</option>
+                            <option value="GENERAL">General question</option>
+                            <option value="PILOT">Pilot or partnership</option>
+                            <option value="TECHNICAL">Technical issue</option>
+                            <option value="FEEDBACK">Feedback on the demo</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                        <span class="field-error" id="contact-topic-error"></span>
+                    </label>
+                    <label for="contact-message">Message
+                        <textarea id="contact-message" name="message" required minlength="10" maxlength="3000"></textarea>
+                        <span class="counter" id="contact-counter">0 / 3000</span>
+                        <span class="field-error" id="contact-message-error"></span>
+                    </label>
+                    <div class="hp" aria-hidden="true">
+                        <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                    </div>
+                    <div id="contact-status" class="contact-status" role="status" aria-live="polite"></div>
+                    <div><button type="submit" class="btn btn-primary" id="contact-submit">Send message</button></div>
+                </form>
+            </div>
+        </section>
+
         <!-- Disclaimer and sources -->
         <section class="about-section">
             <h2>About this instance</h2>
@@ -618,6 +688,76 @@
         function pct(v) { return v === null || v === undefined ? '-' : Number(v).toFixed(0) + '%'; }
         function num(v) { return v === null || v === undefined ? '-' : String(v); }
 
+        (function initContactForm() {
+            const form = document.getElementById('contact-form');
+            if (!form) return;
+            const submit = document.getElementById('contact-submit');
+            const status = document.getElementById('contact-status');
+            const message = document.getElementById('contact-message');
+            const counter = document.getElementById('contact-counter');
+            const fields = {
+                name: v => (v.length >= 2 && v.length <= 100) ? '' : 'Please enter your name (2 to 100 characters).',
+                email: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 200 ? '' : 'Please enter a valid email address.',
+                topic: v => v ? '' : 'Please choose what your message is about.',
+                message: v => (v.length >= 10 && v.length <= 3000) ? '' : 'Please write a message of 10 to 3000 characters.'
+            };
+            function setError(name, msg) {
+                const input = form.elements[name];
+                document.getElementById('contact-' + name + '-error').textContent = msg;
+                input.classList.toggle('input-error', !!msg);
+            }
+            function showStatus(text, ok) {
+                status.textContent = text;
+                status.className = 'contact-status ' + (ok ? 'ok' : 'err');
+            }
+            message.addEventListener('input', () => { counter.textContent = message.value.trim().length + ' / 3000'; });
+            Object.keys(fields).forEach(name => {
+                form.elements[name].addEventListener('blur', () => setError(name, fields[name](form.elements[name].value.trim())));
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                status.className = 'contact-status';
+                const data = {};
+                let firstBad = null;
+                Object.keys(fields).forEach(name => {
+                    const v = form.elements[name].value.trim();
+                    data[name] = v;
+                    const err = fields[name](v);
+                    setError(name, err);
+                    if (err && !firstBad) firstBad = name;
+                });
+                if (firstBad) { form.elements[firstBad].focus(); return; }
+                data.website = form.elements['website'].value || '';
+
+                submit.disabled = true;
+                submit.textContent = 'Sending...';
+                try {
+                    const res = await window.fetch('/api/contact', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const body = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                        form.reset();
+                        counter.textContent = '0 / 3000';
+                        showStatus(body.message || 'Thank you. Your message has been sent and we will reply shortly.', true);
+                    } else if (res.status === 400 && body.field && fields[body.field]) {
+                        setError(body.field, body.error || 'Please check this field.');
+                        form.elements[body.field].focus();
+                    } else {
+                        showStatus(body.error || 'Your message could not be sent. Please try again later.', false);
+                    }
+                } catch (_) {
+                    showStatus('Network error. Please try again.', false);
+                } finally {
+                    submit.disabled = false;
+                    submit.textContent = 'Send message';
+                }
+            });
+        })();
+
         (async () => {
             let user = null;
             try {
@@ -640,7 +780,7 @@
                     await api.initNav('about');
                 }
                 if (heroActions) {
-                    heroActions.innerHTML = '<a href="/incidents.html" class="btn btn-primary">Triage an incident</a>\n                <a href="/evidence.html" class="btn btn-secondary">Review vendor evidence</a>';
+                    heroActions.innerHTML = '<a href="/incidents.html" class="btn btn-primary">Triage an incident</a>\n                <a href="/evidence.html" class="btn btn-secondary">Review vendor evidence</a>\n                <a href="/guide.html" class="btn btn-secondary">Help guide</a>\n                <a href="/judges.html" class="btn btn-secondary">Judge guide</a>';
                 }
                 if (trySection) {
                     trySection.style.display = 'none';
@@ -648,7 +788,7 @@
             } else {
                 if (navLinks) navLinks.style.display = 'none';
                 if (navUser) {
-                    navUser.innerHTML = '<a href="/login.html" class="btn btn-primary">Log in</a>';
+                    navUser.innerHTML = '<a href="/guide.html" class="btn btn-secondary" style="margin-right: 0.5rem;">Guide</a><a href="/login.html" class="btn btn-primary">Log in</a>';
                 }
                 if (trySection) {
                     trySection.style.display = 'block';

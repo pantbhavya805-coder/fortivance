@@ -40,6 +40,7 @@ services:
       CONTACT_TO: ${CONTACT_TO:-}
       OWNER_PASSWORD: ${OWNER_PASSWORD:-}
       JUDGE_PASSWORD: ${JUDGE_PASSWORD:-}
+      JUDGE_PASSWORD_PUBLIC: ${JUDGE_PASSWORD_PUBLIC:-false}
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
     ports:
       - "8080:8080"

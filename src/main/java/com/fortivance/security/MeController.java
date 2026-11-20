@@ -30,13 +30,11 @@ public class MeController {
 
     private final JdbcTemplate jdbc;
     private final AuditService audit;
-    private final AdminAccess adminAccess;
     private final SecurityContextRepository contextRepository = new HttpSessionSecurityContextRepository();
 
-    public MeController(JdbcTemplate jdbc, AuditService audit, AdminAccess adminAccess) {
+    public MeController(JdbcTemplate jdbc, AuditService audit) {
         this.jdbc = jdbc;
         this.audit = audit;
-        this.adminAccess = adminAccess;
     }
 
     @GetMapping
@@ -51,7 +49,6 @@ public class MeController {
         body.put("role", principal.getRole());
         body.put("team", principal.getTeam() != null ? principal.getTeam() : "");
         body.put("canSwitchRole", principal.canSwitchRole());
-        body.put("isAdmin", adminAccess.isAdmin(principal));
         return ResponseEntity.ok(body);
     }
 

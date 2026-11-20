@@ -56,19 +56,20 @@ public class DemoMailer {
     // ------------------------------------------------------------------ welcome
 
     /** Sends the credentials. Throws if the message cannot be handed to the SMTP server. */
-    public void sendWelcome(String to, String name, String username, String password, Instant expiresAt)
+    public void sendWelcome(String to, String name, String username, Instant expiresAt)
             throws MessagingException {
         send(to, "Your Fortivance demo access",
-                welcomeText(name, username, password, expiresAt),
-                hasLogo -> welcomeHtml(name, username, password, expiresAt, hasLogo));
+                welcomeText(name, username, expiresAt),
+                hasLogo -> welcomeHtml(name, username, expiresAt, hasLogo));
     }
 
-    String welcomeText(String name, String username, String password, Instant expiresAt) {
+    String welcomeText(String name, String username, Instant expiresAt) {
         return "Hello " + oneLine(name) + ",\n\n"
                 + "Thank you for your interest in Fortivance. Your demo access is ready.\n\n"
                 + "Sign in at: " + publicUrl + "/login.html\n"
                 + "  Email:    " + username + "\n"
-                + "  Password: " + password + "\n\n"
+                + "  Password: the one you chose when you requested access\n"
+                + "Forgot it? Use \"Forgot password?\" on the sign-in page.\n\n"
                 + "You start as an Analyst (triage incidents, review evidence). Switch to Approver from the\n"
                 + "header at any time to approve or reject response plans.\n\n"
                 + "Access is valid until " + formatIst(expiresAt) + " (24 hours).\n"
@@ -76,11 +77,11 @@ public class DemoMailer {
                 + "and request an extension: 24 hours each, up to 2 extensions. You can also change your\n"
                 + "password there.\n\n"
                 + "The demo runs on synthetic data shared by all demo users. Please do not enter real\n"
-                + "customer or bank information. Keep these credentials private.\n\n"
+                + "customer or bank information. Keep your password private.\n\n"
                 + "Regards,\nThe Fortivance team\n" + publicUrl + "\n";
     }
 
-    String welcomeHtml(String name, String username, String password, Instant expiresAt, boolean hasLogo) {
+    String welcomeHtml(String name, String username, Instant expiresAt, boolean hasLogo) {
         String body = """
                 <p style="margin:0 0 14px;font-size:16px;">Hello %s,</p>
                 <p style="margin:0 0 20px;font-size:15px;line-height:1.6;">Thank you for your interest in Fortivance. Your demo access is ready.</p>
@@ -88,7 +89,8 @@ public class DemoMailer {
                   <tr><td style="padding:14px 16px;">
                     <div style="font-weight:700;color:#0f2744;font-size:15px;margin-bottom:10px;">Your sign-in details</div>
                     <div style="font-size:14px;">Email: <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:14px;">%s</code></div>
-                    <div style="font-size:14px;margin-top:6px;">Password: <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:14px;">%s</code></div>
+                    <div style="font-size:14px;margin-top:6px;">Password: the one you chose when you requested access</div>
+                    <div style="font-size:13px;margin-top:6px;color:#64748b;">Forgot it? Use <a href="%s/forgot-password.html" style="color:#0d9488;">Forgot password?</a> on the sign-in page.</div>
                   </td></tr>
                 </table>
                 <p style="margin:0 0 4px;font-size:14px;line-height:1.6;">You start as an <strong>Analyst</strong> (triage incidents, review evidence). Switch to <strong>Approver</strong> from the header at any time to approve or reject AI-drafted response plans.</p>
@@ -99,9 +101,9 @@ public class DemoMailer {
                     Need more time? Before it expires, open your <a href="%s/profile.html" style="color:#0d9488;">profile</a> and request an extension: 24 hours each, up to 2 extensions. You can also change your password there.
                   </td></tr>
                 </table>
-                <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#64748b;">The demo runs on synthetic data shared by all demo users. Please do not enter real customer or bank information, and keep these credentials private.</p>
+                <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#64748b;">The demo runs on synthetic data shared by all demo users. Please do not enter real customer or bank information, and keep your password private.</p>
                 """.formatted(
-                esc(oneLine(name)), esc(username), esc(password),
+                esc(oneLine(name)), esc(username), publicUrl,
                 button(publicUrl + "/login.html", "Sign in to Fortivance"),
                 esc(formatIst(expiresAt)), publicUrl);
         return layout(body, hasLogo);
@@ -123,6 +125,43 @@ public class DemoMailer {
                 <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">If you did not ask for this, ignore this email. Your password will not change.</p>
                 """.formatted(esc(oneLine(name)), esc(to), button(link, "Choose a new password"), validMinutes, esc(link)),
                 hasLogo));
+    }
+
+    // ------------------------------------------------------------------ contact form
+
+    /**
+     * Automatic acknowledgement to a contact-form sender. It deliberately contains no text supplied by the
+     * visitor (only a topic label from a fixed list), so the form cannot be used to send arbitrary content to
+     * third-party addresses.
+     */
+    public void sendContactAcknowledgement(String to, String topicLabel) throws MessagingException {
+        String text = "Hello,\n\n"
+                + "Thank you for contacting Fortivance. We have received your message about \"" + topicLabel + "\"\n"
+                + "and will reply shortly, usually within one working day.\n\n"
+                + "If you did not send this message, you can ignore this email.\n\n"
+                + "Regards,\nThe Fortivance team\n" + publicUrl + "\n";
+        send(to, "We received your message - Fortivance", text, hasLogo -> layout("""
+                <p style="margin:0 0 14px;font-size:16px;">Hello,</p>
+                <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">Thank you for contacting Fortivance. We have received your message about <strong>%s</strong> and will reply shortly, usually within one working day.</p>
+                <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">While you wait, you can explore the product with a personal demo account:</p>
+                %s
+                <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">If you did not send this message, you can ignore this email.</p>
+                """.formatted(esc(topicLabel), button(publicUrl + "/request-demo.html", "Request a demo")), hasLogo));
+    }
+
+    /** Forwards a contact-form message to the Fortivance mailbox; Reply-To is the visitor. Throws on failure. */
+    public void forwardContactMessage(String name, String email, String topicLabel, String message) {
+        SimpleMailMessage m = new SimpleMailMessage();
+        m.setFrom(from);
+        m.setTo(ownerTo.isBlank() ? from : ownerTo);
+        m.setReplyTo(oneLine(email));
+        m.setSubject("[Fortivance contact] " + topicLabel + ": " + oneLine(name));
+        m.setText("Name: " + oneLine(name) + "\n"
+                + "Email: " + oneLine(email) + "\n"
+                + "Topic: " + topicLabel + "\n\n"
+                + message + "\n\n"
+                + "-- Sent from the contact form on " + publicUrl + "/about.html. Reply to this email to answer.\n");
+        mailSender.send(m);
     }
 
     // ------------------------------------------------------------------ owner notice

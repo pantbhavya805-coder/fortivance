@@ -44,40 +44,42 @@ class PasswordChangeServiceTest {
 
     @Test
     void changesPasswordAndStoresOnlyAHash() {
-        PasswordChangeService.Result r = service.change(user(3L), CURRENT, "NewSecret2026");
+        PasswordChangeService.Result r = service.change(user(3L), CURRENT, "NewSecret!2026");
         assertThat(r.status()).isEqualTo(CHANGED);
         verify(jdbc).update(contains("UPDATE users SET password_hash"),
-                argThat((Object h) -> h instanceof String s && s.startsWith("$2") && encoder.matches("NewSecret2026", s)),
+                argThat((Object h) -> h instanceof String s && s.startsWith("$2") && encoder.matches("NewSecret!2026", s)),
                 eq(9L));
         verify(audit).log(eq("acme-analyst"), eq("PASSWORD_CHANGED"), eq("USER"), eq(9L), anyMap());
     }
 
     @Test
     void wrongCurrentPasswordIsRejected() {
-        assertThat(service.change(user(3L), "notTheOne123", "NewSecret2026").status()).isEqualTo(WRONG_CURRENT);
+        assertThat(service.change(user(3L), "notTheOne123", "NewSecret!2026").status()).isEqualTo(WRONG_CURRENT);
         verify(jdbc, never()).update(anyString(), any(), any());
     }
 
     @Test
     void permanentAccountsCannotChangeHere() {
-        assertThat(service.change(user(null), CURRENT, "NewSecret2026").status()).isEqualTo(NOT_ALLOWED);
+        assertThat(service.change(user(null), CURRENT, "NewSecret!2026").status()).isEqualTo(NOT_ALLOWED);
         verifyNoInteractions(jdbc);
     }
 
     @Test
     void strengthRules() {
-        assertThat(PasswordChangeService.strengthProblem(CURRENT, "short1")).contains("10 to 64");
-        assertThat(PasswordChangeService.strengthProblem(CURRENT, "onlyletterslong")).contains("letter and one number");
-        assertThat(PasswordChangeService.strengthProblem(CURRENT, "1234567890123")).contains("letter and one number");
-        assertThat(PasswordChangeService.strengthProblem(CURRENT, CURRENT)).contains("different");
-        assertThat(PasswordChangeService.strengthProblem(CURRENT, "NewSecret2026")).isNull();
+        assertThat(PasswordChangeService.strengthProblem(CURRENT, "Sh0rt!")).contains("8 to 64");
+        assertThat(PasswordChangeService.strengthProblem(CURRENT, "onlyletterslong")).contains("uppercase");
+        assertThat(PasswordChangeService.strengthProblem(CURRENT, "1234567890123")).contains("uppercase");
+        assertThat(PasswordChangeService.strengthProblem(CURRENT, "NoSymbolHere2026")).contains("symbol");
+        assertThat(PasswordChangeService.strengthProblem(CURRENT, "nouppercase!2026")).contains("uppercase");
+        assertThat(PasswordChangeService.strengthProblem("NewSecret!2026", "NewSecret!2026")).contains("different");
+        assertThat(PasswordChangeService.strengthProblem(CURRENT, "NewSecret!2026")).isNull();
     }
 
     @Test
     void attemptsAreRateLimited() {
         for (int i = 0; i < 5; i++) {
-            service.change(user(3L), "wrongGuess" + i, "NewSecret2026");
+            service.change(user(3L), "wrongGuess" + i, "NewSecret!2026");
         }
-        assertThat(service.change(user(3L), CURRENT, "NewSecret2026").status()).isEqualTo(RATE_LIMITED);
+        assertThat(service.change(user(3L), CURRENT, "NewSecret!2026").status()).isEqualTo(RATE_LIMITED);
     }
 }

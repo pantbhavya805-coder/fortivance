@@ -24,7 +24,9 @@ public class PasswordChangeService {
 
     public record Result(Status status, String message) { }
 
-    static final int MIN_LENGTH = 10;
+    static final int MIN_LENGTH = 8;
+    static final String STRENGTH_RULE =
+            "The password must include an uppercase letter, a lowercase letter, a number and a symbol.";
     static final int MAX_LENGTH = 64;   // bcrypt uses at most 72 bytes
 
     private final JdbcTemplate jdbc;
@@ -73,10 +75,12 @@ public class PasswordChangeService {
     /** Returns a message describing what is wrong with the new password, or null if it is acceptable. */
     static String strengthProblem(String current, String next) {
         if (next == null || next.length() < MIN_LENGTH || next.length() > MAX_LENGTH) {
-            return "The new password must be " + MIN_LENGTH + " to " + MAX_LENGTH + " characters long.";
+            return "The password must be " + MIN_LENGTH + " to " + MAX_LENGTH + " characters long.";
         }
-        if (!next.chars().anyMatch(Character::isLetter) || !next.chars().anyMatch(Character::isDigit)) {
-            return "The new password must contain at least one letter and one number.";
+        if (!next.chars().anyMatch(Character::isUpperCase) || !next.chars().anyMatch(Character::isLowerCase)
+                || !next.chars().anyMatch(Character::isDigit)
+                || next.chars().allMatch(c -> Character.isLetterOrDigit(c) || Character.isWhitespace(c))) {
+            return STRENGTH_RULE;
         }
         if (next.equals(current)) {
             return "The new password must be different from the current one.";

@@ -26,7 +26,8 @@ class DemoExpiryFilterTest {
 
     private final JdbcTemplate jdbc = mock(JdbcTemplate.class);
     private final FilterChain chain = mock(FilterChain.class);
-    private final DemoExpiryFilter filter = new DemoExpiryFilter(jdbc, Clock.fixed(NOW, ZoneOffset.UTC));
+    private final AccountRevocations revocations = new AccountRevocations();
+    private final DemoExpiryFilter filter = new DemoExpiryFilter(jdbc, revocations, Clock.fixed(NOW, ZoneOffset.UTC));
 
     @AfterEach
     void clear() {
@@ -91,5 +92,21 @@ class DemoExpiryFilterTest {
 
         verify(chain).doFilter(any(), any());
         assertThat(p.getExpiresAt()).isEqualTo(extended);
+    }
+
+    @Test
+    void revokedAccountIsSignedOutImmediately() throws Exception {
+        login(NOW.plusSeconds(3600)); // still has time left
+        revocations.revoke(7L);
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        filter.doFilter(new MockHttpServletRequest("GET", "/api/vendors"), res, chain);
+        assertThat(res.getStatus()).isEqualTo(401);
+        assertThat(res.getContentAsString()).contains("disabled");
+        verify(chain, never()).doFilter(any(), any());
+
+        revocations.restore(7L);
+        login(NOW.plusSeconds(3600));
+        filter.doFilter(new MockHttpServletRequest("GET", "/api/vendors"), new MockHttpServletResponse(), chain);
+        verify(chain).doFilter(any(), any());
     }
 }

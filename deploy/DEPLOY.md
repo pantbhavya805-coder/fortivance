@@ -84,8 +84,9 @@ CONTACT_TO=admin@fortivance.in
 Permanent accounts (created or updated at startup; they never expire). Use single quotes: Docker Compose
 treats `$` in an unquoted value as a variable.
 ```
-OWNER_PASSWORD='<password for the bhavya account>'
-JUDGE_PASSWORD='<password for the judge account>'
+OWNER_PASSWORD='<password for the admin account bhavya (admin console only)>'
+JUDGE_PASSWORD='<password for the judges test account judgedemo>'
+JUDGE_PASSWORD_PUBLIC=true   # show the judgedemo password on /judges.html (default false)
 ```
 The old shared `analyst` / `approver` accounts are disabled by migration V4. Visitors get personal 24-hour
 accounts through `/request-demo.html`.
@@ -132,17 +133,51 @@ with demo credentials and receives a notice (without passwords) for every demo r
 1. Send a test email from another account to `admin@fortivance.in` and check it arrives in webmail.
 2. Put `MAIL_USERNAME`, `MAIL_PASSWORD` and `CONTACT_TO` in `.env` on the server (never in the repository).
 3. Recreate the app: `docker compose -f docker-compose.prod.yml up -d --build app`.
-4. Open `https://fortivance.in/request-demo.html`, submit a request with an address you can read, and check:
-   the credentials appear on screen, the welcome email arrives, and the notice reaches `admin@fortivance.in`
+4. Open `https://fortivance.in/request-demo.html`, submit a request with an address you can read and a password you choose, and check:
+   the success message appears, the welcome email arrives (it does not contain the password), and the notice reaches `admin@fortivance.in`
    (replying to the notice goes to the visitor).
 
 SMTP defaults: `smtpout.secureserver.net`, port 465 (SSL), full email address as the username. If the login is
 rejected, set `MAIL_HOST=smtp.titan.email` in `.env` and recreate the app. Errors appear in
 `docker compose -f docker-compose.prod.yml logs app | grep -i demo`.
 
+The **Contact us** form at the bottom of `https://fortivance.in/about.html` also sends to this mailbox (Reply-To is the
+visitor) and emails the visitor an automatic "we'll reply shortly" confirmation. The confirmation contains no text
+typed by the visitor (only the topic chosen from a fixed list), at most one per address per day, and the form allows 5
+messages per IP per hour, so it cannot be used to send content to strangers. Test it after each deploy.
+
 `POST /api/demo-requests` is public. It drops submissions that fill the hidden honeypot field, allows 3 requests
 per IP per hour (`DEMO_REQUESTS_PER_HOUR`) and one request per email address. Without `MAIL_USERNAME` it answers
 503 and the rest of the app runs normally. Accounts are activated only after the welcome email is sent.
+
+## Managing the domain, DNS and email with the gddy CLI
+
+The GoDaddy developer CLI (`gddy`) was used to choose the domain and is used to inspect the live setup. It runs
+against the production environment and authenticates with a personal access token (never commit it).
+
+```bash
+gddy env info                      # active environment: prod (https://api.godaddy.com)
+gddy auth status                   # prod credentials valid
+gddy domain available <name>       # used to search for and compare domain names before buying
+gddy domain list                   # fortivance.in, status ACTIVE
+gddy dns list fortivance.in        # the records below
+gddy email list                    # the Professional Email (Titan) mailbox order, status COMPLETED
+```
+
+DNS for `fortivance.in` (from `gddy dns list`):
+
+| Type | Name | Value | Purpose |
+|---|---|---|---|
+| A | `@` | VPS IP address | The site, served by Caddy with automatic HTTPS |
+| CNAME | `www` | `fortivance.in` | `https://www.fortivance.in` also works |
+| MX | `@` | `smtp.secureserver.net`, `mailstore1.secureserver.net` | Mail for `admin@fortivance.in` |
+| TXT | `@` | `v=spf1 include:secureserver.net -all` | SPF: only GoDaddy mail servers may send for the domain |
+| CNAME | `secureserver1._domainkey`, `secureserver2._domainkey` | GoDaddy DKIM keys | DKIM signing of outgoing mail |
+| TXT | `_dmarc` | `v=DMARC1; p=quarantine; ...` | DMARC policy |
+
+SPF, DKIM and DMARC matter here because the app sends real email (welcome emails, password reset links, contact
+form acknowledgements) from `admin@fortivance.in`; without them those emails would land in spam. If the VPS IP
+changes, update the A record with `gddy dns set` (see `gddy dns set --help`).
 
 ## No domain yet
 

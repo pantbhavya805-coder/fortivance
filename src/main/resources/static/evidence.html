@@ -7,6 +7,34 @@
     <link rel="stylesheet" href="/css/app.css">
     <link rel="stylesheet" href="/css/ai-loader.css">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        /* Column help: an (i) button per header; the explanation shows on hover, keyboard focus or tap. */
+        .info-tip {
+            position: relative; display: inline-flex; align-items: center; justify-content: center;
+            width: 15px; height: 15px; margin-left: 4px; padding: 0; vertical-align: middle;
+            border: 1px solid var(--text-secondary); border-radius: 50%; background: transparent;
+            color: var(--text-secondary); font: italic 700 10px/1 Georgia, serif; cursor: help;
+            text-transform: none; letter-spacing: 0;
+        }
+        .info-tip:hover, .info-tip:focus-visible { color: var(--teal); border-color: var(--teal); outline: none; }
+        .info-tip::after {
+            content: attr(data-tip); position: absolute; top: calc(100% + 6px); left: -8px; z-index: 30;
+            width: 260px; padding: 0.55rem 0.7rem; border-radius: 6px; background: var(--navy); color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 0.75rem; font-style: normal; font-weight: 400; line-height: 1.45;
+            text-align: left; white-space: normal;
+            text-transform: none; letter-spacing: normal; box-shadow: 0 6px 18px rgba(15, 39, 68, 0.25);
+            opacity: 0; visibility: hidden; transition: opacity 0.12s; pointer-events: none;
+        }
+        .info-tip.tip-left::after { left: auto; right: -8px; }
+        .info-tip:hover::after, .info-tip:focus::after { opacity: 1; visibility: visible; }
+        .data-table thead th { overflow: visible; }
+        .table-responsive:has(.info-tip:focus), .table-responsive:has(.info-tip:hover) { overflow: visible; }
+        .col-legend { margin-top: 0.75rem; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.55; }
+        .col-legend summary { cursor: pointer; font-weight: 600; color: var(--navy); }
+        .col-legend ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
+        .col-legend li { margin-bottom: 0.3rem; }
+        @media (max-width: 640px) { .info-tip::after { width: 200px; } }
+    </style>
 </head>
 <body>
     <header class="header-nav">
@@ -23,6 +51,7 @@
             <a href="/incidents.html" data-nav="incidents">Incidents</a>
             <a href="/evidence.html" data-nav="evidence" class="active">Evidence</a>
             <a href="/eval.html" data-nav="eval">Evaluation</a>
+            <a href="/guide.html" data-nav="guide">Guide</a>
             <a href="/about.html" data-nav="about">About</a>
         </nav>
         <div class="nav-user-section" id="nav-user"></div>
@@ -57,11 +86,11 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Vendor</th>
-                            <th>Coverage %</th>
-                            <th>Evidence Status Counts</th>
-                            <th>Residual Risk Score</th>
-                            <th>Action</th>
+                            <th>Vendor <button type="button" class="info-tip" aria-label="About Vendor: The outside company and its risk tier: how critical it is to the bank (CRITICAL, HIGH, MEDIUM or LOW), set by the bank when it took the vendor on." data-tip="The outside company and its risk tier: how critical it is to the bank (CRITICAL, HIGH, MEDIUM or LOW), set by the bank when it took the vendor on.">i</button></th>
+                            <th>Coverage % <button type="button" class="info-tip" aria-label="About Coverage %: Share of the 5 requirements with evidence FOUND in the vendor&#x27;s documents. The figure in brackets counts only findings an analyst has verified. N/A means the vendor is out of scope." data-tip="Share of the 5 requirements with evidence FOUND in the vendor&#x27;s documents. The figure in brackets counts only findings an analyst has verified. N/A means the vendor is out of scope.">i</button></th>
+                            <th>Evidence Status Counts <button type="button" class="info-tip" aria-label="About Evidence Status Counts: How many requirements are FOUND (fully met), PARTIAL (partly met) or MISSING (no evidence). OUT OF SCOPE means the RBI IT outsourcing rules do not apply to this vendor; it is still monitored for incidents." data-tip="How many requirements are FOUND (fully met), PARTIAL (partly met) or MISSING (no evidence). OUT OF SCOPE means the RBI IT outsourcing rules do not apply to this vendor; it is still monitored for incidents.">i</button></th>
+                            <th>Residual Risk Score <button type="button" class="info-tip tip-left" aria-label="About Residual Risk Score: 0 to 100, rule-based (no AI): the vendor&#x27;s inherent risk plus every gap not covered by evidence. 70 and above HIGH, 40 to 69 MEDIUM, below 40 LOW. The gap report lists each factor." data-tip="0 to 100, rule-based (no AI): the vendor&#x27;s inherent risk plus every gap not covered by evidence. 70 and above HIGH, 40 to 69 MEDIUM, below 40 LOW. The gap report lists each factor.">i</button></th>
+                            <th>Action <button type="button" class="info-tip tip-left" aria-label="About Action: Open the vendor&#x27;s gap report: each requirement, the cited evidence and the score breakdown." data-tip="Open the vendor&#x27;s gap report: each requirement, the cited evidence and the score breakdown.">i</button></th>
                         </tr>
                     </thead>
                     <tbody id="summary-tbody">
@@ -69,6 +98,16 @@
                     </tbody>
                 </table>
             </div>
+            <details class="col-legend">
+                <summary>What the columns mean</summary>
+                <ul>
+                        <li><strong>Vendor:</strong> The outside company and its risk tier: how critical it is to the bank (CRITICAL, HIGH, MEDIUM or LOW), set by the bank when it took the vendor on.</li>
+                        <li><strong>Coverage %:</strong> Share of the 5 requirements with evidence FOUND in the vendor&#x27;s documents. The figure in brackets counts only findings an analyst has verified. N/A means the vendor is out of scope.</li>
+                        <li><strong>Evidence Status Counts:</strong> How many requirements are FOUND (fully met), PARTIAL (partly met) or MISSING (no evidence). OUT OF SCOPE means the RBI IT outsourcing rules do not apply to this vendor; it is still monitored for incidents.</li>
+                        <li><strong>Residual Risk Score:</strong> 0 to 100, rule-based (no AI): the vendor&#x27;s inherent risk plus every gap not covered by evidence. 70 and above HIGH, 40 to 69 MEDIUM, below 40 LOW. The gap report lists each factor.</li>
+                        <li><strong>Action:</strong> Open the vendor&#x27;s gap report: each requirement, the cited evidence and the score breakdown.</li>
+                </ul>
+            </details>
         </section>
 
         <!-- Vendor Detail Section (Loaded on Vendor Selection) -->
@@ -104,6 +143,19 @@
                     <ul class="risk-factors-list" id="risk-factors-list">
                         <li style="font-size: 0.8125rem; color: var(--text-secondary);">No contributing risk factors.</li>
                     </ul>
+                    <details style="margin-top: 0.75rem; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.55;">
+                        <summary style="cursor: pointer; font-weight: 600; color: var(--navy);">How the score works</summary>
+                        <div style="margin-top: 0.5rem;">
+                            <p style="margin: 0 0 0.5rem;">The score shows how much risk is <strong>left</strong> after counting what the bank can prove is under control (residual risk), on a scale of 0 to 100.</p>
+                            <ul style="margin: 0 0 0.5rem; padding-left: 1.1rem;">
+                                <li><strong>Starting point (inherent risk):</strong> how critical the vendor is (CRITICAL 40, HIGH 30, MEDIUM 20, LOW 10) and what data it handles (financial 15, customer personal data 10, internal 5).</li>
+                                <li><strong>Missing or partial evidence (+8 / +4 per requirement):</strong> a control the bank cannot prove exists gives no protection, so the risk stays.</li>
+                                <li><strong>Open incidents in the vendor's chain (+5 each):</strong> something is going wrong right now. These points drop off when the incident is closed.</li>
+                                <li><strong>Overdue periodic review (+10)</strong> and <strong>subcontractors with no assurance report on file (+5 each):</strong> blind spots in oversight and in the supply chain.</li>
+                            </ul>
+                            <p style="margin: 0;">Bands: 70 and above HIGH, 40 to 69 MEDIUM, below 40 LOW. The checks follow the RBI Outsourcing Directions 2025; the point weights are the bank's own settings, not an RBI formula. No AI is used in the score.</p>
+                        </div>
+                    </details>
                 </div>
             </div>
 
@@ -112,12 +164,12 @@
                 <table class="data-table" id="requirements-table">
                     <thead>
                         <tr>
-                            <th style="width: 120px;">Code</th>
-                            <th>Requirement Title</th>
-                            <th>Regulatory Source</th>
-                            <th style="width: 130px;">Status</th>
-                            <th style="width: 120px;">Review</th>
-                            <th style="width: 100px;">Details</th>
+                            <th style="width: 120px;">Code <button type="button" class="info-tip" aria-label="About Code: Requirement ID. CON = contract clause, BCP = business continuity, SEC = security assurance." data-tip="Requirement ID. CON = contract clause, BCP = business continuity, SEC = security assurance.">i</button></th>
+                            <th>Requirement Title <button type="button" class="info-tip" aria-label="About Requirement Title: What the bank expects the vendor to have in place." data-tip="What the bank expects the vendor to have in place.">i</button></th>
+                            <th>Regulatory Source <button type="button" class="info-tip" aria-label="About Regulatory Source: Where the requirement comes from: a paragraph of the RBI Outsourcing Directions 2025, or the bank&#x27;s internal policy. &#x27;(verify)&#x27; means check the number against the official text before quoting it." data-tip="Where the requirement comes from: a paragraph of the RBI Outsourcing Directions 2025, or the bank&#x27;s internal policy. &#x27;(verify)&#x27; means check the number against the official text before quoting it.">i</button></th>
+                            <th style="width: 130px;">Status <button type="button" class="info-tip" aria-label="About Status: What the AI found in the vendor&#x27;s documents: FOUND, PARTIAL, MISSING, or NOT ASSESSED (no document analysed). A FOUND must cite a passage the system has checked exists, otherwise it is lowered to PARTIAL." data-tip="What the AI found in the vendor&#x27;s documents: FOUND, PARTIAL, MISSING, or NOT ASSESSED (no document analysed). A FOUND must cite a passage the system has checked exists, otherwise it is lowered to PARTIAL.">i</button></th>
+                            <th style="width: 120px;">Review <button type="button" class="info-tip tip-left" aria-label="About Review: Human check of the AI finding: Needs review (not checked yet), Verified (an analyst confirmed it) or Disputed (an analyst overruled or edited it). Only verified findings count toward verified coverage." data-tip="Human check of the AI finding: Needs review (not checked yet), Verified (an analyst confirmed it) or Disputed (an analyst overruled or edited it). Only verified findings count toward verified coverage.">i</button></th>
+                            <th style="width: 100px;">Details <button type="button" class="info-tip tip-left" aria-label="About Details: Expand to see the cited passages, the AI&#x27;s reasoning and confidence, and to verify or reject the finding." data-tip="Expand to see the cited passages, the AI&#x27;s reasoning and confidence, and to verify or reject the finding.">i</button></th>
                         </tr>
                     </thead>
                     <tbody id="requirements-tbody">
@@ -125,6 +177,17 @@
                     </tbody>
                 </table>
             </div>
+            <details class="col-legend">
+                <summary>What the columns mean</summary>
+                <ul>
+                        <li><strong>Code:</strong> Requirement ID. CON = contract clause, BCP = business continuity, SEC = security assurance.</li>
+                        <li><strong>Requirement Title:</strong> What the bank expects the vendor to have in place.</li>
+                        <li><strong>Regulatory Source:</strong> Where the requirement comes from: a paragraph of the RBI Outsourcing Directions 2025, or the bank&#x27;s internal policy. &#x27;(verify)&#x27; means check the number against the official text before quoting it.</li>
+                        <li><strong>Status:</strong> What the AI found in the vendor&#x27;s documents: FOUND, PARTIAL, MISSING, or NOT ASSESSED (no document analysed). A FOUND must cite a passage the system has checked exists, otherwise it is lowered to PARTIAL.</li>
+                        <li><strong>Review:</strong> Human check of the AI finding: Needs review (not checked yet), Verified (an analyst confirmed it) or Disputed (an analyst overruled or edited it). Only verified findings count toward verified coverage.</li>
+                        <li><strong>Details:</strong> Expand to see the cited passages, the AI&#x27;s reasoning and confidence, and to verify or reject the finding.</li>
+                </ul>
+            </details>
         </section>
     </main>
 
@@ -181,6 +244,17 @@
 
             await loadSummary(vendorParam);
         });
+
+        function infoTip(text, label, alignLeft) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = alignLeft ? 'info-tip tip-left' : 'info-tip';
+            b.textContent = 'i';
+            b.dataset.tip = text;
+            b.setAttribute('aria-label', 'About ' + label + ': ' + text);
+            b.addEventListener('click', function(e) { e.stopPropagation(); b.focus(); });
+            return b;
+        }
 
         function setupAnalyseAllButton() {
             const btn = document.getElementById('analyse-all-btn');
@@ -512,6 +586,8 @@
             revBadge.textContent = finding.reviewStatus || 'PENDING';
 
             metaBlock.appendChild(conf);
+            metaBlock.appendChild(infoTip("The AI's own estimate of how sure it is (0 to 100%). A guide for the reviewer, not proof.", 'Confidence', true));
+            metaBlock.appendChild(document.createTextNode(' '));
             metaBlock.appendChild(revBadge);
             header.appendChild(titleBlock);
             header.appendChild(metaBlock);
@@ -524,6 +600,7 @@
             rationaleLabel.style.color = 'var(--navy)';
             rationaleLabel.textContent = 'AI Extraction Rationale:';
             container.appendChild(rationaleLabel);
+            container.appendChild(infoTip("The AI's explanation of why it chose this status, and the gap if any. Check it against the cited passages before verifying.", 'AI rationale', false));
 
             const rationaleText = document.createElement('p');
             rationaleText.style.fontSize = '0.8125rem';
@@ -543,6 +620,7 @@
             citationsLabel.style.color = 'var(--navy)';
             citationsLabel.textContent = 'Passage Citations & Excerpts:';
             container.appendChild(citationsLabel);
+            container.appendChild(infoTip("Exact passages from the vendor's document, with clause and page. The system discards any citation that does not exist in the document.", 'Citations', false));
 
             const citationsList = finding.citations || [];
             if (citationsList.length === 0) {
@@ -702,5 +780,6 @@
             document.getElementById('dispute-modal').style.display = 'flex';
         }
     </script>
+    <script src="/js/glossary.js" data-guide="evidence"></script>
 </body>
 </html>

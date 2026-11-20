@@ -28,6 +28,7 @@ public class DemoRequestController {
             "name", "Please enter your name or organisation (2 to 100 characters).",
             "phone", "Phone may contain only digits, spaces and + - ( ), 7 to 20 characters.",
             "purpose", "Please tell us who you are and why you need access (50 to 1000 characters).",
+            "password", "Please choose a password (8 to 64 characters).",
             "website", "Invalid submission.");
 
     private final DemoRequestService service;
@@ -44,24 +45,25 @@ public class DemoRequestController {
         return switch (result.outcome()) {
             case CREATED -> created(result.credentials());
             case IGNORED -> ResponseEntity.status(HttpStatus.CREATED).body(Map.of("status", "sent"));
+            case WEAK_PASSWORD -> ResponseEntity.badRequest().body(Map.of(
+                    "error", DemoRequestService.passwordProblem(form), "field", "password"));
             case DUPLICATE -> ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error",
-                    "Demo access has already been issued to this email address. Please use the credentials "
-                            + "from your welcome email, or reply to it if you need help."));
+                    "Demo access has already been issued to this email address. Sign in with your email and "
+                            + "the password you chose, or use \"Forgot password?\" on the sign-in page."));
             case RATE_LIMITED -> ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(Map.of("error", "Too many requests from your network. Please try again later."));
             case NOT_CONFIGURED -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("error", "Demo requests are not available right now. Please try again later."));
             case MAIL_FAILED -> ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of("error",
-                    "We could not email your credentials just now. Please try again in a few minutes."));
+                    "We could not send your welcome email just now. Please try again in a few minutes."));
         };
     }
 
-    /** Credentials are shown once on screen as well as emailed; the response must not be cached. */
+    /** The password was chosen by the requester and is never echoed back; the response is not cached. */
     private static ResponseEntity<Map<String, String>> created(DemoRequestService.Provisioned p) {
         Map<String, String> body = new LinkedHashMap<>();
         body.put("status", "sent");
         body.put("username", p.username());
-        body.put("password", p.password());
         body.put("role", "ANALYST");
         body.put("accessExpiresAt", DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(p.expiresAt().atZone(DemoMailer.IST)));
         return ResponseEntity.status(HttpStatus.CREATED).cacheControl(CacheControl.noStore()).body(body);

@@ -27,7 +27,7 @@ class RoleSwitchTest {
 
     private final JdbcTemplate jdbc = mock(JdbcTemplate.class);
     private final AuditService audit = mock(AuditService.class);
-    private final MeController controller = new MeController(jdbc, audit, new AdminAccess("bhavya,judge", "bhavya"));
+    private final MeController controller = new MeController(jdbc, audit);
 
     @AfterEach
     void clear() {
