@@ -95,7 +95,7 @@ Failures travel along this chain: **vendor → application → business service*
 ### Incidents
 | Term | Meaning |
 |---|---|
-| Incident notice | A vendor's message telling the bank something went wrong. The demo has three in `sample-docs/incident-notices/`. |
+| Incident notice | A vendor's message telling the bank something went wrong. Sample notices, a live-demo notice and a prompt-injection test are in `sample-docs/` (its README says what each one shows). |
 | Reference numbers | The vendor's own ticket number, kept so analysts can quote it: **NH**-INC-2026-0412 (NotifyHub, SMS delays), INC-**NC**-2026-1103 (NimbusCloud, data-centre cooling at SecureVault), **PR-SEC**-2026-0027 (PayRail, suspected ransomware). |
 | RBI 6-hour reporting window | Banks are expected to report significant cyber incidents to RBI within 6 hours of detection. The clock counts from the incident's detected time. |
 | Window elapsed | The 6 hours have passed (always the case for the older demo incidents). Fortivance shows the clock but never decides reportability; an analyst does. |
