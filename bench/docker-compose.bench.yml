@@ -1,0 +1,15 @@
+# Overrides for a separate benchmark copy of Fortivance.
+# Use together with the repo's docker-compose.yml and the project name fortivance-bench, so the benchmark gets its
+# own database volume (fortivance-bench_mysql-data) and never touches the normal local data. From the repo root:
+#   docker compose -p fortivance-bench -f docker-compose.yml -f bench/docker-compose.bench.yml up -d --build
+# The AI key and mail settings are blanked: the benchmark makes no Claude calls and sends no email.
+services:
+  mysql:
+    container_name: fortivance-bench-mysql
+  app:
+    container_name: fortivance-bench-app
+    environment:
+      ANTHROPIC_API_KEY: ""
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      CONTACT_TO: ""

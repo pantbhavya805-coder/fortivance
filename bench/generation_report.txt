@@ -1,0 +1,40 @@
+File counts (data rows exclude header; bytes include header):
+vendors_01.csv                1,500 rows    253,313 bytes
+vendors_02.csv                2,000 rows    316,812 bytes
+vendors_03.csv                1,500 rows    238,233 bytes
+systems_01.csv                1,200 rows    552,551 bytes
+services_01.csv                 400 rows     80,553 bytes
+vendor_dependencies.csv       3,800 rows    237,393 bytes
+
+Total edges:
+Parent -> subcontractor: 3500
+Additional shared fourth-party edges: 300
+Vendor dependency edges: 3800
+System -> vendor: 13094
+Single-point vendor edges (subset): 1216
+Service -> essential system: 2176
+Service -> supporting system: 1604
+
+Hotspots (182 critical systems):
+Zorvexa Pelnivo V00907 Pvt Ltd: 359 systems (29.9%); 158 critical (86.8%) [CRITICAL HOTSPOT]
+Fynzelo Talvex V00018 Pvt Ltd: 480 systems (40.0%); 160 critical (87.9%) [CRITICAL HOTSPOT]
+Nexqora Qirnox V00445 Pvt Ltd: 353 systems (29.4%); 161 critical (88.5%) [CRITICAL HOTSPOT]
+Trelvuni Myrqen V00253 Pvt Ltd: 355 systems (29.6%); 161 critical (88.5%) [CRITICAL HOTSPOT]
+Nexqora Myrqen V00085 Pvt Ltd: 339 systems (28.2%); 161 critical (88.5%) [CRITICAL HOTSPOT]
+Trelvuni Pelnivo V01142 Pvt Ltd: 455 systems (37.9%); 72 critical (39.6%)
+Fynzelo Qirnox V00128 Pvt Ltd: 477 systems (39.8%); 70 critical (38.5%)
+Quenlivo Pelnivo V01088 Pvt Ltd: 463 systems (38.6%); 56 critical (30.8%)
+Orvexiq Drovixa V00435 Pvt Ltd: 346 systems (28.8%); 42 critical (23.1%)
+Zorvexa Qirnox V00542 Pvt Ltd: 373 systems (31.1%); 51 critical (28.0%)
+Varnyxo Zelvani V01145 Pvt Ltd: 371 systems (30.9%); 63 critical (34.6%)
+Kelzuno Pelnivo V01485 Pvt Ltd: 385 systems (32.1%); 52 critical (28.6%)
+Trelvuni Drovixa V00009 Pvt Ltd: 441 systems (36.8%); 67 critical (36.8%)
+Kelzuno Zelvani V01266 Pvt Ltd: 388 systems (32.3%); 46 critical (25.3%)
+Varnyxo Talvex V01119 Pvt Ltd: 401 systems (33.4%); 51 critical (28.0%)
+Orvexiq Talvex V00709 Pvt Ltd: 425 systems (35.4%); 52 critical (28.6%)
+Nexqora Pelnivo V01486 Pvt Ltd: 479 systems (39.9%); 56 critical (30.8%)
+Nexqora Talvex V00530 Pvt Ltd: 330 systems (27.5%); 46 critical (25.3%)
+Varnyxo Drovixa V00528 Pvt Ltd: 350 systems (29.2%); 41 critical (22.5%)
+Orvexiq Myrqen V01087 Pvt Ltd: 428 systems (35.7%); 51 critical (28.0%)
+
+Validation passed.
