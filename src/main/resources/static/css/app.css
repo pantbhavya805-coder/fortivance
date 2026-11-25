@@ -688,3 +688,323 @@ table.data-table tr:hover td {
     box-shadow: none;
     transform: none;
 }
+
+/* Vendor Registry Toolbar and Filters */
+.vendor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.vendor-search-wrap {
+    flex: 1 1 240px;
+}
+
+.vendor-search-wrap input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #ffffff;
+    color: var(--text-primary);
+}
+
+.vendor-search-wrap input:focus,
+.vendor-filters select:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+}
+
+.vendor-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.vendor-filters select {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #ffffff;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* Vendor Registry Pagination */
+.vendor-paging {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.875rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.vendor-paging-info {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.vendor-paging-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Vendor Search-as-you-type Picker (Graph Page) */
+.vendor-picker {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vendor-picker-wrap {
+    position: relative;
+}
+
+.vendor-picker-input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    min-width: 280px;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    background-color: #ffffff;
+    color: var(--text-primary);
+}
+
+.vendor-picker-input:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+}
+
+.vendor-picker-listbox {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    min-width: 320px;
+    max-height: 280px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    z-index: 1000;
+}
+
+.vendor-picker-option {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.1s;
+}
+
+.vendor-picker-option:last-child {
+    border-bottom: none;
+}
+
+.vendor-picker-option:hover,
+.vendor-picker-option.highlighted {
+    background-color: var(--teal-light);
+    color: var(--navy);
+}
+
+.vendor-picker-option-name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vendor-picker-option-meta {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Responsive / Mobile Styles (max-width: 768px) */
+@media (max-width: 768px) {
+    html, body {
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    .main-container {
+        padding: 0 1rem;
+        margin: 1rem auto;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Navigation Bar: wraps and links row scrolls horizontally inside itself */
+    .header-nav {
+        height: auto;
+        min-height: 56px;
+        flex-wrap: wrap;
+        padding: 0.625rem 1rem;
+        gap: 0.5rem;
+    }
+
+    .brand-section {
+        flex: 1 1 auto;
+        gap: 0.5rem;
+    }
+
+    .brand-subtitle {
+        display: none;
+    }
+
+    .nav-user-section {
+        margin-left: auto;
+    }
+
+    .nav-links {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        padding: 0.25rem 0;
+        gap: 0.25rem;
+    }
+
+    .nav-links a {
+        flex-shrink: 0;
+        font-size: 0.8125rem;
+        padding: 0.35rem 0.6rem;
+    }
+
+    /* Page Header */
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .page-header > div:last-child {
+        width: 100%;
+    }
+
+    .card {
+        padding: 1rem;
+    }
+
+    .card-title {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Dashboard Vendor Toolbar: search box and filters each take full width */
+    .vendor-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .vendor-search-wrap {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .vendor-search-wrap input {
+        width: 100%;
+    }
+
+    .vendor-filters {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .vendor-filters select {
+        width: 100%;
+    }
+
+    /* Paging Controls */
+    .vendor-paging {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .vendor-paging-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .vendor-paging-actions button {
+        flex: 1;
+    }
+
+    /* Wide tables scroll inside .table-responsive, not the page */
+    .table-responsive {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Graph page: graph and Impact Assessment panel stack vertically, each full width */
+    .graph-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    #cy-container {
+        width: 100%;
+        height: 420px;
+    }
+
+    #impact-panel {
+        width: 100%;
+    }
+
+    /* Graph header row and vendor picker */
+    .vendor-picker {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .vendor-picker-wrap {
+        width: 100%;
+    }
+
+    .vendor-picker-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .vendor-picker-listbox {
+        width: 100%;
+        min-width: 0;
+    }
+
+    #vendor-picker-clear {
+        width: 100%;
+        text-align: center;
+    }
+}

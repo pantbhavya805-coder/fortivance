@@ -79,6 +79,39 @@
                 <span>Vendor Risk Registry</span>
                 <span class="badge badge-grey" id="vendor-count">0 Vendors</span>
             </div>
+
+            <!-- Toolbar: search box and filters -->
+            <div class="vendor-toolbar">
+                <div class="vendor-search-wrap">
+                    <input type="text" id="vendor-search" placeholder="Search vendors" autocomplete="off" aria-label="Search vendors">
+                </div>
+                <div class="vendor-filters">
+                    <select id="filter-tier" aria-label="Filter by Risk Tier">
+                        <option value="">All Tiers</option>
+                        <option value="CRITICAL">Critical</option>
+                        <option value="HIGH">High</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="LOW">Low</option>
+                    </select>
+                    <select id="filter-scope" aria-label="Filter by Outsourcing Scope">
+                        <option value="">All Scopes</option>
+                        <option value="IN_SCOPE">In Scope</option>
+                        <option value="EXCLUDED">Excluded</option>
+                        <option value="UNDER_REVIEW">Under Review</option>
+                    </select>
+                    <select id="filter-type" aria-label="Filter by Vendor Type">
+                        <option value="all">All Types</option>
+                        <option value="direct">Direct</option>
+                        <option value="subcontractor">Subcontractors</option>
+                    </select>
+                    <select id="filter-flag" aria-label="Filter by Flag">
+                        <option value="">All Flags</option>
+                        <option value="overdue">Review overdue</option>
+                        <option value="expired">Contract expired</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="data-table" id="vendors-table">
                     <thead>
@@ -94,9 +127,18 @@
                         </tr>
                     </thead>
                     <tbody id="vendors-tbody">
-                        <tr><td colspan="8" style="text-align:center; padding: 2rem;">Loading vendors...</td></tr>
+                        <tr><td colspan="8" style="text-align:center; padding: 2rem;">Loading...</td></tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Paging controls -->
+            <div class="vendor-paging" id="vendor-paging">
+                <div class="vendor-paging-info" id="pagination-info">0-0 of 0</div>
+                <div class="vendor-paging-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-prev" disabled>Previous</button>
+                    <button type="button" class="btn btn-secondary" id="btn-next" disabled>Next</button>
+                </div>
             </div>
         </section>
     </main>
@@ -130,6 +172,204 @@
             return fmtDate(value);
         }
 
+        // Paging and search state
+        let currentSearch = '';
+        let currentTier = '';
+        let currentScope = '';
+        let currentType = 'all';
+        let currentFlag = '';
+        let currentPage = 0;
+        const pageSize = 25;
+        let unfilteredTotal = null;
+        let vendorRequestId = 0;
+        let searchDebounceTimer = null;
+
+        function isFiltered() {
+            return Boolean(currentSearch || currentTier || currentScope || (currentType && currentType !== 'all') || currentFlag);
+        }
+
+        function readParamsFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            currentSearch = params.get('q') || '';
+            currentTier = params.get('tier') || '';
+            currentScope = params.get('scope') || '';
+            currentType = params.get('type') || 'all';
+            currentFlag = params.get('flag') || '';
+            const p = parseInt(params.get('page'), 10);
+            currentPage = !isNaN(p) && p >= 0 ? p : 0;
+
+            const searchEl = document.getElementById('vendor-search');
+            if (searchEl) searchEl.value = currentSearch;
+            const tierEl = document.getElementById('filter-tier');
+            if (tierEl) tierEl.value = currentTier;
+            const scopeEl = document.getElementById('filter-scope');
+            if (scopeEl) scopeEl.value = currentScope;
+            const typeEl = document.getElementById('filter-type');
+            if (typeEl) typeEl.value = currentType;
+            const flagEl = document.getElementById('filter-flag');
+            if (flagEl) flagEl.value = currentFlag;
+        }
+
+        function updateUrl(replace = false) {
+            const params = new URLSearchParams();
+            if (currentSearch) params.set('q', currentSearch);
+            if (currentTier) params.set('tier', currentTier);
+            if (currentScope) params.set('scope', currentScope);
+            if (currentType && currentType !== 'all') params.set('type', currentType);
+            if (currentFlag) params.set('flag', currentFlag);
+            if (currentPage > 0) params.set('page', String(currentPage));
+
+            const qs = params.toString();
+            const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+            if (replace) {
+                history.replaceState(null, '', newUrl);
+            } else {
+                history.pushState(null, '', newUrl);
+            }
+        }
+
+        function updateHeaderCount(matchingTotal) {
+            const vendorCountEl = document.getElementById('vendor-count');
+            if (!vendorCountEl) return;
+            const baseCount = unfilteredTotal != null ? unfilteredTotal : matchingTotal;
+            if (isFiltered()) {
+                vendorCountEl.textContent = `${baseCount.toLocaleString('en-IN')} Vendors (${matchingTotal.toLocaleString('en-IN')} matching)`;
+            } else {
+                vendorCountEl.textContent = `${baseCount.toLocaleString('en-IN')} Vendors`;
+            }
+        }
+
+        function clearAllFilters() {
+            currentSearch = '';
+            currentTier = '';
+            currentScope = '';
+            currentType = 'all';
+            currentFlag = '';
+            currentPage = 0;
+
+            const searchEl = document.getElementById('vendor-search');
+            if (searchEl) searchEl.value = '';
+            const tierEl = document.getElementById('filter-tier');
+            if (tierEl) tierEl.value = '';
+            const scopeEl = document.getElementById('filter-scope');
+            if (scopeEl) scopeEl.value = '';
+            const typeEl = document.getElementById('filter-type');
+            if (typeEl) typeEl.value = 'all';
+            const flagEl = document.getElementById('filter-flag');
+            if (flagEl) flagEl.value = '';
+
+            updateUrl();
+            loadVendors();
+        }
+
+        async function loadVendors() {
+            const reqId = ++vendorRequestId;
+            const tbody = document.getElementById('vendors-tbody');
+            const paginationInfoEl = document.getElementById('pagination-info');
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2rem;">Loading...</td></tr>';
+
+            const params = new URLSearchParams();
+            if (currentSearch) params.set('q', currentSearch);
+            if (currentTier) params.set('tier', currentTier);
+            if (currentScope) params.set('scope', currentScope);
+            if (currentType && currentType !== 'all') params.set('type', currentType);
+            if (currentFlag) params.set('flag', currentFlag);
+            params.set('page', String(currentPage));
+            params.set('size', String(pageSize));
+
+            try {
+                const data = await api.get(`/api/vendors/search?${params.toString()}`);
+                if (reqId !== vendorRequestId) return; // Stale response
+
+                // Track unfiltered total
+                if (!isFiltered() && unfilteredTotal == null) {
+                    unfilteredTotal = data.total;
+                } else if (isFiltered() && unfilteredTotal == null) {
+                    api.get('/api/vendors/search?size=1').then(uData => {
+                        if (uData && uData.total != null) {
+                            unfilteredTotal = uData.total;
+                            updateHeaderCount(data.total);
+                        }
+                    }).catch(() => {});
+                }
+
+                updateHeaderCount(data.total);
+
+                if (!data.items || data.items.length === 0) {
+                    // Page past the end: when response has no items but total > 0, load the last page and replace URL
+                    if (data.total > 0 && data.totalPages > 0) {
+                        currentPage = Math.max(0, data.totalPages - 1);
+                        updateUrl(true);
+                        return loadVendors();
+                    }
+
+                    if (isFiltered()) {
+                        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2.5rem 1rem; color: var(--text-secondary);">' +
+                            'No vendors match these filters. <a href="#" id="clear-filters-link" style="color: var(--teal); font-weight: 600; text-decoration: underline; margin-left: 0.35rem;">Clear filters</a>' +
+                            '</td></tr>';
+                        const clearLink = document.getElementById('clear-filters-link');
+                        if (clearLink) {
+                            clearLink.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                clearAllFilters();
+                            });
+                        }
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2rem;">No vendors registered</td></tr>';
+                    }
+                } else {
+                    tbody.innerHTML = data.items.map(v => {
+                        const tier = escapeHtml(v.riskTier);
+                        const tierClass = tier === 'CRITICAL' ? 'badge-critical' :
+                                          tier === 'HIGH' ? 'badge-high' :
+                                          tier === 'MEDIUM' ? 'badge-medium' : 'badge-low';
+                        
+                        const scopeBadge = v.outsourcingScope === 'EXCLUDED' ?
+                            `<span class="badge badge-grey" title="${escapeHtml(v.scopeNote || '')}">EXCLUDED</span>` :
+                            v.outsourcingScope === 'UNDER_REVIEW' ?
+                            `<span class="badge badge-amber">UNDER REVIEW</span>` :
+                            `<span class="badge badge-green">IN SCOPE</span>`;
+
+                        let flags = [];
+                        if (v.reviewOverdue) flags.push('<span class="badge badge-red">Review Overdue</span>');
+                        if (v.contractExpired) flags.push('<span class="badge badge-amber">Contract Expired</span>');
+                        if (v.fourthParty) flags.push('<span class="badge badge-grey">4th Party</span>');
+
+                        return `
+                            <tr>
+                                <td><strong><a href="/vendor.html?id=${encodeURIComponent(v.id)}">${escapeHtml(v.name)}</a></strong></td>
+                                <td>${escapeHtml(v.serviceCategory || '-')}</td>
+                                <td><span class="badge ${tierClass}">${tier}</span></td>
+                                <td>${scopeBadge}</td>
+                                <td><code>${escapeHtml(v.dataAccess || 'NONE')}</code></td>
+                                <td>${escapeHtml(fmtDay(v.nextReviewDue))}</td>
+                                <td>${flags.join(' ') || '-'}</td>
+                                <td><a href="/vendor.html?id=${encodeURIComponent(v.id)}" class="btn btn-secondary">Profile</a></td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                // Update pagination info & buttons
+                const total = data.total;
+                const page = data.page;
+                const size = data.size;
+                const from = total === 0 ? 0 : page * size + 1;
+                const to = Math.min((page + 1) * size, total);
+                paginationInfoEl.textContent = `${from.toLocaleString('en-IN')}-${to.toLocaleString('en-IN')} of ${total.toLocaleString('en-IN')}`;
+                btnPrev.disabled = page <= 0;
+                btnNext.disabled = to >= total || page >= (data.totalPages || 1) - 1;
+
+            } catch (err) {
+                if (reqId !== vendorRequestId) return;
+                console.error("Failed to load vendors", err);
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 2rem; color: var(--status-red);">Failed to load vendors</td></tr>';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             await api.initNav('dashboard');
 
@@ -146,47 +386,63 @@
                 console.error("Failed to load metrics", err);
             }
 
-            // Load Vendors
-            try {
-                const vendors = await api.get('/api/vendors');
-                document.getElementById('vendor-count').textContent = `${vendors.length} Vendors`;
-                const tbody = document.getElementById('vendors-tbody');
-                if (!vendors || vendors.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No vendors registered</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = vendors.map(v => {
-                    const tier = escapeHtml(v.riskTier);
-                    const tierClass = tier === 'CRITICAL' ? 'badge-critical' :
-                                      tier === 'HIGH' ? 'badge-high' :
-                                      tier === 'MEDIUM' ? 'badge-medium' : 'badge-low';
-                    
-                    const scopeBadge = v.outsourcingScope === 'EXCLUDED' ?
-                        `<span class="badge badge-grey" title="${escapeHtml(v.scopeNote || '')}">EXCLUDED</span>` :
-                        `<span class="badge badge-green">IN SCOPE</span>`;
-
-                    let flags = [];
-                    if (v.reviewOverdue) flags.push('<span class="badge badge-red">Review Overdue</span>');
-                    if (v.contractExpired) flags.push('<span class="badge badge-amber">Contract Expired</span>');
-                    if (v.fourthParty) flags.push('<span class="badge badge-grey">4th Party</span>');
-
-                    return `
-                        <tr>
-                            <td><strong><a href="/vendor.html?id=${encodeURIComponent(v.id)}">${escapeHtml(v.name)}</a></strong></td>
-                            <td>${escapeHtml(v.serviceCategory || '-')}</td>
-                            <td><span class="badge ${tierClass}">${tier}</span></td>
-                            <td>${scopeBadge}</td>
-                            <td><code>${escapeHtml(v.dataAccess || 'NONE')}</code></td>
-                            <td>${escapeHtml(fmtDay(v.nextReviewDue))}</td>
-                            <td>${flags.join(' ') || '-'}</td>
-                            <td><a href="/vendor.html?id=${encodeURIComponent(v.id)}" class="btn btn-secondary">Profile</a></td>
-                        </tr>
-                    `;
-                }).join('');
-            } catch (err) {
-                console.error("Failed to load vendors", err);
+            // Bind filter & search listeners
+            const searchInput = document.getElementById('vendor-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+                    searchDebounceTimer = setTimeout(() => {
+                        currentSearch = searchInput.value.trim();
+                        currentPage = 0;
+                        updateUrl(true);
+                        loadVendors();
+                    }, 300);
+                });
             }
+
+            ['filter-tier', 'filter-scope', 'filter-type', 'filter-flag'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('change', () => {
+                        currentTier = document.getElementById('filter-tier').value;
+                        currentScope = document.getElementById('filter-scope').value;
+                        currentType = document.getElementById('filter-type').value;
+                        currentFlag = document.getElementById('filter-flag').value;
+                        currentPage = 0;
+                        updateUrl(false);
+                        loadVendors();
+                    });
+                }
+            });
+
+            const btnPrev = document.getElementById('btn-prev');
+            if (btnPrev) {
+                btnPrev.addEventListener('click', () => {
+                    if (currentPage > 0) {
+                        currentPage--;
+                        updateUrl(false);
+                        loadVendors();
+                    }
+                });
+            }
+
+            const btnNext = document.getElementById('btn-next');
+            if (btnNext) {
+                btnNext.addEventListener('click', () => {
+                    currentPage++;
+                    updateUrl(false);
+                    loadVendors();
+                });
+            }
+
+            window.addEventListener('popstate', () => {
+                readParamsFromUrl();
+                loadVendors();
+            });
+
+            // Initial load
+            readParamsFromUrl();
+            await loadVendors();
         });
     </script>
     <script src="/js/glossary.js" data-guide="start"></script>

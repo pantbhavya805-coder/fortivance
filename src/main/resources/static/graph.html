@@ -40,10 +40,28 @@
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                 <a href="/import.html" class="btn btn-secondary" title="Load a bank's vendors, systems and services from Excel">Import register</a>
-                <label for="vendor-select" style="font-weight: 600; font-size: 0.8125rem;">Simulate Vendor Incident:</label>
-                <select id="vendor-select" style="padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; min-width: 260px;">
-                    <option value="">-- Complete Bank Graph (Normal) --</option>
-                </select>
+                <label for="vendor-picker-input" style="font-weight: 600; font-size: 0.8125rem;">Simulate Vendor Incident:</label>
+                <div class="vendor-picker" id="vendor-picker-container" data-no-glossary>
+                    <div class="vendor-picker-wrap" data-no-glossary>
+                        <input type="text"
+                               id="vendor-picker-input"
+                               class="vendor-picker-input"
+                               placeholder="Search vendor..."
+                               autocomplete="off"
+                               role="combobox"
+                               aria-autocomplete="list"
+                               aria-expanded="false"
+                               aria-haspopup="listbox"
+                               aria-controls="vendor-picker-listbox"
+                               aria-activedescendant="">
+                        <div id="vendor-picker-listbox"
+                             role="listbox"
+                             class="vendor-picker-listbox"
+                             data-no-glossary>
+                        </div>
+                    </div>
+                    <button type="button" id="vendor-picker-clear" class="btn btn-secondary" title="Clear vendor selection and return to complete graph" style="display: none; padding: 0.5rem 0.75rem; font-size: 0.8125rem;">Clear</button>
+                </div>
             </div>
         </div>
 
@@ -64,31 +82,189 @@
     <script src="/js/ai-loader.js"></script>
     <script>
         let cy = null;
+        let pickerDebounceTimer = null;
+        let pickerReqId = 0;
+        let pickerItems = [];
+        let highlightedIndex = -1;
+        let selectedVendorId = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             await api.initNav('graph');
 
-            // Load Vendors into dropdown
-            try {
-                const vendors = await api.get('/api/vendors');
-                const sel = document.getElementById('vendor-select');
-                vendors.forEach(v => {
-                    const opt = document.createElement('option');
-                    opt.value = v.id;
-                    opt.textContent = `${v.name} (${v.riskTier})${v.fourthParty ? ' [4th Party]' : ''}`;
-                    sel.appendChild(opt);
-                });
+            const container = document.getElementById('vendor-picker-container');
+            const input = document.getElementById('vendor-picker-input');
+            const listbox = document.getElementById('vendor-picker-listbox');
+            const clearBtn = document.getElementById('vendor-picker-clear');
 
-                sel.addEventListener('change', (e) => {
-                    const vendorId = e.target.value;
-                    loadGraph(vendorId || null);
-                });
-            } catch (err) {
-                console.error("Failed to load vendor dropdown", err);
+            function openPicker(query) {
+                listbox.style.display = 'block';
+                input.setAttribute('aria-expanded', 'true');
+                fetchPickerVendors(query);
             }
+
+            function closePicker() {
+                listbox.style.display = 'none';
+                input.setAttribute('aria-expanded', 'false');
+                input.removeAttribute('aria-activedescendant');
+                highlightedIndex = -1;
+            }
+
+            function setHighlightedIndex(index) {
+                highlightedIndex = index;
+                const options = listbox.querySelectorAll('.vendor-picker-option');
+                options.forEach((opt, idx) => {
+                    const isHl = idx === highlightedIndex;
+                    opt.classList.toggle('highlighted', isHl);
+                    opt.setAttribute('aria-selected', isHl ? 'true' : 'false');
+                    if (isHl) {
+                        input.setAttribute('aria-activedescendant', opt.id);
+                        opt.scrollIntoView({ block: 'nearest' });
+                    }
+                });
+                if (highlightedIndex === -1) {
+                    input.removeAttribute('aria-activedescendant');
+                }
+            }
+
+            function selectVendor(v) {
+                selectedVendorId = v.id;
+                input.value = v.name;
+                closePicker();
+                clearBtn.style.display = 'inline-block';
+                loadGraph(v.id);
+            }
+
+            function clearSelection() {
+                selectedVendorId = null;
+                input.value = '';
+                closePicker();
+                clearBtn.style.display = 'none';
+                loadGraph(null);
+            }
+
+            async function fetchPickerVendors(query) {
+                const reqId = ++pickerReqId;
+                listbox.innerHTML = '<div style="padding: 0.75rem; color: var(--text-secondary); text-align: center; font-size: 0.8125rem;">Loading...</div>';
+
+                const q = query ? query.trim() : '';
+                const url = q ? `/api/vendors/search?q=${encodeURIComponent(q)}&size=20` : '/api/vendors/search?size=20';
+
+                try {
+                    const data = await api.get(url);
+                    if (reqId !== pickerReqId) return; // Stale response
+
+                    pickerItems = data.items || [];
+                    highlightedIndex = -1;
+                    renderPickerOptions(pickerItems);
+                } catch (err) {
+                    if (reqId !== pickerReqId) return;
+                    console.error("Failed to search vendors", err);
+                    listbox.innerHTML = '<div style="padding: 0.75rem; color: var(--status-red); text-align: center; font-size: 0.8125rem;">Failed to load vendors</div>';
+                }
+            }
+
+            function renderPickerOptions(items) {
+                if (!items || items.length === 0) {
+                    listbox.innerHTML = '<div style="padding: 0.75rem; color: var(--text-secondary); text-align: center; font-size: 0.8125rem;">No matching vendors</div>';
+                    return;
+                }
+
+                listbox.innerHTML = items.map((v, idx) => {
+                    const tier = escapeHtml(v.riskTier);
+                    const tierClass = tier === 'CRITICAL' ? 'badge-critical' :
+                                      tier === 'HIGH' ? 'badge-high' :
+                                      tier === 'MEDIUM' ? 'badge-medium' : 'badge-low';
+                    const fpBadge = v.fourthParty ? '<span class="badge badge-grey">[4th Party]</span>' : '';
+
+                    return `
+                        <div id="vendor-opt-${v.id}"
+                             role="option"
+                             class="vendor-picker-option"
+                             data-idx="${idx}"
+                             aria-selected="false">
+                            <span class="vendor-picker-option-name">${escapeHtml(v.name)}</span>
+                            <span class="vendor-picker-option-meta">
+                                <span class="badge ${tierClass}">${tier}</span>
+                                ${fpBadge}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+
+                listbox.querySelectorAll('.vendor-picker-option').forEach(el => {
+                    const idx = parseInt(el.getAttribute('data-idx'), 10);
+                    el.addEventListener('mouseenter', () => {
+                        setHighlightedIndex(idx);
+                    });
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (pickerItems[idx]) {
+                            selectVendor(pickerItems[idx]);
+                        }
+                    });
+                });
+            }
+
+            // Input typing with debounce
+            input.addEventListener('input', () => {
+                if (pickerDebounceTimer) clearTimeout(pickerDebounceTimer);
+                pickerDebounceTimer = setTimeout(() => {
+                    openPicker(input.value);
+                }, 300);
+            });
+
+            // Focus with empty input shows first 20
+            input.addEventListener('focus', () => {
+                openPicker(input.value);
+            });
+
+            // Keyboard navigation
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (listbox.style.display === 'none') {
+                        openPicker(input.value);
+                    } else if (pickerItems.length > 0) {
+                        const next = (highlightedIndex + 1) % pickerItems.length;
+                        setHighlightedIndex(next);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (listbox.style.display !== 'none' && pickerItems.length > 0) {
+                        const prev = (highlightedIndex - 1 + pickerItems.length) % pickerItems.length;
+                        setHighlightedIndex(prev);
+                    }
+                } else if (e.key === 'Enter') {
+                    if (listbox.style.display !== 'none' && highlightedIndex >= 0 && highlightedIndex < pickerItems.length) {
+                        e.preventDefault();
+                        selectVendor(pickerItems[highlightedIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    closePicker();
+                }
+            });
+
+            // Clear button
+            clearBtn.addEventListener('click', () => {
+                clearSelection();
+            });
+
+            // Click outside closes listbox
+            document.addEventListener('click', (e) => {
+                if (container && !container.contains(e.target)) {
+                    closePicker();
+                }
+            });
 
             // Initial graph load
             await loadGraph(null);
+
+            window.addEventListener('resize', () => {
+                if (cy) {
+                    cy.resize();
+                    cy.fit(null, 40);
+                }
+            });
         });
 
         async function loadGraph(vendorId) {
