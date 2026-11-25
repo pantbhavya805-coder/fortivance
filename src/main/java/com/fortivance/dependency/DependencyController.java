@@ -1,5 +1,6 @@
 package com.fortivance.dependency;
 
+import com.fortivance.common.PageResult;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,30 @@ public class DependencyController {
     @GetMapping("/impact/vendors/{vendorId}")
     public ImpactReport impact(@PathVariable long vendorId) {
         return impactService.analyse(vendorId);
+    }
+
+    /** Origin, vendor chain and exact totals, without the lists (fetch those a page at a time). */
+    @GetMapping("/impact/vendors/{vendorId}/summary")
+    public ImpactReport.Overview impactSummary(@PathVariable long vendorId) {
+        return impactService.analyse(vendorId).overview();
+    }
+
+    /** Affected business services, most urgent first. filter: ALL, DISRUPTED, CRITICAL, CUSTOMER_FACING. */
+    @GetMapping("/impact/vendors/{vendorId}/services")
+    public PageResult<ImpactReport.AffectedService> impactServices(@PathVariable long vendorId,
+                                                                   @RequestParam(required = false) String filter,
+                                                                   @RequestParam(required = false) Integer page,
+                                                                   @RequestParam(required = false) Integer size) {
+        return ImpactLists.servicePage(impactService.analyse(vendorId), filter, page, size);
+    }
+
+    /** Affected applications, one entry each, single points of failure first. filter: ALL, CRITICAL, SINGLE_POINT. */
+    @GetMapping("/impact/vendors/{vendorId}/applications")
+    public PageResult<ImpactReport.AffectedApplication> impactApplications(@PathVariable long vendorId,
+                                                                           @RequestParam(required = false) String filter,
+                                                                           @RequestParam(required = false) Integer page,
+                                                                           @RequestParam(required = false) Integer size) {
+        return ImpactLists.applicationPage(impactService.analyse(vendorId), filter, page, size);
     }
 
     /**

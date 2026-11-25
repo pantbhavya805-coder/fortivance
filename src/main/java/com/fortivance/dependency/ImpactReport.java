@@ -24,6 +24,13 @@ public record ImpactReport(
             String impactLevel,               // DISRUPTED if an essential app is hit, else DEGRADED
             List<String> viaApplications) { }
 
+    /** The report without its lists: for pages that fetch services and applications a page at a time. */
+    public record Overview(VendorLink origin, List<VendorLink> vendorChain, Summary summary) { }
+
+    public Overview overview() {
+        return new Overview(origin, vendorChain, summary);
+    }
+
     public record Summary(
             int vendorsInChain, int applications, int services,
             int disruptedServices, int criticalServices, int customerFacingServices,

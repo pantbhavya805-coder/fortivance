@@ -93,7 +93,8 @@ public class ImpactService {
         int customerFacing = (int) services.stream().filter(AffectedService::customerFacing).count();
         Integer tightest = services.stream().map(AffectedService::impactToleranceHours)
                 .filter(Objects::nonNull).min(Integer::compare).orElse(null);
-        int spof = (int) apps.stream().filter(AffectedApplication::singlePointOfFailure).count();
+        // Counted per application: one reached through two vendors in the chain is still one single point of failure.
+        int spof = (int) ImpactLists.distinctApplications(apps).stream().filter(AffectedApplication::singlePointOfFailure).count();
         int distinctApps = (int) apps.stream().map(AffectedApplication::id).distinct().count();
 
         return new ImpactReport(chain.get(0), chain, apps, services,

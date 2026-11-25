@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortivance.ai.AiGateway;
 import com.fortivance.ai.Prompts;
+import com.fortivance.dependency.ImpactLists;
 import com.fortivance.dependency.ImpactReport;
 import com.fortivance.dependency.ImpactService;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,12 @@ public class IncidentService {
 
     static final ZoneOffset IST = ZoneOffset.ofHoursMinutes(5, 30);
     static final int CLOCK_HOURS = 6;
+    /**
+     * Most affected services (and applications) listed in an AI prompt. A large register can put hundreds behind
+     * one vendor; beyond this the prompt lists the most urgent ones and states the full counts. At or under the
+     * limit the facts are unchanged, so cached results stay valid.
+     */
+    static final int PROMPT_LIST_LIMIT = 25;
     private static final List<String> FIXED_TEAMS =
             List.of("Third-Party Risk", "Information Security", "Legal & Compliance", "Corporate Communications");
 
@@ -184,7 +191,7 @@ public class IncidentService {
 
         ArrayNode apps = facts.putArray("affected_applications");
         Set<String> teams = new LinkedHashSet<>(FIXED_TEAMS);
-        for (ImpactReport.AffectedApplication a : r.applications()) {
+        for (ImpactReport.AffectedApplication a : promptApplications(r, facts)) {
             ObjectNode o = apps.addObject();
             o.put("code", a.code()); o.put("name", a.name()); o.put("criticality", a.criticality());
             o.put("depends_on", a.viaVendorName()); o.put("single_point_of_failure", a.singlePointOfFailure());
@@ -195,14 +202,15 @@ public class IncidentService {
                 .forEach(teams::add);
 
         ArrayNode svcs = facts.putArray("affected_services");
-        for (ImpactReport.AffectedService s : r.services()) {
+        for (ImpactReport.AffectedService s : promptServices(r, facts)) {
             ObjectNode o = svcs.addObject();
             o.put("name", s.name()); o.put("criticality", s.criticality()); o.put("impact", s.impactLevel());
             o.put("impact_tolerance_hours", s.impactToleranceHours()); o.put("bcp_plan", s.bcpPlanRef());
             o.put("business_owner", s.businessOwner());
             o.put("via_applications", String.join(", ", s.viaApplications()));
-            if (s.businessOwner() != null) teams.add(s.businessOwner());
         }
+        // Owner teams come from every affected service, including any left out of the list above.
+        r.services().forEach(s -> { if (s.businessOwner() != null) teams.add(s.businessOwner()); });
         ArrayNode t = facts.putArray("owner_teams");
         teams.forEach(t::add);
 
@@ -289,7 +297,7 @@ public class IncidentService {
         sum.put("services", r.summary().services());
         sum.put("disrupted_services", r.summary().disruptedServices());
         ArrayNode svcs = facts.putArray("affected_services");
-        for (ImpactReport.AffectedService s : r.services()) {
+        for (ImpactReport.AffectedService s : promptServices(r, facts)) {
             ObjectNode o = svcs.addObject();
             o.put("name", s.name()); o.put("criticality", s.criticality()); o.put("impact", s.impactLevel());
             o.put("impact_tolerance_hours", s.impactToleranceHours());
@@ -310,6 +318,35 @@ public class IncidentService {
         event(incidentId, "ESCALATION_DRAFTED", LocalDateTime.now(IST), "AI:" + note.model(),
                 "Escalation note drafted" + (note.fromCache() ? " (cached result)" : ""));
         audit(actor, "ESCALATION_DRAFTED", incidentId, Map.of("aiOutputId", note.aiOutputId()));
+    }
+
+    /** Services for an AI prompt: all of them when few, else the most urgent PROMPT_LIST_LIMIT with a note on the totals. */
+    static List<ImpactReport.AffectedService> promptServices(ImpactReport r, ObjectNode facts) {
+        if (r.services().size() <= PROMPT_LIST_LIMIT) return r.services();
+        List<ImpactReport.AffectedService> top =
+                ImpactLists.servicesByUrgency(r.services()).subList(0, PROMPT_LIST_LIMIT);
+        ObjectNode note = facts.putObject("affected_services_listed");
+        note.put("listed", PROMPT_LIST_LIMIT);
+        note.put("total", r.summary().services());
+        note.put("disrupted_total", r.summary().disruptedServices());
+        note.put("critical_total", r.summary().criticalServices());
+        note.put("customer_facing_total", r.summary().customerFacingServices());
+        note.put("note", "Only the " + PROMPT_LIST_LIMIT + " most urgent affected services are listed (disrupted first, "
+                + "then shortest impact tolerance). The totals are complete; refer to the rest by these counts.");
+        return top;
+    }
+
+    /** Applications for an AI prompt: all of them when few, else one entry each, most urgent first, with a note. */
+    static List<ImpactReport.AffectedApplication> promptApplications(ImpactReport r, ObjectNode facts) {
+        if (r.applications().size() <= PROMPT_LIST_LIMIT) return r.applications();
+        List<ImpactReport.AffectedApplication> all = ImpactLists.distinctApplications(r.applications());
+        ObjectNode note = facts.putObject("affected_applications_listed");
+        note.put("listed", Math.min(PROMPT_LIST_LIMIT, all.size()));
+        note.put("total", all.size());
+        note.put("single_points_of_failure_total", r.summary().singlePointsOfFailure());
+        note.put("note", "Only the most urgent affected applications are listed (single points of failure first, "
+                + "then criticality). The totals are complete.");
+        return all.subList(0, Math.min(PROMPT_LIST_LIMIT, all.size()));
     }
 
     /** Code-side checks on the note: services must come from the impact analysis, summary capped at 60 words. */
