@@ -30,7 +30,8 @@ production or your normal local data: the import never deletes, so the records w
    docker compose -p fortivance-bench -f docker-compose.yml -f bench/docker-compose.bench.yml up -d --build
    ```
 3. Enable an import account **in the benchmark database only**. The seeded `approver` account
-   (password `Fortivance@2026`) was switched off by migration V4 and is marked deleted at startup:
+   (password `Fortivance@2026`) was switched off by migration V4 and is marked deleted at every app startup, so run
+   this again after each restart or rebuild of the benchmark app:
    ```powershell
    "UPDATE users SET active = TRUE, deleted_at = NULL WHERE username = 'approver';" | docker exec -i fortivance-bench-mysql sh -c 'mysql -u$MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE'
    ```

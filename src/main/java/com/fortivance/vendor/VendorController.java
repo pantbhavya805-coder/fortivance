@@ -1,5 +1,6 @@
 package com.fortivance.vendor;
 
+import com.fortivance.common.PageResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,22 @@ public class VendorController {
     @GetMapping
     public List<Vendor> list(@RequestParam(defaultValue = "false") boolean directOnly) {
         return directOnly ? vendors.findByParentIsNull() : vendors.findAll();
+    }
+
+    /**
+     * One page of vendors, sorted by name, for registers too large to list at once.
+     * q matches anywhere in the name; tier, scope, type (all/direct/subcontractor) and flag (overdue/expired) filter.
+     */
+    @GetMapping("/search")
+    public PageResult<Vendor> search(@RequestParam(required = false) String q,
+                                     @RequestParam(required = false) String tier,
+                                     @RequestParam(required = false) String scope,
+                                     @RequestParam(required = false) String type,
+                                     @RequestParam(required = false) String flag,
+                                     @RequestParam(required = false) Integer page,
+                                     @RequestParam(required = false) Integer size) {
+        VendorSearch s = VendorSearch.of(q, tier, scope, type, flag, page, size);
+        return PageResult.of(vendors.findAll(s.specification(LocalDate.now()), s.pageable()));
     }
 
     @GetMapping("/{id}")
